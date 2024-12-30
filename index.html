@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>QR Code 掃描器</title>
+    <title>QR Code 掃描器1</title>
     <style>
         /* 基本樣式設定 */
         body {
@@ -20,74 +20,99 @@
         #canvas {
             display: none; /* 用於處理視頻幀 */
         }
-        #result {
+        #results {
             margin-top: 20px;
             width: 300px;
             padding: 10px;
             font-size: 16px;
+            border: 1px solid #ccc;
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
         }
-        #scanButton {
+        #buttons {
+            margin-top: 20px;
+        }
+        .button {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
+            margin: 5px;
         }
     </style>
 </head>
 <body>
 
     <h1>QR Code 掃描器</h1>
-    <button id="scanButton">開始掃描 QR Code</button>
+    <div id="buttons">
+        <button id="scanButton" class="button">開始掃描 QR Code</button>
+        <button id="clearButton" class="button">清除結果</button>
+    </div>
     <br>
     <video id="video" autoplay></video>
     <canvas id="canvas"></canvas>
     <br>
-    <input type="text" id="result" placeholder="QR Code 內容將顯示在此">
+    <div id="results" placeholder="QR Code 內容將顯示在此"></div>
 
     <!-- 引入 jsQR 庫 -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
     <script>
         const scanButton = document.getElementById('scanButton');
+        const clearButton = document.getElementById('clearButton');
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const resultInput = document.getElementById('result');
+        const resultsDiv = document.getElementById('results');
         const canvasContext = canvas.getContext('2d');
         let videoStream = null;
         let scanInterval = null;
+        let scannedCodes = new Set(); // 用於儲存已掃描的 QR Code
 
         scanButton.addEventListener('click', async () => {
-            // 啟動攝像頭
-            try {
-                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                video.srcObject = videoStream;
-                video.style.display = 'block';
-                scanButton.textContent = '掃描中...';
-                
-                // 設定 canvas 尺寸與視頻一致
-                video.addEventListener('loadedmetadata', () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                });
-
-                // 每隔 500ms 檢查一次 QR Code
-                scanInterval = setInterval(() => {
-                    canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                        inversionAttempts: "dontInvert",
+            if (scanButton.textContent === '開始掃描 QR Code') {
+                // 啟動攝像頭
+                try {
+                    videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    video.srcObject = videoStream;
+                    video.style.display = 'block';
+                    scanButton.textContent = '停止掃描 QR Code';
+                    
+                    // 設定 canvas 尺寸與視頻一致
+                    video.addEventListener('loadedmetadata', () => {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
                     });
 
-                    if (code) {
-                        // 找到 QR Code，停止視頻流和掃描
-                        resultInput.value = code.data;
-                        stopScanning();
-                        alert('QR Code 掃描成功！');
-                    }
-                }, 500);
+                    // 每隔 500ms 檢查一次 QR Code
+                    scanInterval = setInterval(() => {
+                        canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                            inversionAttempts: "dontInvert",
+                        });
 
-            } catch (err) {
-                console.error('無法訪問攝像頭: ', err);
-                alert('無法訪問攝像頭，請檢查權限設定。');
+                        if (code) {
+                            if (!scannedCodes.has(code.data)) {
+                                scannedCodes.add(code.data);
+                                appendResult(code.data);
+                                alert('QR Code 掃描成功！');
+                            } else {
+                                console.log('已掃描過此 QR Code:', code.data);
+                            }
+                        }
+                    }, 500);
+
+                } catch (err) {
+                    console.error('無法訪問攝像頭: ', err);
+                    alert('無法訪問攝像頭，請檢查權限設定。');
+                }
+            } else {
+                // 停止掃描
+                stopScanning();
             }
+        });
+
+        clearButton.addEventListener('click', () => {
+            clearResults();
         });
 
         function stopScanning() {
@@ -98,6 +123,19 @@
             video.style.display = 'none';
             scanButton.textContent = '開始掃描 QR Code';
             clearInterval(scanInterval);
+        }
+
+        function appendResult(data) {
+            const p = document.createElement('p');
+            p.textContent = data;
+            resultsDiv.appendChild(p);
+            // 自動滾動到最新結果
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+            scannedCodes.clear();
         }
 
         // 當用戶離開頁面時，確保停止視頻流
