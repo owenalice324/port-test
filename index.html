@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>1DrayTek PortKnockingTool V1.0</title>
+  <title>DrayTek PortKnockingTool V1.0</title>
   <!-- 引入 Google Fonts (Noto Sans TC) 讓整體字型更美觀 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -766,7 +766,7 @@
         if (protocol.toLowerCase() === 'https') {
           //logElem.textContent += `\nChecking HTTPS port ${publicport}...\n`;
           try {
-            const response = await timedFetch(`https://${ip}/`, { method: 'GET', mode: 'no-cors' }, 500);
+            const response = await timedFetch(`https://${ip}/`, { method: 'GET', mode: 'no-cors' }, 3000);
             // 如果 fetch 成功，不會拋出錯誤
             //logElem.textContent += `HTTPS port ${publicport} open\n`;
             y = 0;
