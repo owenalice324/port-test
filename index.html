@@ -407,7 +407,7 @@
         <td>
           <label for="profileSelect">Profile Select:</label>
           <select id="profileSelect"></select>
-        </tr>
+      </tr>
       </tr>
       <tr>
         <td colspan="2">
@@ -476,15 +476,14 @@
                   <select id="protocol">
                     <option value="http">HTTP</option>
                     <option value="https">HTTPS</option>
+                    <option value="ftp">FTP</option>
+                    <option value="telnet">Telnet</option>
+                    <option value="ssh">SSH</option>
+                    <option value="snmp">SNMP</option>
                   </select>
                 </td>
               </tr>
-              <tr>
-                <td colspan="2">
-                  <label>Port Knocking Status:</label>
-                  <span id="portKnockingStatus" class="status na">N/A</span>
-                </td>
-              </tr>
+              <!-- 移除 Port Knocking Status 行 -->
               <tr>
                 <td colspan="2">
                   <label>Status Link:</label>
@@ -728,10 +727,6 @@
     const logElem = document.getElementById('log');
     logElem.textContent = ""; // 清空上一輪結果
 
-    // 取得可選設定相關元素
-    const portKnockingStatus = document.getElementById('portKnockingStatus');
-    const statusLink = document.getElementById('statusLink');
-
     try {
       // 1. 先在前端自行計算 6 位數 TOTP
       const tokenStr = await generateTOTP(totpKey);
@@ -748,7 +743,6 @@
       const defaultProtocol = 'https'; // 固定協議為 HTTPS
       const ordinals = ['1st', '2nd', '3rd']; 
       let i = 0;
-      let y = 0;
       for (let p of ports) {
         const ordinal = ordinals[i] || `${i + 1}th`; // 適用於超出3個端口的情況
         logElem.textContent += `Knocking on ${ordinal} port: ${p}\n`;
@@ -766,43 +760,35 @@
         if (protocol.toLowerCase() === 'https') {
           //logElem.textContent += `\nChecking HTTPS port ${publicport}...\n`;
           try {
-            const response = await timedFetch(`https://${ip}/`, { method: 'GET', mode: 'no-cors' }, 3000);
+            const response = await timedFetch(`https://${ip}:${publicport}/`, { method: 'GET', mode: 'no-cors' }, 1000);
             // 如果 fetch 成功，不會拋出錯誤
             //logElem.textContent += `HTTPS port ${publicport} open\n`;
-            y = 0;
-            portKnockingStatus.textContent = "Successful";
-            portKnockingStatus.className = "status successful";
+            logElem.textContent += "\nPorts knocking completed.\nYou can now access the server. ";
+            logElem.innerHTML += `<a href="${protocol}://${ip}:${publicport}" target="_blank">${protocol}://${ip}:${publicport}</a>\n`;
           } catch (error) {
             logElem.textContent += `HTTPS port ${publicport} failed!\n`;
-            y = 1;
-            portKnockingStatus.textContent = "Failed";
-            portKnockingStatus.className = "status failed";
           }
         } else {
           // 如果不是 HTTPS 或 Public Port 不是 443，顯示 N/A
-          portKnockingStatus.textContent = "N/A";
-          portKnockingStatus.className = "status na";
           //logElem.textContent += `\nPort Knocking Status: N/A\n`;
+          logElem.textContent += "\nPorts knocking completed.\nYou can now access the server. ";
         }
 
         // 生成狀態超連結
         if (protocol && ip && publicport) {
           const link = `${protocol}://${ip}:${publicport}`;
-          statusLink.innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+          document.getElementById('statusLink').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
         } else {
-          statusLink.innerHTML = "";
+          document.getElementById('statusLink').innerHTML = "";
         }
 
-        if (y !== 1) {
-          logElem.textContent += "\nPorts knocking completed.\nYou can now access the server. ";
-        }
       } else {
         // 如果未啟用可選設定，只通知用戶完成
         logElem.textContent += "\nPort knocking completed successfully.\nYou can now access the server. ";
         // 設置狀態為 N/A
-        portKnockingStatus.textContent = "N/A";
-        portKnockingStatus.className = "status na";
-        statusLink.innerHTML = "";
+        //document.getElementById('portKnockingStatus').textContent = "N/A";
+        //document.getElementById('portKnockingStatus').className = "status na";
+        document.getElementById('statusLink').innerHTML = "";
       }
 
     } catch (err) {
@@ -890,21 +876,13 @@
         const link = `${data.protocol}://${data.ip}:${data.publicport}`;
         document.getElementById('statusLink').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
 
-        // 設置 Port Knocking Status
-        if (data.protocol.toLowerCase() === 'https' && data.publicport === 443) {
-          // 由於無法在載入時直接驗證端口，暫時設置為 N/A
-          document.getElementById('portKnockingStatus').textContent = "N/A";
-          document.getElementById('portKnockingStatus').className = "status na";
-        } else {
-          document.getElementById('portKnockingStatus').textContent = "N/A";
-          document.getElementById('portKnockingStatus').className = "status na";
-        }
+        // 重新更新 TOTP 驗證碼和進度條
+        updateTotpCode();
+        startTotpTimer();
       } else {
         document.getElementById('toggleOptional').checked = false;
         document.getElementById('optionalSettingsRow').style.display = 'none';
         document.getElementById('statusLink').innerHTML = "";
-        document.getElementById('portKnockingStatus').textContent = "N/A";
-        document.getElementById('portKnockingStatus').className = "status na";
       }
 
       // 重新更新 TOTP 驗證碼和進度條
@@ -934,8 +912,8 @@
         optionalSettingsRow.style.display = 'none';
         // 清除狀態和超連結
         document.getElementById('statusLink').innerHTML = "";
-        document.getElementById('portKnockingStatus').textContent = "N/A";
-        document.getElementById('portKnockingStatus').className = "status na";
+        //document.getElementById('portKnockingStatus').textContent = "N/A";
+        //document.getElementById('portKnockingStatus').className = "status na";
       }
     });
 
@@ -1053,8 +1031,8 @@
       document.getElementById('toggleOptional').checked = false;
       document.getElementById('optionalSettingsRow').style.display = 'none';
       document.getElementById('statusLink').innerHTML = "";
-      document.getElementById('portKnockingStatus').textContent = "N/A";
-      document.getElementById('portKnockingStatus').className = "status na";
+      //document.getElementById('portKnockingStatus').textContent = "N/A";
+      //document.getElementById('portKnockingStatus').className = "status na";
 
       // 清空 TOTP 驗證碼和進度條
       document.getElementById('currentTotpCode').textContent = "--";
