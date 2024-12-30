@@ -37,13 +37,23 @@
     }
 
     /* 標題 */
-    h3 {
+    h3, h4 {
       margin-top: 0;
       margin-bottom: 10px;
       text-align: center;
       color: #333;
       font-weight: 700;
       letter-spacing: 1px;
+    }
+
+    /* 可選設定容器 */
+    .optional-container {
+      border: 2px solid #4CAF50; /* 加粗綠色邊框 */
+      padding: 20px;
+      border-radius: 8px;
+      /* 移除背景色 */
+      /* background-color: #f0fff0; */
+      margin-top: 15px; /* 增加上方間距 */
     }
 
     /* 表單表格 */
@@ -126,12 +136,6 @@
       font-size: 13px;
       white-space: pre-wrap; /* 讓換行更自然 */
       color: #333;
-    }
-
-    /* 可選設定區塊 */
-    /* 設置 #optionalSettingsRow 為預設隱藏 */
-    #optionalSettingsRow {
-      display: none;
     }
 
     .status {
@@ -407,7 +411,7 @@
         <td>
           <label for="profileSelect">Profile Select:</label>
           <select id="profileSelect"></select>
-      </tr>
+        </td>
       </tr>
       <tr>
         <td colspan="2">
@@ -462,35 +466,39 @@
         </td>
       </tr>
       <!-- 可選設定區塊 -->
-      <tr id="optionalSettingsRow">
+      <tr id="optionalSettingsRow" style="display: none;"> <!-- 初始隱藏 -->
         <td colspan="2">
-          <div id="optionalSettings">
-            <table class="form-table">
-              <tr>
-                <td>
-                  <label for="publicport">Public Port:</label>
-                  <input type="number" id="publicport" placeholder="e.g. 443" />
-                </td>
-                <td>
-                  <label for="protocol">Protocol:</label>
-                  <select id="protocol">
-                    <option value="http">HTTP</option>
-                    <option value="https">HTTPS</option>
-                    <option value="ftp">FTP</option>
-                    <option value="telnet">Telnet</option>
-                    <option value="ssh">SSH</option>
-                    <option value="snmp">SNMP</option>
-                  </select>
-                </td>
-              </tr>
-              <!-- 移除 Port Knocking Status 行 -->
-              <tr>
-                <td colspan="2">
-                  <label>Status Link:</label>
-                  <span id="statusLink"></span>
-                </td>
-              </tr>
-            </table>
+          <!-- 新增的容器 -->
+          <div class="optional-container">
+            <h4>Checking port knocking status</h4>
+            <div id="optionalSettings">
+              <table class="form-table">
+                <tr>
+                  <td>
+                    <label for="publicport">Public Port:</label>
+                    <input type="number" id="publicport" placeholder="e.g. 443" />
+                  </td>
+                  <td>
+                    <label for="protocol">Protocol:</label>
+                    <select id="protocol">
+                      <option value="http">HTTP</option>
+                      <option value="https">HTTPS</option>
+                      <option value="ftp">FTP</option>
+                      <option value="telnet">Telnet</option>
+                      <option value="ssh">SSH</option>
+                      <option value="snmp">SNMP</option>
+                    </select>
+                  </td>
+                </tr>
+                <!-- Status Link 行 -->
+                <tr>
+                  <td colspan="2">
+                    <label>Status Link:</label>
+                    <span id="statusLink"></span>
+                  </td>
+                </tr>
+              </table>
+            </div>
           </div>
         </td>
       </tr>
@@ -645,15 +653,15 @@
   function copyTotpCode() {
     const totpCode = document.getElementById('currentTotpCode').textContent;
     if (totpCode === "--" || totpCode === "Invalid") {
-      alert("沒有有效的 TOTP 驗證碼可複製！");
+      alert("There is no valid TOTP code to copy!");
       return;
     }
     navigator.clipboard.writeText(totpCode)
       .then(() => {
-        alert("TOTP 驗證碼已複製到剪貼簿！");
+        alert("TOTP code has been copied to the clipboard!");
       })
       .catch(err => {
-        alert("複製失敗，請手動複製。");
+        alert("Copy failed, please copy manually.");
         console.error('Clipboard copy failed:', err);
       });
   }
@@ -683,8 +691,8 @@
           correctLevel: QRCode.CorrectLevel.Q // 從 H 調整為 Q，以降低 QR Code 密度
         });
       } catch (err) {
-        console.error('QR Code 生成失敗:', err);
-        alert("QR Code 生成失敗，請檢查輸入的 Profile 名稱和 TOTP Key。");
+        console.error('QR Code generation failed:', err);
+        alert("QR Code generation failed, please check the entered Profile Name and TOTP Key.");
       }
     }
   }
@@ -756,24 +764,7 @@
       }
 
       if (isOptional) {
-        // 僅在協議為 HTTPS 且 Public Port 為 443 時進行端口驗證
-        if (protocol.toLowerCase() === 'https') {
-          //logElem.textContent += `\nChecking HTTPS port ${publicport}...\n`;
-          try {
-            const response = await timedFetch(`https://${ip}:${publicport}/`, { method: 'GET', mode: 'no-cors' }, 1000);
-            // 如果 fetch 成功，不會拋出錯誤
-            //logElem.textContent += `HTTPS port ${publicport} open\n`;
-            logElem.textContent += "\nPorts knocking completed.\nYou can now access the server. ";
-            logElem.innerHTML += `<a href="${protocol}://${ip}:${publicport}" target="_blank">${protocol}://${ip}:${publicport}</a>\n`;
-          } catch (error) {
-            logElem.textContent += `HTTPS port ${publicport} failed!\n`;
-          }
-        } else {
-          // 如果不是 HTTPS 或 Public Port 不是 443，顯示 N/A
-          //logElem.textContent += `\nPort Knocking Status: N/A\n`;
-          logElem.textContent += "\nPorts knocking completed.\nYou can now access the server. ";
-        }
-
+        logElem.textContent += "\nPorts knocking completed.\nYou can now access the server.";
         // 生成狀態超連結
         if (protocol && ip && publicport) {
           const link = `${protocol}://${ip}:${publicport}`;
@@ -784,7 +775,7 @@
 
       } else {
         // 如果未啟用可選設定，只通知用戶完成
-        logElem.textContent += "\nPort knocking completed successfully.\nYou can now access the server. ";
+        logElem.textContent += "\nPorts knocking completed.\nYou can now access the server.";
         // 設置狀態為 N/A
         //document.getElementById('portKnockingStatus').textContent = "N/A";
         //document.getElementById('portKnockingStatus').className = "status na";
@@ -1147,23 +1138,23 @@
                 startTotpTimer();
 
                 // 顯示掃描成功的提示
-                alert("TOTP Key 已成功掃描並載入！");
+                alert("TOTP Key has been successfully scanned and loaded!");
 
                 // 清除掃描
                 stopScanner();
                 scannerContainer.style.display = 'none';
               } else {
-                alert("掃描到的 QR Code 不包含 'secret=' 字串。");
-                // 若不需要停止掃描，可選擇不執行 stopScanner()
-                // 這裡選擇繼續掃描
+                // Avoid frequent alert pop-ups, use console log instead
+                console.log("Scanned QR Code does not contain the 'secret=' string.");
+                // Optional: Display non-blocking notification
               }
             }
           }
         }, 500);
       })
       .catch(err => {
-        console.error('無法訪問攝像頭: ', err);
-        alert('無法訪問攝像頭，請檢查權限設定。');
+        console.error('Unable to access the camera: ', err);
+        alert('Unable to access the camera, please check your permissions.');
         document.getElementById('scannerContainer').style.display = 'none';
       });
   }
