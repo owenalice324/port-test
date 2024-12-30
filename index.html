@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>1DrayTek PortKnockingTool V1.0</title>
+  <title>DrayTek PortKnockingTool V1.0</title>
   <!-- 引入 Google Fonts (Noto Sans TC) 讓整體字型更美觀 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -596,12 +596,17 @@
 
     if (serviceName && totpKey) {
       const otpauthUrl = generateOtpauthUrl(serviceName, totpKey);
-      new QRCode(qrcodeDiv, {
-        text: otpauthUrl,
-        width: 150,
-        height: 150,
-        correctLevel: QRCode.CorrectLevel.Q // 從 H 調整為 Q，以降低 QR Code 密度
-      });
+      try {
+        new QRCode(qrcodeDiv, {
+          text: otpauthUrl,
+          width: 150,
+          height: 150,
+          correctLevel: QRCode.CorrectLevel.Q // 從 H 調整為 Q，以降低 QR Code 密度
+        });
+      } catch (err) {
+        console.error('QR Code 生成失敗:', err);
+        alert("QR Code 生成失敗，請檢查輸入的 Service 名稱和 TOTP Key。");
+      }
     }
   }
 
@@ -892,42 +897,46 @@
 
         // 每隔 500ms 檢查一次 QR Code
         scanInterval = setInterval(() => {
-          canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
-          const code = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: "dontInvert",
-          });
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+              inversionAttempts: "dontInvert",
+            });
 
-          if (code) {
-            // 找到 QR Code，嘗試解析 'secret=' 後的字串
-            const qrData = code.data;
-            let secretValue = null;
+            if (code) {
+              // 找到 QR Code，嘗試解析 'secret=' 後的字串
+              const qrData = code.data;
+              let secretValue = null;
 
-            // 嘗試將 QR Data 當作 URL 來解析
-            try {
-              const url = new URL(qrData);
-              secretValue = url.searchParams.get('secret');
-            } catch (error) {
-              // QR Data 不是有效的 URL，嘗試直接解析 'secret=' 字串
-              const secretMatch = qrData.match(/secret=([^&]+)/);
-              if (secretMatch) {
-                secretValue = secretMatch[1];
+              // 嘗試將 QR Data 當作 URL 來解析
+              try {
+                const url = new URL(qrData);
+                secretValue = url.searchParams.get('secret');
+              } catch (error) {
+                // QR Data 不是有效的 URL，嘗試直接解析 'secret=' 字串
+                const secretMatch = qrData.match(/secret=([^&]+)/);
+                if (secretMatch) {
+                  secretValue = secretMatch[1];
+                }
               }
-            }
 
-            if (secretValue) {
-              document.getElementById('totpKey').value = secretValue;
-              updateTotpCode();
-              startTotpTimer();
+              if (secretValue) {
+                document.getElementById('totpKey').value = secretValue;
+                updateTotpCode();
+                startTotpTimer();
 
-              // 停止掃描
-              stopScanner();
-              scannerContainer.style.display = 'none';
-              alert("TOTP Key 已成功掃描並載入！");
-            } else {
-              alert("掃描到的 QR Code 不包含 'secret=' 字串。");
-              // 如果需要，可以選擇停止掃描或繼續
-              // 這裡選擇繼續掃描
+                // 顯示掃描成功的提示
+                alert("TOTP Key 已成功掃描並載入！");
+
+                // 清除掃描
+                stopScanner();
+                scannerContainer.style.display = 'none';
+              } else {
+                alert("掃描到的 QR Code 不包含 'secret=' 字串。");
+                // 若不需要停止掃描，可選擇不執行 stopScanner()
+                // 這裡選擇繼續掃描
+              }
             }
           }
         }, 500);
