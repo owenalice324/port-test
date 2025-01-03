@@ -10,8 +10,6 @@
     href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" 
     rel="stylesheet"
   >
-  <!-- 引入 QRCode.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- 引入 jsQR 庫 -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
   <style>
@@ -163,7 +161,7 @@
     }
 
     /* 新增：TOTP 功能相關樣式 */
-    /* Flex 容器，用於佈局 TOTP Key、Scan QR 按鈕和 Show QR 勾選框 */
+    /* Flex 容器，用於佈局 TOTP Key、Scan QR 按鈕和 Verify Code 勾選框 */
     .totp-key-container {
       display: flex;
       align-items: center;
@@ -192,8 +190,8 @@
       transform: translateY(0);
     }
 
-    /* Show QR Checkbox */
-    .show-qr-container {
+    /* Verify Code Checkbox */
+    .verify-code-container {
       display: flex;
       align-items: center;
       gap: 5px;
@@ -202,21 +200,7 @@
     /* QR Code 顯示、TOTP 驗證碼及進度條的統一容器 */
     #qrSection {
       margin-top: 20px;
-      display: none; /* 初始隱藏 */
-    }
-
-    /* 隱藏 QR Code 顯示 */
-    #qrcodeContainer {
-      display: none; /* 隱藏 QR Code */
-    }
-
-    /* QR Code 顯示 */
-    #qrcodeContainer {
-      display: none; /* 隱藏 QR Code */
-    }
-    #qrcode {
-      width: 150px;
-      height: 150px;
+      /* QR Code 顯示已移除 */
     }
 
     /* 顯示當前 TOTP 驗證碼及複製按鈕 */
@@ -371,7 +355,7 @@
         width: 100%;
         margin-top: 10px;
       }
-      .show-qr-container {
+      .verify-code-container {
         flex-direction: row;
         align-items: center;
       }
@@ -388,10 +372,6 @@
       #totpCountdown {
         top: -20px;
         font-size: 12px;
-      }
-      #qrcode {
-        width: 100px;
-        height: 100px;
       }
       #scannerVideo {
         width: 300px; /* 縮小手機上的掃描窗口 */
@@ -437,18 +417,15 @@
             <!-- 將 type 改為 password 以隱藏輸入 -->
             <input type="password" id="totpKey" placeholder="e.g. JBSWY3DPEHPK3PXP" />
             <button id="scanTotpBtn">Scan QR</button>
-            <div class="show-qr-container">
-              <!-- 預設勾選 Show QR -->
-              <input type="checkbox" id="showQrCheckbox" checked />
-              <label for="showQrCheckbox">Show QR</label>
+            <!-- 新增 Verify Code 勾選框 -->
+            <div class="verify-code-container">
+              <input type="checkbox" id="verifyCodeCheckbox" checked />
+              <label for="verifyCodeCheckbox">Show Verify Code</label>
             </div>
           </div>
-          <!-- QR Code 顯示、TOTP 驗證碼及進度條 -->
+          <!-- QR Code 顯示已移除 -->
+          <!-- TOTP 驗證碼及進度條 -->
           <div id="qrSection">
-            <!-- QR Code 顯示 -->
-            <div id="qrcodeContainer">
-              <div id="qrcode"></div>
-            </div>
             <!-- 當前 TOTP 驗證碼及複製按鈕 -->
             <div id="currentTotpContainer">
               <div id="currentTotpCode">--</div>
@@ -618,11 +595,8 @@
     try {
       const code = await generateTOTP(totpKey);
       totpCodeElem.textContent = code;
-      updateQrCode(serviceName, totpKey); // 更新 QR Code
     } catch (err) {
       totpCodeElem.textContent = `Invalid`;
-      const qrcodeDiv = document.getElementById('qrcode');
-      qrcodeDiv.innerHTML = "";
     }
   }
 
@@ -674,34 +648,10 @@
 
   /**
    * -------------------------------------------------------------
-   * Part D: QR Code 生成與顯示
+   * Part D: 已移除 QR Code 生成與顯示相關功能
    * -------------------------------------------------------------
+   * 已刪除 generateOtpauthUrl 和 updateQrCode 函數
    */
-  function generateOtpauthUrl(serviceName, totpKey) {
-    const issuer = encodeURIComponent(serviceName);
-    const secret = encodeURIComponent(totpKey);
-    return `otpauth://totp/${issuer}:${issuer}?secret=${secret}&issuer=${issuer}`;
-  }
-
-  function updateQrCode(serviceName, totpKey) {
-    const qrcodeDiv = document.getElementById('qrcode');
-    qrcodeDiv.innerHTML = ""; // 清空之前的 QR Code
-
-    if (serviceName && totpKey) {
-      const otpauthUrl = generateOtpauthUrl(serviceName, totpKey);
-      try {
-        new QRCode(qrcodeDiv, {
-          text: otpauthUrl,
-          width: 150,
-          height: 150,
-          correctLevel: QRCode.CorrectLevel.Q // 從 H 調整為 Q，以降低 QR Code 密度
-        });
-      } catch (err) {
-        console.error('QR Code generation failed:', err);
-        alert("QR Code generation failed, please check the entered Profile Name and TOTP Key.");
-      }
-    }
-  }
 
   /**
    * -------------------------------------------------------------
@@ -914,20 +864,16 @@
       }
     });
 
-    // 綁定 Show QR 勾選框
-    document.getElementById('showQrCheckbox').addEventListener('change', (e) => {
-      const qrSection = document.getElementById('qrSection');
+    // 綁定 Verify Code 勾選框
+    document.getElementById('verifyCodeCheckbox').addEventListener('change', (e) => {
+      const currentTotpContainer = document.getElementById('currentTotpContainer');
+      const totpProgressContainer = document.getElementById('totpProgressContainer');
       if (e.target.checked) {
-        qrSection.style.display = 'block';
-        // 更新 QR Code 和 TOTP 驗證碼
-        updateQrCode(
-          document.getElementById('profileName').value.trim(),
-          document.getElementById('totpKey').value.trim()
-        );
-        updateTotpCode();
-        startTotpTimer();
+        currentTotpContainer.style.display = 'flex';
+        totpProgressContainer.style.display = 'block';
       } else {
-        qrSection.style.display = 'none';
+        currentTotpContainer.style.display = 'none';
+        totpProgressContainer.style.display = 'none';
       }
     });
 
@@ -998,13 +944,7 @@
         isOptional ? protocol : null, 
         isOptional
       );
-      // 如果 Show QR 勾選框已勾選，更新 QR Code 和 TOTP 驗證碼
-      const showQrCheckbox = document.getElementById('showQrCheckbox');
-      if (showQrCheckbox.checked) {
-        updateQrCode(profileName, totpKey);
-        updateTotpCode();
-        startTotpTimer();
-      }
+      // 已移除 Show QR 勾選框相關代碼
     });
 
     // 綁定「Delete Profile」按鈕
@@ -1036,19 +976,13 @@
       document.getElementById('totpProgress').style.width = '0%';
       document.getElementById('totpCountdown').textContent = "-- Sec";
 
-      // 清空 QR Code
-      const qrcodeDiv = document.getElementById('qrcode');
-      qrcodeDiv.innerHTML = "";
+      // 已移除 QR Code 相關代碼
+      document.getElementById('statusLink').innerHTML = "";
 
       // 清除進度條計時器
       if (progressInterval) {
         clearInterval(progressInterval);
       }
-
-      // 如果 Show QR 勾選框已勾選，隱藏 QR Section
-      const qrSection = document.getElementById('qrSection');
-      qrSection.style.display = 'none';
-      document.getElementById('showQrCheckbox').checked = false;
 
       alert(`Profile '${profileName}' has been deleted.`);
     });
@@ -1083,6 +1017,18 @@
     // 初始化並定期更新 TOTP 驗證碼
     updateTotpCode(); // 初始調用一次
     startTotpTimer(); // 啟動進度條
+
+    // 初始化 Verify Code 勾選框狀態
+    const verifyCodeCheckbox = document.getElementById('verifyCodeCheckbox');
+    const currentTotpContainer = document.getElementById('currentTotpContainer');
+    const totpProgressContainer = document.getElementById('totpProgressContainer');
+    if (verifyCodeCheckbox.checked) {
+      currentTotpContainer.style.display = 'flex';
+      totpProgressContainer.style.display = 'block';
+    } else {
+      currentTotpContainer.style.display = 'none';
+      totpProgressContainer.style.display = 'none';
+    }
   });
 
   /**
