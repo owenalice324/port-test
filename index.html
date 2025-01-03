@@ -84,6 +84,7 @@
     /* 輸入框、下拉式選單 */
     input[type="text"],
     input[type="number"],
+    input[type="password"], /* 新增 */
     select {
       width: 90%;
       padding: 8px 10px;
@@ -204,11 +205,14 @@
       display: none; /* 初始隱藏 */
     }
 
+    /* 隱藏 QR Code 顯示 */
+    #qrcodeContainer {
+      display: none; /* 隱藏 QR Code */
+    }
+
     /* QR Code 顯示 */
     #qrcodeContainer {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
+      display: none; /* 隱藏 QR Code */
     }
     #qrcode {
       width: 150px;
@@ -430,10 +434,12 @@
         <td colspan="2">
           <label>TOTP Key:</label>
           <div class="totp-key-container">
-            <input type="text" id="totpKey" placeholder="e.g. JBSWY3DPEHPK3PXP" />
+            <!-- 將 type 改為 password 以隱藏輸入 -->
+            <input type="password" id="totpKey" placeholder="e.g. JBSWY3DPEHPK3PXP" />
             <button id="scanTotpBtn">Scan QR</button>
             <div class="show-qr-container">
-              <input type="checkbox" id="showQrCheckbox" />
+              <!-- 預設勾選 Show QR -->
+              <input type="checkbox" id="showQrCheckbox" checked />
               <label for="showQrCheckbox">Show QR</label>
             </div>
           </div>
