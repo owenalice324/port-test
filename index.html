@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- saved from url=(0045)https://jojoliie.github.io/ptknock.github.io/ -->
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -8,8 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com/">
   <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
   <link href="./DrayTek PortKnockingTool V1.1_files/css2" rel="stylesheet">
-  <!-- 引入 jsQR 庫 -->
-  <script src="./DrayTek PortKnockingTool V1.1_files/jsQR.js.download"></script>
+  <!-- 引入 jsQR 庫（改用您提供的 CDN 連結） -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+
   <style>
     /* 全局設定 */
     * {
@@ -77,7 +79,7 @@
     /* 輸入框、下拉式選單 */
     input[type="text"],
     input[type="number"],
-    input[type="password"],
+    input[type="password"], /* 新增 */
     select {
       padding: 8px;
       font-size: 14px;
@@ -92,7 +94,7 @@
     }
     input:focus,
     select:focus {
-      border-color: #999; 
+      border-color: #999; /* 聚焦時綠色邊框 */
     }
     input::placeholder {
       font-weight: 100;
@@ -223,12 +225,13 @@
       height: 10px;
       border: solid white;
       border-width: 0 3px 3px 0;
+      -webkit-transform: rotate(45deg);
+      -ms-transform: rotate(45deg);
       transform: rotate(45deg);
     }
     .moreSetting {
       color: #21adf3;
     }
-
 
     /* 顯示日誌(進度欄) */
     #log {
@@ -242,7 +245,7 @@
       padding: 10px;
       font-family: Consolas, Monaco, monospace;
       font-size: 13px;
-      white-space: pre-wrap;
+      white-space: pre-wrap; /* 讓換行更自然 */
       color: #333;
     }
 
@@ -297,12 +300,12 @@
       margin-bottom: 20px;
     }
     #currentTotpCode {
-      font-size: 36px; 
+      font-size: 36px; /* 放大字型 */
       font-weight: bold;
       color: #333;
       margin-bottom: 10px;
-      user-select: all; 
-      text-align: center; 
+      user-select: all; /* 允許用戶選取文字 */
+      text-align: center; /* 置中 */
     }
 
     /* 進度條與倒數字 */
@@ -349,7 +352,7 @@
       text-align: center;
     }
     #scannerVideo {
-      width: 500px; 
+      width: 500px; /* 增大掃描窗口尺寸 */
       height: 400px;
       max-width: 90%;
       border: 2px solid #fff;
@@ -374,7 +377,7 @@
     }
     #closeScannerBtn {
       margin-top: 20px;
-      padding: 12px 24px; 
+      padding: 12px 24px; /* 增大按鈕尺寸 */
       cursor: pointer;
       background-color: #9a9a9a;
       color: #e8e8e8;
@@ -442,7 +445,7 @@
         font-size: 12px;
       }
       #scannerVideo {
-        width: 300px; 
+        width: 300px; /* 縮小手機上的掃描窗口 */
       }
       #scannerInstructions {
         font-size: 16px;
@@ -463,23 +466,28 @@
       position: relative;
       vertical-align: bottom;
     }
+
     .custom-checkbox:checked {
       background-color: #09C199;
       border-color: #09C199;
     }
+
     .custom-checkbox:checked::after {
-      content: "";
+      content: ""; /* 無文字內容 */
       position: absolute;
       left: 4px;
       top: 1px;
       width: 4px;
       height: 7px;
       border: solid white;
-      border-width: 0 2px 2px 0; 
-      transform: rotate(40deg); 
+      border-width: 0 2px 2px 0; /* 勾勾的線條 */
+      transform: rotate(40deg); /* 旋轉形成勾勾形狀 */
     }
+
     .custom-checkbox:hover {
     }
+
+    /* 標籤的樣式 */
     label {
       font-size: 16px;
       cursor: pointer;
@@ -488,7 +496,7 @@
 </head>
 <body>
   <div id="container">
-    <img alt="" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTIiIGhlaWdodD0iNDQiIGZpbGw9Im5vbmUiIHhtbG5zOnY9Imh0dHBzOi8vdmVjdGEuaW8vbmFubyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgMGgxNTJ2NDRIMHoiLz48cGF0aCBkPSJNODMuNCAxNC4xbC01LjUgOC43Yy0uMi0uMS0uMy0uMS0uNC0uMWwtMy04LjctNyAuMSA1LjYgMTUtNy4zIDEwLjZjLS4xLjEtLjEuMSA2LjguMmwxNy43LTI1LjhoLTYuOXptNjIuMSAxOGMtMS42LS4xLTMuMiAwLTQuOCAwbC01LjQtOC4xLS40LS4xLTEuNyA4LjNIMTI4bDQuOC0yMy41LTIuNy0uMS4yLTEuMSA4LjMtLjgtMyAxNC4zLjcuMSA0LjMtNGMyLjktMi45IDIuMS0yLjYgNi4yLTIuN2wtLjQgMS41Yy0yLjYgMS4xLTYuNCAzLjItNy45IDUuNmw2LjkgOS42Yy4xLjUuMy41LjEgMXpNMzguNCAxNi45bC42LTIuN2MtLjMgMC0xIC4xLTEuMi4xaC00LjdsLTMuNCAxNy41YzAgLjIgNi40LjIgNi40IDAgLjctNC40LjctMTUuMiA4LjItMTAuNy40LjkgMy0xNC4zLjguNy0uMSA1LjZhMi41IDIuNSAwIDAgMCAwLTF6bTIxLjQtMi44bC0uMyAxLjdjLS40LS4zLS43LS42LTEtLjktMTQuNi01LjYtMTkuMiAyMC40LTMuOCAxN2wyLjQtMS4yYy0uMS40LS4yLjctLjIgMS4xaC4yYzAgLjIgNi41LjIgNi41IDBsMi43LTE3LjZoLTYuNXYtLjF6bS01IDEzLjFjLTIuMiAwLTQuMS0xLjgtNC4xLTMuOSAwLTIuMiAxLjgtMy45IDQuMS0zLjkgMi4yIDAgNC4xIDEuOCA0LjEgMy45cy0xLjkgMy45LTQuMSAzLjl6TTE0LjkgNi4zTDguOCA2IDUgMzEuOGMwIC4yIDEwLjUuMiAxMC41IDAgNi4zLTEuNCAxMC44LTQuNiAxMi42LTEwLjEgMy4zLTkuOC0zLjktMTUuMS0xMy4yLTE1LjR6bS0yLjIgMTkuNWwyIDEzLjVjMTIgLjYgOC40IDE0LjYtMiAxMy41em0xMDMuNy05LjFjNi41LTYgMTMuNi4xIDcuOSA0LjctMi42IDIuMS00LjUgMS43LTcuNiAxLjktMS4xIDYuOSAyLjYgNy4yIDcuOCA0LjIuNC42LjQuNi41IDEtMTEuOCA5LTE4LjUtMi41LTguNi0xMS44em0uOCA1LjNjMS45LS4yIDMuMSAwIDQuNC0xLjUgMi4xLTIuNCAxLjktNi41LTEuMi00LjEtMS4zIDEtMS45IDItMi41IDMuNS0uMy42LS42IDEuMy0uNyAyLjF6TTk2LjkgOS44Yy0xLjggMS4xLTIuMSAxLjgtMi45IDMuNmgtMS4ybDEtNS40IDIyLjEtLjEtLjggNS42Yy0uNS0uMS0xLS4xLTEuNi0uMS0uMi0xLjktLjMtMi41LTEuNy0zLjZoLTQuOWMtLjMuNy0yLjcgMTMuOC0zLjUgMTcuOS0uMyAxLjMtLjguMiA1LjEuMWwuMy0yLjJoMS4xbC0uMSAxLjUgMS4zLS4xYzItLjEgMi4xLTEuNSAyLjUtMy4xbDMuNy0xNy42Yy0xLjcuMS0zLjMuMS00LjkuMXoiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZmlsbD0iI2ZmNDU1YyIvPjwvc3ZnPg==" />
+    <img alt="" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTIiIGhlaWdodD0iNDQiIGZpbGw9Im5vbmUiIHhtbG5zOnY9Imh0dHBzOi8vdmVjdGEuaW8vbmFubyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgMGgxNTJ2NDRIMHoiLz48cGF0aCBkPSJNODMuNCAxNC4xbC01LjUgOC43Yy0uMi0uMS0uMy0uMS0uNC0uMWwtMy04LjctNyAuMSA1LjYgMTUtNy4zIDEwLjZjLS4xLjEtLjEuMSA2LjguMmwxNy43LTI1LjhoLTYuOXptNjIuMSAxOGMtMS42LS4xLTMuMiAwLTQuOCAwbC01LjQtOC4xLS40LS4xLTEuNyA4LjNIMTI4bDQuOC0yMy41LTIuNy0uMS4yLTEuMSA4LjMtLjgtMyAxNC4zLjcuMSA0LjMtNGMyLjktMi45IDIuMS0yLjYgNi4yLTIuN2wtLjQgMS41Yy0yLjYgMS4xLTYuNCAzLjItNy45IDUuNmw2LjkgOS42Yy4xLjUuMy41LjEgMXpNMzguNCAxNi45bC42LTIuN2MtLjMgMC0xIC4xLTEuMi4xaC00LjdsLTMuNCAxNy41YzAgLjIgNi40LjIgNi40IDAgLjctNC40LjctMTUuMiA4LjItMTEuNGwuOS02LjNjLTIuNC4yLTUuNi4zLTYuOCAyLjh6bTIxLjQtMi44bC0uMyAxLjdjLS40LS4zLS43LS42LTEtLjktMTQuNi01LjYtMTkuMiAyMC40LTMuOCAxN2wyLjQtMS4yYy0uMS40LS4yLjctLjIgMS4xaC4yYzAgLjIgNi41LjIgNi41IDBsMi43LTE3LjZoLTYuNXYtLjF6bS01IDEzLjFjLTIuMiAwLTQuMS0xLjgtNC4xLTMuOSAwLTIuMiAxLjgtMy45IDQuMS0zLjkgMi4yIDAgNC4xIDEuOCA0LjEgMy45cy0xLjkgMy45LTQuMSAzLjl6TTE0LjkgNi4zTDguOCA2IDUgMzEuOGMwIC4yIDEwLjUuMiAxMC41IDAgNi4zLTEuNCAxMC44LTQuNiAxMi42LTEwLjEgMy4zLTkuOC0zLjktMTUuMS0xMy4yLTE1LjR6bS0yLjIgMTkuNWwyIDEzLjVjMTIgLjYgOC40IDE0LjYtMiAxMy41em0xMDMuNy05LjFjNi41LTYgMTMuNi4xIDcuOSA0LjctMi42IDIuMS00LjUgMS43LTcuNiAxLjktMS4xIDYuOSAyLjYgNy4yIDcuOCA0LjIuNC42LjQuNi41IDEtMTEuOCA5LTE4LjUtMi41LTguNi0xMS44em0uOCA1LjNjMS45LS4yIDMuMSAwIDQuNC0xLjUgMi4xLTIuNCAxLjktNi41LTEuMi00LjEtMS4zIDEtMS45IDItMi41IDMuNS0uMy42LS42IDEuMy0uNyAyLjF6TTk2LjkgOS44Yy0xLjggMS4xLTIuMSAxLjgtMi45IDMuNmgtMS4ybDEtNS40IDIyLjEtLjEtLjggNS42Yy0uNS0uMS0xLS4xLTEuNi0uMS0uMi0xLjktLjMtMi41LTEuNy0zLjZoLTQuOWMtLjMuNy0yLjcgMTMuOC0zLjUgMTcuOS0uMyAxLjMtLjguMiA1LjEuMWwuMy0yLjJoMS4xbC0uMSAxLjUgMS4zLS4xYzItLjEgMi4xLTEuNSAyLjUtMy4xbDMuNy0xNy42Yy0xLjcuMS0zLjMuMS00LjkuMXoiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZmlsbD0iI2ZmNDU1YyIvPjwvc3ZnPg==" />
     <h3>PortKnockingTool V1.1</h3>
 
     <table class="form-table">
@@ -496,54 +504,52 @@
       <tr class="flex-container">
         <td class="flex-item flex-4">
           <label for="profileName">Profile Name</label>
-          <input type="text" id="profileName" class="input--lg" placeholder="MyTestProfile" data-np-autofill-field-type="username" data-np-uid="3ed1d176-9971-42f3-b0ae-92a368dcee80">
-        <nordpass-icon data-np-uid="3ed1d176-9971-42f3-b0ae-92a368dcee80" style="all: initial !important;"><template shadowrootmode="closed"><nordpass-icon-button data-np-uid="3ed1d176-9971-42f3-b0ae-92a368dcee80" style="width: calc(24px); height: auto; aspect-ratio: 1 / 1; background-image: url(&quot;chrome-extension://eiaeiblijfjekdanodkjadfinkhbfgcd/assets/manifestIcons/icon.svg&quot;); background-repeat: no-repeat; background-position: left center; background-size: auto; border: none; display: inline-block; visibility: visible; position: absolute; cursor: pointer; z-index: auto; padding: 0px; transition: none; pointer-events: all; opacity: 1; right: 0px; left: 520px; top: 10px;"></nordpass-icon-button></template></nordpass-icon>
+          <input type="text" id="profileName" class="input--lg" placeholder="MyTestProfile">
         </td>
         <td class="flex-item flex-1">
           <label for="profileSelect" class="label-none">Profile Select</label>
-          <select id="profileSelect" class="custom-select" data-np-intersection-state="visible">
-            <option value="">-- Select --</option>
-          </select>
+          <select id="profileSelect" class="custom-select"><option value="">-- Select --</option></select>
         </td>
       </tr>
       <tr>
         <td colspan="2">
           <label>IP or Domain Name</label>
-          <input type="text" id="ip" class="input--lg" placeholder="10.3.14.20" data-np-intersection-state="visible">
+          <input type="text" id="ip" class="input--lg" placeholder="10.3.14.20">
         </td>
       </tr>
       <tr>
         <td colspan="2">
           <label>1st Port</label>
-          <input type="number" id="knock" class="input--sm" placeholder="1222" data-np-intersection-state="visible">
+          <input type="number" id="knock" class="input--sm" placeholder="1222">
         </td>
       </tr>
       <!-- TOTP Key 與相關功能 -->
       <tr>
         <td>
-          <div class="totp-key-container" data-np-autofill-form-type="login" data-np-checked="1" data-np-watching="1">
+          <div class="totp-key-container">
             <label>TOTP Key</label>
             <!-- 將 type 改為 password 以隱藏輸入 -->
-            <input type="password" id="totpKey" class="input--lg" placeholder="JBSWY3DPEHPK3PXP" data-np-autofill-field-type="password" data-np-uid="acd3fff1-06c8-4ee2-ab3a-4f077e0f2021">
+            <input type="password" id="totpKey" class="input--lg" placeholder="JBSWY3DPEHPK3PXP">
             <button id="scanTotpBtn">Scan QR</button>
             <!-- 新增 Verify Code 勾選框 -->
             <div class="verify-code-container">
-              <input type="checkbox" id="verifyCodeCheckbox" class="custom-checkbox" checked="">
+              <input type="checkbox" id="verifyCodeCheckbox" class="custom-checkbox" checked>
               <label for="verifyCodeCheckbox">Show Verify Code</label>
             </div>
-          <nordpass-icon data-np-uid="acd3fff1-06c8-4ee2-ab3a-4f077e0f2021" style="all: initial !important;"><template shadowrootmode="closed"><nordpass-icon-button data-np-uid="acd3fff1-06c8-4ee2-ab3a-4f077e0f2021" style="width: calc(24px); height: auto; aspect-ratio: 1 / 1; background-image: url(&quot;chrome-extension://eiaeiblijfjekdanodkjadfinkhbfgcd/assets/manifestIcons/icon.svg&quot;); background-repeat: no-repeat; background-position: left center; background-size: auto; border: none; display: inline-block; visibility: visible; position: absolute; cursor: pointer; z-index: auto; padding: 0px; transition: none; pointer-events: all; opacity: 1; right: 0px; left: 520px; top: 11px;"></nordpass-icon-button></template></nordpass-icon>
           </div>
           <!-- TOTP 驗證碼及進度條 -->
           <div id="qrSection">
+            <!-- 當前 TOTP 驗證碼及複製按鈕 -->
             <div id="currentTotpContainer" style="display: flex;">
               <div id="currentTotpCode">--</div>
               <button id="copyTotpBtn">Copy</button>
             </div>
-            <div id="" class="flex-container progress-Box">
-              <div id="totpProgressBar" class="">
+            <!-- 進度條與倒數字 -->
+            <div class="flex-container progress-Box">
+              <div id="totpProgressBar">
                 <div id="totpProgress" style="width: 0%;"></div>
               </div>
-              <div id="totpCountdown" class="">-- Sec</div>
+              <div id="totpCountdown">-- Sec</div>
             </div>
           </div>
         </td>
@@ -556,8 +562,9 @@
         </td>
       </tr>
       <!-- 可選設定區塊 -->
-      <tr id="optionalSettingsRow" style="display: none;">
+      <tr id="optionalSettingsRow" style="display: none;"> <!-- 初始隱藏 -->
         <td colspan="2">
+          <!-- 新增的容器 -->
           <div class="optional-container">
             <h4>Checking port knocking status</h4>
             <div id="optionalSettings">
@@ -653,17 +660,22 @@
   }
 
   async function generateTOTP(base32Key, intervalSec = 30) {
+    // 1. Base32 解碼
     const keyBytes = base32ToBytes(base32Key);
 
+    // 2. 取得當前時間戳 / 30秒
     let counter = Math.floor(Date.now() / 1000 / intervalSec);
+    // 以 8 bytes big-endian 儲存
     const counterBytes = new Uint8Array(8);
     for (let i = 7; i >= 0; i--) {
       counterBytes[i] = counter & 0xff;
       counter >>= 8;
     }
 
+    // 3. HMAC-SHA1 計算
     const hmacResult = await hmacSha1(keyBytes, counterBytes);
 
+    // 4. 動態截取
     const offset = hmacResult[hmacResult.length - 1] & 0x0f;
     const binary =
       ((hmacResult[offset] & 0x7f) << 24) |
@@ -671,6 +683,7 @@
       ((hmacResult[offset + 2] & 0xff) << 8)  |
       (hmacResult[offset + 3] & 0xff);
 
+    // 5. 取後 6 碼
     const otp = binary % 1_000_000;
     return otp.toString().padStart(6, '0');
   }
@@ -708,6 +721,7 @@
     const progressElem = document.getElementById('totpProgress');
     const countdownElem = document.getElementById('totpCountdown');
 
+    // Clear any existing intervals
     if (progressInterval) {
       clearInterval(progressInterval);
     }
@@ -724,7 +738,7 @@
       }
     }
 
-    updateTimer();
+    updateTimer(); // Initial call
     progressInterval = setInterval(updateTimer, 1000);
   }
 
@@ -748,6 +762,12 @@
         console.error('Clipboard copy failed:', err);
       });
   }
+
+  /**
+   * -------------------------------------------------------------
+   * Part D: 已移除 QR Code 生成與顯示相關功能
+   * -------------------------------------------------------------
+   */
 
   /**
    * -------------------------------------------------------------
@@ -782,23 +802,26 @@
 
   async function knockPorts(ip, firstPort, totpKey, publicport, protocol, isOptional) {
     const logElem = document.getElementById('log');
-    logElem.textContent = "";
+    logElem.textContent = ""; // 清空上一輪結果
 
     try {
+      // 1. 先在前端自行計算 6 位數 TOTP
       const tokenStr = await generateTOTP(totpKey);
       const token = parseInt(tokenStr, 10);
       logElem.textContent += `TOTP generated: ${tokenStr}\n`;
 
+      // 2. 計算 knock2, knock3
       const knock2 = 1000 + Math.floor(token / 1000);
       const knock3 = 2000 + (token % 1000);
       const ports = [firstPort, knock2, knock3];
 
+      // 3. 依序敲前 3 Port
       logElem.textContent += "Starting Port Knocking Sequence:\n";
-      const defaultProtocol = 'https';
+      const defaultProtocol = 'https'; // 固定協議為 HTTPS
       const ordinals = ['1st', '2nd', '3rd']; 
       let i = 0;
       for (let p of ports) {
-        const ordinal = ordinals[i] || `${i + 1}th`; 
+        const ordinal = ordinals[i] || `${i + 1}th`;
         logElem.textContent += `Knocking on ${ordinal} port: ${p}\n`;
         try {
           await timedFetch(`${defaultProtocol}://${ip}:${p}`, { method: 'GET', mode: 'no-cors' }, 1000);
@@ -810,16 +833,20 @@
 
       if (isOptional) {
         logElem.textContent += "\nPorts knocking completed.\nYou can now access the server.";
+        // 生成狀態超連結
         if (protocol && ip && publicport) {
           const link = `${protocol}://${ip}:${publicport}`;
           document.getElementById('statusLink').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
         } else {
           document.getElementById('statusLink').innerHTML = "";
         }
+
       } else {
+        // 如果未啟用可選設定，只通知用戶完成
         logElem.textContent += "\nPorts knocking completed.\nYou can now access the server.";
         document.getElementById('statusLink').innerHTML = "";
       }
+
     } catch (err) {
       logElem.textContent += `TOTP calculation failed: ${err}\n`;
     }
@@ -894,15 +921,18 @@
       document.getElementById('knock').value = data.knock || "";
       document.getElementById('totpKey').value = data.totpKey || "";
 
+      // 根據是否有可選設定填充顯示狀態
       if (data.publicport && data.protocol) {
         document.getElementById('toggleOptional').checked = true;
         document.getElementById('optionalSettingsRow').style.display = 'table-row';
         document.getElementById('publicport').value = data.publicport;
         document.getElementById('protocol').value = data.protocol;
 
+        // 生成狀態超連結
         const link = `${data.protocol}://${data.ip}:${data.publicport}`;
         document.getElementById('statusLink').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
 
+        // 重新更新 TOTP 驗證碼和進度條
         updateTotpCode();
         startTotpTimer();
       } else {
@@ -911,6 +941,7 @@
         document.getElementById('statusLink').innerHTML = "";
       }
 
+      // 重新更新 TOTP 驗證碼和進度條
       updateTotpCode();
       startTotpTimer();
     }
@@ -918,14 +949,17 @@
 
   /**
    * -------------------------------------------------------------
-   * Part G: 首次載入 & 綁定事件
+   * Part G: 新增 QR Code 掃描功能 
    * -------------------------------------------------------------
    */
   document.addEventListener('DOMContentLoaded', () => {
+    // 初始化下拉式選單
     refreshServiceSelect();
 
+    // 綁定選單變更事件
     document.getElementById('profileSelect').addEventListener('change', onServiceSelectChanged);
 
+    // 綁定可選設定切換
     document.getElementById('toggleOptional').addEventListener('change', (e) => {
       const optionalSettingsRow = document.getElementById('optionalSettingsRow');
       if (e.target.checked) {
@@ -936,6 +970,7 @@
       }
     });
 
+    // 綁定 Verify Code 勾選框
     document.getElementById('verifyCodeCheckbox').addEventListener('change', (e) => {
       const currentTotpContainer = document.getElementById('currentTotpContainer');
       const totpProgressContainer = document.getElementById('totpProgressContainer');
@@ -948,6 +983,7 @@
       }
     });
 
+    // 即時更新狀態超連結
     document.getElementById('protocol').addEventListener('input', updateStatusLink);
     document.getElementById('ip').addEventListener('input', updateStatusLink);
     document.getElementById('publicport').addEventListener('input', updateStatusLink);
@@ -966,6 +1002,7 @@
       }
     }
 
+    // 綁定「Knock Ports」按鈕
     document.getElementById('knockBtn').addEventListener('click', () => {
       const profileName = document.getElementById('profileName').value.trim();
       const srvip = document.getElementById('ip').value.trim();
@@ -983,7 +1020,9 @@
         return;
       }
 
+      // 檢查是否啟用了可選設定
       const isOptional = document.getElementById('toggleOptional').checked;
+
       if (isOptional) {
         if (isNaN(publicport) || !protocol) {
           alert("Please ensure Public Port and Protocol are correctly filled!");
@@ -991,6 +1030,7 @@
         }
       }
 
+      // 儲存到 localStorage
       saveService(
         profileName, 
         srvip, 
@@ -999,7 +1039,9 @@
         isOptional ? publicport : null, 
         isOptional ? protocol : null
       );
+      // 更新下拉選單
       refreshServiceSelect();
+      // 敲門
       knockPorts(
         srvip, 
         knock, 
@@ -1010,6 +1052,7 @@
       );
     });
 
+    // 綁定「Delete Profile」按鈕
     document.getElementById('deleteBtn').addEventListener('click', () => {
       const profileName = document.getElementById('profileName').value.trim();
       if (!profileName) {
@@ -1020,6 +1063,7 @@
       deleteService(profileName);
       refreshServiceSelect();
 
+      // 清空表單欄位
       document.getElementById('profileName').value = "";
       document.getElementById('ip').value = "";
       document.getElementById('knock').value = "";
@@ -1030,10 +1074,12 @@
       document.getElementById('optionalSettingsRow').style.display = 'none';
       document.getElementById('statusLink').innerHTML = "";
 
+      // 清空 TOTP 驗證碼和進度條
       document.getElementById('currentTotpCode').textContent = "--";
       document.getElementById('totpProgress').style.width = '0%';
       document.getElementById('totpCountdown').textContent = "-- Sec";
 
+      // 清除進度條計時器
       if (progressInterval) {
         clearInterval(progressInterval);
       }
@@ -1041,8 +1087,10 @@
       alert(`Profile '${profileName}' has been deleted.`);
     });
 
+    // 綁定「複製」按鈕
     document.getElementById('copyTotpBtn').addEventListener('click', copyTotpCode);
 
+    // 綁定 TOTP Key 輸入框和 Profile Name 輸入框的事件
     document.getElementById('totpKey').addEventListener('input', () => {
       updateTotpCode();
       startTotpTimer();
@@ -1052,18 +1100,24 @@
       startTotpTimer();
     });
 
+    // 綁定「Scan QR」按鈕
     document.getElementById('scanTotpBtn').addEventListener('click', () => {
+      // 顯示掃描介面
       document.getElementById('scannerContainer').style.display = 'flex';
       startScanner();
     });
+
+    // 綁定「Close Scanner」按鈕
     document.getElementById('closeScannerBtn').addEventListener('click', () => {
       stopScanner();
       document.getElementById('scannerContainer').style.display = 'none';
     });
 
-    updateTotpCode();
-    startTotpTimer();
+    // 初始化並定期更新 TOTP 驗證碼
+    updateTotpCode(); // 初始調用一次
+    startTotpTimer(); // 啟動進度條
 
+    // 初始化 Verify Code 勾選框狀態
     const verifyCodeCheckbox = document.getElementById('verifyCodeCheckbox');
     const currentTotpContainer = document.getElementById('currentTotpContainer');
     const totpProgressContainer = document.getElementById('totpProgressContainer');
@@ -1078,50 +1132,51 @@
 
   /**
    * -------------------------------------------------------------
-   * Part H: QR Code 掃描功能實現 (使用 jsQR) -- 只此處已修改
+   * Part H: QR Code 掃描功能實現 (使用 jsQR)
+   * 以下替換為您提供之參考寫法
    * -------------------------------------------------------------
    */
   let videoStream = null;
   let scanIntervalId = null;
 
-  // ===== 這裡替換成參考程式碼的做法（每 500ms 擷取一張畫面並使用 jsQR 偵測）=====
   function startScanner() {
     const scannerContainer = document.getElementById('scannerContainer');
     const video = document.getElementById('scannerVideo');
     const canvas = document.getElementById('scannerCanvas');
     const canvasContext = canvas.getContext('2d');
 
-    // 啟動後鏡頭
+    // 啟動攝影機
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
       .then(stream => {
         videoStream = stream;
         video.srcObject = stream;
         video.play();
 
-        // 設定 canvas 尺寸與 video 同步
+        // 設定 canvas 尺寸與video一致
         video.addEventListener('loadedmetadata', () => {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
         });
 
-        // 每 500ms 擷取一次
+        // 每隔 500ms 檢查一次 QR Code
         scanIntervalId = setInterval(() => {
           if (video.readyState === video.HAVE_ENOUGH_DATA) {
             canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height, {
-              inversionAttempts: "dontInvert",
-            });
+            // 參考您提供的 code：不加任何 inversionAttempts 參數
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
 
             if (code) {
-              // 解析 'secret='
+              // 找到 QR Code，嘗試解析 'secret=' 後的字串
               const qrData = code.data;
               let secretValue = null;
 
+              // 嘗試將 QR Data 當作 URL 來解析
               try {
                 const url = new URL(qrData);
                 secretValue = url.searchParams.get('secret');
               } catch (error) {
+                // QR Data 不是有效的 URL，嘗試直接解析 'secret=' 字串
                 const secretMatch = qrData.match(/secret=([^&]+)/);
                 if (secretMatch) {
                   secretValue = secretMatch[1];
@@ -1133,8 +1188,10 @@
                 updateTotpCode();
                 startTotpTimer();
 
+                // 顯示掃描成功的提示
                 alert("TOTP Key has been successfully scanned and loaded!");
 
+                // 清除掃描
                 stopScanner();
                 scannerContainer.style.display = 'none';
               } else {
@@ -1147,7 +1204,7 @@
       .catch(err => {
         console.error('Unable to access the camera: ', err);
         alert('Unable to access the camera, please check your permissions.');
-        scannerContainer.style.display = 'none';
+        document.getElementById('scannerContainer').style.display = 'none';
       });
   }
 
@@ -1159,7 +1216,7 @@
     video.srcObject = null;
     clearInterval(scanIntervalId);
   }
-  // ===== end of Part H =====
   </script>
+
 </body>
 </html>
