@@ -1271,7 +1271,7 @@
       }
 
       // 建立 Blob 物件
-      const blob = new Blob([configContent], { type: 'text/plain;charset=utf-8' });
+      const blob = new Blob([configContent], { type: 'application/octet-stream' });
 
       // 建立下載連結
       const link = document.createElement('a');
