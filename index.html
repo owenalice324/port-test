@@ -68,6 +68,42 @@
       max-width: 800px;
     }
 
+    /* Export Modal */
+    .export-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: #fff;
+      max-width: 400px;
+      width: 90%;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .modal-content h4 {
+      margin: 0 0 15px;
+      text-align: center;
+    }
+    .modal-content label {
+      display: flex;
+      align-items: center;
+      margin: 8px 0;
+      font-size: 14px;
+    }
+    .modal-buttons {
+      text-align: center;
+      margin-top: 20px;
+    }
+
     /* 表單表格 */
     .form-table {
       margin: 20px auto;
@@ -680,8 +716,34 @@
     <div class="notice">
       <p><strong>Notice:</strong> Profiles are stored in your browser's localStorage. They will be lost if you clear browsing data or use incognito mode. Please export profiles to save them.</p>
     </div>
+    <!-- Export Modal -->
+    <div id="exportModal" class="export-modal">
+      <div class="modal-content">
+        <h4>Export Profiles</h4>
+        <div id="exportProfileList">
+          <!-- Profile checkboxes will be dynamically inserted here -->
+        </div>
+        <div class="modal-buttons">
+          <button id="confirmExportBtn">Confirm</button>
+          <button id="cancelExportBtn" class="del-color">Cancel</button>
+        </div>
+      </div>
+    </div>
   </div>
 
+  <!-- Import Modal -->
+  <div id="importModal" class="export-modal">
+    <div class="modal-content">
+      <h4>Import Profiles</h4>
+      <div id="importProfileList">
+        <!-- Profile checkboxes will be dynamically inserted here -->
+      </div>
+      <div class="modal-buttons">
+        <button id="confirmImportBtn">Confirm</button>
+        <button id="cancelImportBtn" class="del-color">Cancel</button>
+      </div>
+    </div>
+  </div>
   <!-- 新增：掃描介面 -->
   <div id="scannerContainer">
     <div>
@@ -1173,6 +1235,11 @@
         stopScanner();
         document.getElementById('scannerContainer').style.display = 'none';
       });
+      
+      document.getElementById('confirmExportBtn').addEventListener('click', confirmExport);
+      document.getElementById('cancelExportBtn').addEventListener('click', () => {
+      document.getElementById('exportModal').style.display = 'none';
+      });
 
       updateTotpCode();
       startTotpTimer();
@@ -1270,58 +1337,95 @@
 
     // --- 匯出功能 ---
     function exportProfile() {
-      const profileName = document.getElementById('profileName').value.trim();
-      const ip = document.getElementById('ip').value.trim();
-      const firstport = document.getElementById('1stport').value.trim();
-      const totpKey = document.getElementById('totpKey').value.trim(); // 注意：匯出的金鑰是明文
-      const isOptional = document.getElementById('toggleOptional').checked;
-      const publicport = document.getElementById('publicport').value.trim();
-      const protocol = document.getElementById('protocol').value.trim();
-
-      if (!profileName) {
-        alert("Please enter a Profile Name before exporting.");
+      const profiles = getAllServices();
+      const profileNames = Object.keys(profiles);
+      if (profileNames.length === 0) {
+        alert("No profiles available to export.");
         return;
       }
+      generateExportModalContent();
+      document.getElementById('exportModal').style.display = 'flex';
+    }
 
-      // Create JSON object
-      const portknockingData = {
-        profileName,
-        ip,
-        firstport,
-        totpKey
+    function generateExportModalContent() {
+      const profiles = getAllServices();
+      const profileNames = Object.keys(profiles);
+      const profileList = document.getElementById('exportProfileList');
+      profileList.innerHTML = '';
+
+      const selectAllDiv = document.createElement('div');
+      selectAllDiv.innerHTML = `
+        <label>
+          <input type="checkbox" id="selectAllCheckbox" class="custom-checkbox">
+          Select All
+        </label>
+      `;
+      profileList.appendChild(selectAllDiv);
+
+      profileNames.forEach(name => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <label>
+            <input type="checkbox" class="custom-checkbox export-checkbox" data-profile="${name}">
+            ${name}
+          </label>
+        `;
+        profileList.appendChild(div);
+      });
+
+      document.getElementById('selectAllCheckbox').addEventListener('change', toggleSelectAll);
+    }
+
+    function toggleSelectAll(event) {
+      const isChecked = event.target.checked;
+      const isImportModal = event.target.id === 'selectAllImportCheckbox';
+      const selector = isImportModal ? '.import-checkbox' : '.export-checkbox';
+      const checkboxes = document.querySelectorAll(selector);
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = isChecked;
+      });
+    }
+
+    function confirmExport() {
+      const checkboxes = document.querySelectorAll('.export-checkbox:checked');
+      const selectedProfiles = Array.from(checkboxes).map(cb => cb.dataset.profile);
+      
+      if (selectedProfiles.length === 0) {
+        alert('Please select at least one profile to export.');
+        return;
+      }
+      const filename = selectedProfiles.length === 1 ? `${selectedProfiles[0]}.conf` : 'PortKnocking_profiles.conf';
+      const profiles = getAllServices();
+      const exportData = {
+        portknocking: selectedProfiles.map(name => {
+          const data = profiles[name];
+          const profileData = {
+            profileName: name,
+            ip: data.ip,
+            firstport: data.firstport,
+            totpKey: data.totpKey
+          };
+          if (data.publicport && data.protocol) {
+            profileData.publicport = data.publicport;
+            profileData.protocol = data.protocol;
+          }
+          return profileData;
+        })
       };
 
-      if (isOptional && publicport && protocol) {
-        portknockingData.publicport = publicport;
-        portknockingData.protocol = protocol;
-      }
-      
-      const configData = { portknocking: portknockingData };
-
-      // Serialize to JSON with indentation for readability
-      const configContent = JSON.stringify(configData, null, 2);
-
-      // Create Blob with JSON content
+      const configContent = JSON.stringify(exportData, null, 2);
       const blob = new Blob([configContent], { type: 'application/json' });
-
-      // 建立下載連結
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      // 設定下載檔名，移除可能不合法的字元，並確保有副檔名
-      const safeProfileName = profileName.replace(/[^a-z0-9_\-\.]/gi, '_'); // 替換掉不安全的檔名字符
-      link.download = `${safeProfileName || 'portknocking_profile'}.conf`;
-
-      // 模擬點擊以下載檔案
-      document.body.appendChild(link); // Firefox 需要將連結加到 DOM 中
+      link.download = filename;
+      document.body.appendChild(link);
       link.click();
-
-      // 清理
       document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
 
-      log("Profile exported successfully as " + link.download);
+      log(`Exported ${selectedProfiles.length} profile(s) to ${filename}`);
+      document.getElementById('exportModal').style.display = 'none';
     }
-
     // --- 匯入功能 (修改後：匯入即儲存) ---
     function handleImport(event) {
       const file = event.target.files[0];
@@ -1330,24 +1434,69 @@
       }
 
       const reader = new FileReader();
-
+      let importedData = null;
       reader.onload = function(e) {
         const content = e.target.result;
         try {
           // Parse JSON content
-          const importedData = JSON.parse(content);
+          importedData = JSON.parse(content);
 
           // Validate portknocking section
           if (!importedData.portknocking) {
             throw new Error("Imported file is missing 'portknocking' section.");
           }
 
-          const portknockingData = importedData.portknocking;
+          let profilesToImport = [];
+          if (Array.isArray(importedData.portknocking)) {
+            profilesToImport = importedData.portknocking;
+            if (profilesToImport.length > 1) {
+              // Show modal for multiple profiles
+              document.getElementById('importFile').dataset.importedContent = JSON.stringify(importedData);
+              generateImportModalContent(profilesToImport, file.name);
+              document.getElementById('importModal').style.display = 'flex';
+              return;
+            } else if (profilesToImport.length === 1) {
+              // Single profile in array
+              portknockingData = profilesToImport[0];
+            } else {
+              throw new Error("Imported file has an empty 'portknocking' array.");
+            }
+          } else {
+            // Single profile as object (existing format)
+            portknockingData = importedData.portknocking;
+          }
 
           // Validate required fields
           if (!portknockingData.profileName || !portknockingData.ip || !portknockingData.firstport || !portknockingData.totpKey) {
             throw new Error("Imported file is missing required fields (profileName, ip, 1stport, totpKey) in 'portknocking' section.");
           }
+         // Process single profile import
+          processSingleProfileImport(portknockingData, file.name);
+        } catch (error) {
+          alert("Failed to import profile: " + error.message);
+          console.error("Error parsing config file:", error);
+          log("Error importing profile: " + error.message);
+          event.target.value = null;
+        }
+      };
+
+      reader.onerror = function(e) {
+        alert("Error reading file.");
+        console.error("Error reading file:", e);
+        log("Error reading file.");
+        event.target.value = null;
+      };
+
+      reader.readAsText(file);
+    }
+
+    function processSingleProfileImport(portknockingData, fileName) {
+      const profileNameToSave = portknockingData.profileName;
+      const ipToSave = portknockingData.ip;
+      const firstportToSave = portknockingData.firstport;
+      const totpKeyToSave = portknockingData.totpKey;
+      const publicportToSave = portknockingData.publicport || null;
+      const protocolToSave = portknockingData.protocol || null;
 
           // --- 填入表單 ---
           document.getElementById('profileName').value = portknockingData.profileName;
@@ -1373,13 +1522,6 @@
           }
 
           // --- ★ 新增：立即儲存匯入的資料 ---
-          const profileNameToSave = portknockingData.profileName;
-          const ipToSave = portknockingData.ip;
-          const firstportToSave = portknockingData.firstport;
-          const totpKeyToSave = portknockingData.totpKey;
-          const publicportToSave = portknockingData.publicport || null;
-          const protocolToSave = portknockingData.protocol || null;
-
           saveService(
               profileNameToSave,
               ipToSave,
@@ -1402,26 +1544,99 @@
           // 清空檔案輸入框的值
           event.target.value = null;
 
-          // --- ★ 修改：更新提示訊息 ---
-          log("Profile '" + profileNameToSave + "' imported and saved successfully from " + file.name);
-          alert("Profile '" + profileNameToSave + "' has been imported and saved successfully!"); // 修改提示訊息
+      log("Profile '" + profileNameToSave + "' imported and saved successfully from " + fileName);
+      alert("Profile '" + profileNameToSave + "' has been imported and saved successfully!");
+    }
 
-        } catch (error) {
-          alert("Failed to import profile: " + error.message);
-          console.error("Error parsing config file:", error);
-          log("Error importing profile: " + error.message);
-          event.target.value = null;
+    function generateImportModalContent(profiles, fileName) {
+      const profileList = document.getElementById('importProfileList');
+      profileList.innerHTML = '';
+
+      const selectAllDiv = document.createElement('div');
+      selectAllDiv.innerHTML = `
+        <label>
+          <input type="checkbox" id="selectAllImportCheckbox" class="custom-checkbox">
+          Select All
+        </label>
+      `;
+      profileList.appendChild(selectAllDiv);
+
+      profiles.forEach((profile, index) => {
+        if (profile.profileName) {
+          const div = document.createElement('div');
+          div.innerHTML = `
+            <label>
+              <input type="checkbox" class="custom-checkbox import-checkbox" data-index="${index}">
+              ${profile.profileName}
+            </label>
+          `;
+          profileList.appendChild(div);
         }
-      };
+      });
 
-      reader.onerror = function(e) {
-        alert("Error reading file.");
-        console.error("Error reading file:", e);
-        log("Error reading file.");
-        event.target.value = null;
-      };
+      document.getElementById('selectAllImportCheckbox').addEventListener('change', toggleSelectAll);
+      document.getElementById('confirmImportBtn').dataset.fileName = fileName;
+    }
 
-      reader.readAsText(file);
+    function confirmImport() {
+      const checkboxes = document.querySelectorAll('.import-checkbox:checked');
+      const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+      const fileName = document.getElementById('confirmImportBtn').dataset.fileName;
+
+      if (selectedIndices.length === 0) {
+        alert('Please select at least one profile to import.');
+        return;
+      }
+
+      const importedData = JSON.parse(document.getElementById('importFile').dataset.importedContent || '{}');
+      const profiles = importedData.portknocking || [];
+      const selectedProfiles = selectedIndices.map(index => profiles[index]);
+
+      selectedProfiles.forEach(profile => {
+        if (profile.profileName && profile.ip && profile.firstport && profile.totpKey) {
+          saveService(
+            profile.profileName,
+            profile.ip,
+            profile.firstport,
+            profile.totpKey,
+            profile.publicport || null,
+            profile.protocol || null
+          );
+        }
+      });
+
+      refreshServiceSelect();
+      if (selectedProfiles.length > 0) {
+        document.getElementById('profileSelect').value = selectedProfiles[0].profileName;
+        document.getElementById('profileName').value = selectedProfiles[0].profileName;
+        document.getElementById('ip').value = selectedProfiles[0].ip;
+        document.getElementById('1stport').value = selectedProfiles[0].firstport;
+        document.getElementById('totpKey').value = selectedProfiles[0].totpKey;
+
+        const optionalSettingsRow = document.getElementById('optionalSettingsRow');
+        const toggleOptionalCheckbox = document.getElementById('toggleOptional');
+        if (selectedProfiles[0].publicport && selectedProfiles[0].protocol) {
+          document.getElementById('publicport').value = selectedProfiles[0].publicport;
+          document.getElementById('protocol').value = selectedProfiles[0].protocol;
+          toggleOptionalCheckbox.checked = true;
+          optionalSettingsRow.style.display = 'table-row';
+          updateStatusLink();
+        } else {
+          document.getElementById('publicport').value = '';
+          document.getElementById('protocol').value = 'http';
+          toggleOptionalCheckbox.checked = false;
+          optionalSettingsRow.style.display = 'none';
+          document.getElementById('statusLink').innerHTML = "";
+        }
+
+        updateTotpCode();
+        startTotpTimer();
+      }
+
+      document.getElementById('importFile').value = null;
+      log(`Imported ${selectedProfiles.length} profile(s) from ${fileName}`);
+      alert(`Successfully imported ${selectedProfiles.length} profile(s) from ${fileName}`);
+      document.getElementById('importModal').style.display = 'none';
     }
 
     // --- 用於在 Log 區域顯示訊息的輔助函數 ---
@@ -1446,6 +1661,16 @@
           statusLink.innerHTML = "";
         }
       }
+    // Move import modal event listeners to DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+      // Existing DOMContentLoaded code...
+      document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
+      document.getElementById('cancelImportBtn').addEventListener('click', () => {
+        document.getElementById('importModal').style.display = 'none';
+        document.getElementById('importFile').value = null;
+      });
+      // ... rest of the existing DOMContentLoaded code
+    });
   </script>
 </body>
 </html>
