@@ -100,10 +100,21 @@
       font-size: 14px;
     }
     .modal-buttons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       text-align: center;
       margin-top: 20px;
     }
-
+    .select-all-label {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+    .select-all-label input {
+      margin-right: 5px;
+    }
     /* 表單表格 */
     .form-table {
       margin: 20px auto;
@@ -724,6 +735,9 @@
           <!-- Profile checkboxes will be dynamically inserted here -->
         </div>
         <div class="modal-buttons">
+          <label class="select-all-label">
+            <input type="checkbox" id="selectAllCheckbox" class="custom-checkbox"> Select All
+          </label>
           <button id="confirmExportBtn">Confirm</button>
           <button id="cancelExportBtn" class="del-color">Cancel</button>
         </div>
@@ -739,6 +753,9 @@
         <!-- Profile checkboxes will be dynamically inserted here -->
       </div>
       <div class="modal-buttons">
+        <label class="select-all-label">
+            <input type="checkbox" id="selectAllImportCheckbox" class="custom-checkbox"> Select All
+        </label>
         <button id="confirmImportBtn">Confirm</button>
         <button id="cancelImportBtn" class="del-color">Cancel</button>
       </div>
@@ -1240,7 +1257,13 @@
       document.getElementById('cancelExportBtn').addEventListener('click', () => {
       document.getElementById('exportModal').style.display = 'none';
       });
-
+      document.getElementById('selectAllCheckbox').addEventListener('change', toggleSelectAll);
+      document.getElementById('selectAllImportCheckbox').addEventListener('change', toggleSelectAll);
+      document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
+      document.getElementById('cancelImportBtn').addEventListener('click', () => {
+        document.getElementById('importModal').style.display = 'none';
+        document.getElementById('importFile').value = null;
+      });
       updateTotpCode();
       startTotpTimer();
 
@@ -1353,15 +1376,6 @@
       const profileList = document.getElementById('exportProfileList');
       profileList.innerHTML = '';
 
-      const selectAllDiv = document.createElement('div');
-      selectAllDiv.innerHTML = `
-        <label>
-          <input type="checkbox" id="selectAllCheckbox" class="custom-checkbox">
-          Select All
-        </label>
-      `;
-      profileList.appendChild(selectAllDiv);
-
       profileNames.forEach(name => {
         const div = document.createElement('div');
         div.innerHTML = `
@@ -1372,8 +1386,6 @@
         `;
         profileList.appendChild(div);
       });
-
-      document.getElementById('selectAllCheckbox').addEventListener('change', toggleSelectAll);
     }
 
     function toggleSelectAll(event) {
@@ -1551,16 +1563,6 @@
     function generateImportModalContent(profiles, fileName) {
       const profileList = document.getElementById('importProfileList');
       profileList.innerHTML = '';
-
-      const selectAllDiv = document.createElement('div');
-      selectAllDiv.innerHTML = `
-        <label>
-          <input type="checkbox" id="selectAllImportCheckbox" class="custom-checkbox">
-          Select All
-        </label>
-      `;
-      profileList.appendChild(selectAllDiv);
-
       profiles.forEach((profile, index) => {
         if (profile.profileName) {
           const div = document.createElement('div');
@@ -1573,8 +1575,6 @@
           profileList.appendChild(div);
         }
       });
-
-      document.getElementById('selectAllImportCheckbox').addEventListener('change', toggleSelectAll);
       document.getElementById('confirmImportBtn').dataset.fileName = fileName;
     }
 
@@ -1664,11 +1664,6 @@
     // Move import modal event listeners to DOMContentLoaded
     document.addEventListener('DOMContentLoaded', () => {
       // Existing DOMContentLoaded code...
-      document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
-      document.getElementById('cancelImportBtn').addEventListener('click', () => {
-        document.getElementById('importModal').style.display = 'none';
-        document.getElementById('importFile').value = null;
-      });
       // ... rest of the existing DOMContentLoaded code
     });
   </script>
