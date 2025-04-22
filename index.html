@@ -178,7 +178,10 @@
     /* 按鈕們 */
     .button-bar {
       margin-top: 25px;
-      text-align: center;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 10px;
     }
     button {
       padding: 10px 20px;
@@ -189,6 +192,10 @@
       border-radius: 4px;
       font-size: 14px;
       transition: background-color 0.2s, transform 0.2s;
+    }
+    #knockBtn {
+      margin-left: 260px; /* 將中心點對齊 copyTotpBtn 的中心點 */
+      text-align: center; /* 確保文字居中 */
     }
     button:hover {
       background-color: #00b38b;
@@ -716,16 +723,16 @@
       <div id="settingsMenu">
         <a href="#" id="importOption">Import Profile</a>
         <a href="#" id="exportOption">Export Profile</a>
+        <a href="#" id="deleteOption">Delete Profile</a>
       </div>
       </div>
-      <input type="file" id="importFile" accept=".conf" style="display: none;">
-      <button id="deleteBtn" class="del-color">Delete Profile</button>
       <button id="knockBtn">Knock Ports</button>
+      <input type="file" id="importFile" accept=".conf" style="display: none;">
     </div>
 
     <pre id="log"></pre>
     <div class="notice">
-      <p><strong>Notice:</strong> Profiles are stored in your browser's localStorage. They will be lost if you clear browsing data or use incognito mode. Please export profiles to save them.</p>
+      <p><strong>Notice:</strong> Profiles are stored in your browser's local storage. They will be lost if you clear browsing data or use incognito mode. Please export profiles to save them.</p>
     </div>
     <!-- Export Modal -->
     <div id="exportModal" class="export-modal">
@@ -761,6 +768,22 @@
       </div>
     </div>
   </div>
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="export-modal">
+      <div class="modal-content">
+        <h4>Delete Profiles</h4>
+        <div id="deleteProfileList">
+          <!-- Profile checkboxes will be dynamically inserted here -->
+        </div>
+        <div class="modal-buttons">
+          <label class="select-all-label">
+            <input type="checkbox" id="selectAllDeleteCheckbox" class="custom-checkbox"> Select All
+          </label>
+          <button id="confirmDeleteBtn">Confirm</button>
+          <button id="cancelDeleteBtn" class="del-color">Cancel</button>
+        </div>
+      </div>
+    </div>
   <!-- 新增：掃描介面 -->
   <div id="scannerContainer">
     <div>
@@ -899,10 +922,12 @@
       navigator.clipboard.writeText(totpCode)
         .then(() => {
           alert("TOTP code has been copied to the clipboard!");
+          log("Copied TOTP code");
         })
         .catch(err => {
           alert("Copy failed, please copy manually.");
           console.error('Clipboard copy failed:', err);
+          log("Failed to copy TOTP code: " + err.message);
         });
     }
 
@@ -1116,6 +1141,29 @@
 
       // --- 綁定檔案輸入框的變更事件 ---
       document.getElementById('importFile').addEventListener('change', handleImport);
+      document.getElementById('copyTotpBtn').addEventListener('click', copyTotpCode);
+      // --- 綁定刪除選項事件 ---
+      document.getElementById('deleteOption').addEventListener('click', (e) => {
+        e.preventDefault();
+        deleteProfile();
+        settingsMenu.style.display = 'none';
+      });
+      document.getElementById('selectAllCheckbox').addEventListener('change', toggleSelectAll);
+      document.getElementById('selectAllImportCheckbox').addEventListener('change', toggleSelectAll);
+      document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
+      document.getElementById('cancelImportBtn').addEventListener('click', () => {
+        document.getElementById('importModal').style.display = 'none';
+        document.getElementById('importFile').value = null;
+      });
+      document.getElementById('selectAllDeleteCheckbox').addEventListener('change', toggleSelectAll);
+      document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
+      document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+        document.getElementById('deleteModal').style.display = 'none';
+      });
+      document.getElementById('confirmExportBtn').addEventListener('click', confirmExport);
+      document.getElementById('cancelExportBtn').addEventListener('click', () => {
+        document.getElementById('exportModal').style.display = 'none';
+      });
       refreshServiceSelect();
       document.getElementById('profileSelect').addEventListener('change', onServiceSelectChanged);
 
@@ -1201,36 +1249,6 @@
         );
       });
 
-      document.getElementById('deleteBtn').addEventListener('click', () => {
-        const profileName = document.getElementById('profileName').value.trim();
-        if (!profileName) {
-          alert("Please enter or select the Profile to delete!");
-          return;
-        }
-        deleteService(profileName);
-        refreshServiceSelect();
-
-        document.getElementById('profileName').value = "";
-        document.getElementById('ip').value = "";
-        document.getElementById('1stport').value = "";
-        document.getElementById('totpKey').value = "";
-        document.getElementById('protocol').value = "http";
-        document.getElementById('publicport').value = "";
-        document.getElementById('toggleOptional').checked = false;
-        document.getElementById('optionalSettingsRow').style.display = 'none';
-        document.getElementById('statusLink').innerHTML = "";
-
-        document.getElementById('currentTotpCode').textContent = "--";
-        document.getElementById('totpProgress').style.width = '0%';
-        document.getElementById('totpCountdown').textContent = "-- Sec";
-
-        if (progressInterval) {
-          clearInterval(progressInterval);
-        }
-
-        alert(`Profile '${profileName}' has been deleted.`);
-      });
-
       document.getElementById('copyTotpBtn').addEventListener('click', copyTotpCode);
 
       document.getElementById('totpKey').addEventListener('input', () => {
@@ -1253,17 +1271,6 @@
         document.getElementById('scannerContainer').style.display = 'none';
       });
       
-      document.getElementById('confirmExportBtn').addEventListener('click', confirmExport);
-      document.getElementById('cancelExportBtn').addEventListener('click', () => {
-      document.getElementById('exportModal').style.display = 'none';
-      });
-      document.getElementById('selectAllCheckbox').addEventListener('change', toggleSelectAll);
-      document.getElementById('selectAllImportCheckbox').addEventListener('change', toggleSelectAll);
-      document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
-      document.getElementById('cancelImportBtn').addEventListener('click', () => {
-        document.getElementById('importModal').style.display = 'none';
-        document.getElementById('importFile').value = null;
-      });
       updateTotpCode();
       startTotpTimer();
 
@@ -1390,8 +1397,15 @@
 
     function toggleSelectAll(event) {
       const isChecked = event.target.checked;
-      const isImportModal = event.target.id === 'selectAllImportCheckbox';
-      const selector = isImportModal ? '.import-checkbox' : '.export-checkbox';
+      const targetId = event.target.id;
+      let selector;
+      if (targetId === 'selectAllImportCheckbox') {
+        selector = '.import-checkbox';
+      } else if (targetId === 'selectAllDeleteCheckbox') {
+        selector = '.delete-checkbox';
+      } else {
+        selector = '.export-checkbox';
+      }
       const checkboxes = document.querySelectorAll(selector);
       checkboxes.forEach(checkbox => {
         checkbox.checked = isChecked;
@@ -1638,7 +1652,62 @@
       alert(`Successfully imported ${selectedProfiles.length} profile(s) from ${fileName}`);
       document.getElementById('importModal').style.display = 'none';
     }
+    function confirmDelete() {
+      const checkboxes = document.querySelectorAll('.delete-checkbox:checked');
+      const selectedProfiles = Array.from(checkboxes).map(cb => cb.dataset.profile);
 
+      if (selectedProfiles.length === 0) {
+        alert('Please select at least one profile to delete.');
+        return;
+      }
+
+      selectedProfiles.forEach(profileName => {
+        deleteService(profileName);
+      });
+
+      refreshServiceSelect();
+      if (selectedProfiles.includes(document.getElementById('profileName').value)) {
+        document.getElementById('profileName').value = '';
+        document.getElementById('ip').value = '';
+        document.getElementById('1stport').value = '';
+        document.getElementById('totpKey').value = '';
+        document.getElementById('toggleOptional').checked = false;
+        document.getElementById('optionalSettingsRow').style.display = 'none';
+      }
+
+      log(`Deleted ${selectedProfiles.length} profile(s)`);
+      alert(`Successfully deleted ${selectedProfiles.length} profile(s)`);
+      document.getElementById('deleteModal').style.display = 'none';
+    }
+    // --- 刪除功能 ---
+   function deleteProfile() {
+      const profiles = getAllServices();
+      const profileNames = Object.keys(profiles);
+      if (profileNames.length === 0) {
+        alert("No profiles available to delete.");
+        return;
+      }
+      generateDeleteModalContent();
+      document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function generateDeleteModalContent() {
+      const profiles = getAllServices();
+      const profileNames = Object.keys(profiles);
+      const profileList = document.getElementById('deleteProfileList');
+      profileList.innerHTML = '';
+
+      profileNames.forEach(name => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <label>
+            <input type="checkbox" class="custom-checkbox delete-checkbox" data-profile="${name}">
+            ${name}
+          </label>
+        `;
+        profileList.appendChild(div);
+      });
+    }
     // --- 用於在 Log 區域顯示訊息的輔助函數 ---
     function log(message) {
         const logElem = document.getElementById('log');
@@ -1661,11 +1730,6 @@
           statusLink.innerHTML = "";
         }
       }
-    // Move import modal event listeners to DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', () => {
-      // Existing DOMContentLoaded code...
-      // ... rest of the existing DOMContentLoaded code
-    });
   </script>
 </body>
 </html>
