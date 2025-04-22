@@ -12,19 +12,21 @@
 
   <style>
     /* 全局設定 */
-        html, body {
-      height: 100vh;
-      margin: 0;
-      padding: 0;
-    }
     * {
       box-sizing: border-box;
+    }
+        html, body {
+      height: 100%;
+      overflow-x: hidden; /* 防止水平滾動 */
     }
     body {
       margin: 0;
       padding: 0;
       font-family: 'Noto Sans TC', sans-serif;
       background: linear-gradient(120deg, #E9EFF1, #E9EFF1);
+      min-height: 100vh; /* 至少填滿視口 */
+      display: flex;
+      flex-direction: column;
     }
 
     /* 置中容器，加入陰影與白底卡片風格 */
@@ -35,6 +37,7 @@
       background-color: #ffffff;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      
     }
 
     /* 標題 */
@@ -470,178 +473,69 @@
     }
 
     /* 手機或窄螢幕時 RWD 調整 */
-
-@media (max-width: 600px) {
-  /* 確保滿屏顯示 */
-  html, body {
-    height: 100vh;
-    margin: 0;
-    overflow-x: hidden;
-  }
-  #container {
-    margin: 0;
-    padding: 15px;
-    max-width: 100%;
-    min-height: 100vh; /* 確保內容至少填滿螢幕 */
-    border-radius: 0;
-    box-shadow: none;
-    display: flex;
-    flex-direction: column;
-  }
-  /* 標題 */
-  h3 {
-    font-size: 28px;
-    margin: 10px 0;
-  }
-  h4 {
-    font-size: 22px;
-    margin: 8px 0;
-  }
-  /* 表單表格 */
-  .form-table {
-    margin: 10px 0;
-    width: 100%;
-  }
-  .form-table td {
-    display: block;
-    width: 100%;
-    padding: 8px 0;
-  }
-  .form-table label {
-    display: block;
-    width: 100%;
-    margin-bottom: 8px;
-    font-size: 18px;
-  }
-  /* 輸入框和下拉選單 */
-  input[type="text"],
-  input[type="number"],
-  input[type="password"],
-  select {
-    width: 100% !important;
-    padding: 12px;
-    font-size: 18px;
-    border-radius: 6px;
-  }
-  /* 按鈕 */
-  .button-bar {
-    flex-direction: column;
-    gap: 15px;
-    margin-top: 20px;
-    width: 100%;
-  }
-  button {
-    width: 100%;
-    padding: 14px;
-    font-size: 18px;
-    border-radius: 6px;
-  }
-  .button-group {
-    margin-left: 0;
-    width: 100%;
-    justify-content: center;
-  }
-  /* TOTP 相關 */
-  .totp-key-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .totp-key-container button {
-    margin-top: 10px;
-  }
-  .verify-code-container {
-    margin-left: 0;
-    margin-top: 10px;
-  }
-  #currentTotpCode {
-    font-size: 40px;
-  }
-  #totpProgressBar {
-    width: 60%;
-    height: 10px;
-  }
-  #totpCountdown {
-    font-size: 16px;
-  }
-  /* 日誌區域 */
-  #log {
-    font-size: 16px;
-    height: 200px; /* 限制高度，避免過分延伸 */
-    padding: 12px;
-    margin: 10px 0;
-    flex-grow: 1; /* 允許日誌區域擴展以填滿剩餘空間 */
-  }
-  /* Notice 區域 */
-  .notice {
-    font-size: 16px;
-    padding: 12px;
-    margin: 10px 0;
-  }
-  /* 掃描介面 */
-  #scannerContainer {
-    padding: 10px;
-  }
-  #scannerVideo {
-    width: 100%;
-    max-width: 320px;
-    height: auto;
-  }
-  #scannerInstructions {
-    font-size: 18px;
-    margin: 15px 0;
-  }
-  #closeScannerBtn {
-    padding: 14px 28px;
-    font-size: 18px;
-  }
-  /* 模態框 */
-  .modal-content {
-    width: 95%;
-    padding: 15px;
-  }
-  .modal-content h4 {
-    font-size: 22px;
-  }
-  .modal-content label {
-    font-size: 18px;
-  }
-  .modal-buttons {
-    flex-direction: column;
-    gap: 10px;
-  }
-  .select-all-label {
-    font-size: 18px;
-  }
-  .modal-buttons button {
-    width: 100%;
-    padding: 14px;
-    font-size: 18px;
-  }
-  /* 設定選單 */
-  #settingsMenu {
-    min-width: 200px;
-    right: 0;
-    top: 100%;
-  }
-  #settingsMenu a {
-    font-size: 18px;
-    padding: 12px 15px;
-  }
-  #settingsBtn {
-    font-size: 24px;
-  }
-  /* 複選框 */
-  .custom-checkbox {
-    width: 20px;
-    height: 20px;
-  }
-  .custom-checkbox:checked::after {
-    left: 6px;
-    top: 2px;
-    width: 5px;
-    height: 10px;
-  }
-}
+    @media (max-width: 600px) {
+      #container {
+        margin: 20px auto;
+        padding: 15px;
+      }
+      .form-table td {
+        display: block;
+        width: 100%;
+        border-bottom: 1px solid #ddd;
+      }
+      .form-table tr {
+        margin-bottom: 10px;
+      }
+      .form-table label {
+        display: inline-block;
+        margin-bottom: 6px;
+      }
+      .button-bar {
+        display: flex;
+        flex-direction: column;
+      }
+      button {
+        width: 100%;
+        margin: 5px 0;
+      }
+      .button-group {
+        margin-left: auto; /* 窄螢幕下居中 */
+        margin-right: auto;
+        width: 100%; /* 按鈕組全寬 */
+      }
+      .totp-key-container {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .totp-key-container button {
+        width: 100%;
+        margin-top: 10px;
+      }
+      .verify-code-container {
+        flex-direction: row;
+        align-items: center;
+      }
+      #currentTotpContainer {
+        flex-direction: column;
+        align-items: center;
+      }
+      #copyTotpBtn {
+        margin-top: 10px;
+      }
+      #totpProgressContainer {
+        width: 100%;
+      }
+      #totpCountdown {
+        top: -20px;
+        font-size: 12px;
+      }
+      #scannerVideo {
+        width: 300px;
+      }
+      #scannerInstructions {
+        font-size: 16px;
+      }
+    }
     /* select checked checkbox */
     .custom-checkbox {
       appearance: none;
