@@ -11,667 +11,692 @@
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
 
   <style>
-   /* 全局設定 */
-* {
-  box-sizing: border-box;
-}
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Noto Sans TC', sans-serif;
-  background: linear-gradient(120deg, #E9EFF1, #E9EFF1);
-}
+    /* 全局設定 */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans TC', sans-serif;
+      background: linear-gradient(120deg, #E9EFF1, #E9EFF1);
+    }
 
-/* 置中容器，加入陰影與白底卡片風格 */
-#container {
-  max-width: 700px; /* 調整最大寬度以匹配截圖 */
-  width: 90%;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
+    /* 置中容器，加入陰影與白底卡片風格 */
+    #container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px 30px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
 
-/* 標題 */
-h3, h4 {
-  margin: 0 0 1.5rem;
-  text-align: center;
-  color: #333;
-  font-weight: 700;
-  font-size: 1.6rem;
-}
+    /* 標題 */
+    h3, h4 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      text-align: center;
+      color: #333;
+      font-weight: 700;
+    }
 
-/* 可選設定容器 */
-.optional-container {
-  padding: 1.5rem;
-  border-radius: 8px;
-  background-color: #fffbf0;
-}
+    /* 可選設定容器 */
+    .optional-container {
+      padding: 20px;
+      border-radius: 8px;
+      background-color: #fffbf0; 
+    }
 
-/* Notice section */
-.notice {
-  margin: 1.5rem 0 0;
-  padding: 1rem;
-  background-color: #fffbf0;
-  border: 1px solid #ffe082;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  font-size: 0.85rem;
-  color: #333;
-}
-.notice p {
-  margin: 0;
-}
-.notice-container {
-  margin: 1.5rem 0;
-  max-width: 100%;
-}
+    /* Notice section */
+    .notice {
+      margin: 15px;
+      padding: 15px;
+      background-color: #fffbf0;
+      border: 1px solid #ffe082;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      font-size: 14px;
+      color: #333;
+    }
+    .notice p {
+      margin: 5px 0;
+    }
+    .notice-container {
+      margin-top: 20px;
+      margin-bottom: 20px;
+      max-width: 800px;
+    }
 
-/* Export Modal */
-.export-modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.5);
-  z-index: 1000;
-  justify-content: center;
-  align-items: center;
-}
-.modal-content {
-  background-color: #fff;
-  max-width: 500px;
-  width: 90%;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-.modal-content h4 {
-  margin: 0 0 1rem;
-  text-align: center;
-  font-size: 1.5rem;
-}
-.modal-content label {
-  display: flex;
-  align-items: center;
-  margin: 0.5rem 0;
-  font-size: 0.9rem;
-}
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1.5rem;
-}
-.select-all-label {
-  display: flex;
-  align-items: center;
-  font-size: 0.9rem;
-  margin-right: 0.5rem;
-}
-.select-all-label input {
-  margin-right: 0.3rem;
-}
+    /* Export Modal */
+    .export-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: #fff;
+      max-width: 400px;
+      width: 90%;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .modal-content h4 {
+      margin: 0 0 15px;
+      text-align: center;
+    }
+    .modal-content label {
+      display: flex;
+      align-items: center;
+      margin: 8px 0;
+      font-size: 14px;
+    }
+    .modal-buttons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .select-all-label {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+    .select-all-label input {
+      margin-right: 5px;
+    }
+    /* 表單表格 */
+    .form-table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 100%;
+      text-align: left;
+      border-radius: 8px;
+      overflow: hidden; /* 讓邊角看起來更平滑 */
+    }
+    .form-table td {
+      padding: 5px 0;
+      vertical-align: middle;
+      position: relative; /* 使容器內的元素能夠定位 */
+    }
+    .form-table tr:last-child td {
+      border-bottom: none;
+    }
+    .form-table label {
+      font-size: 14px;
+      width: 150px;
+      display: inline-block;
+    }
+    .label-none {
+      display: none !important;
+    }
 
-/* 表單表格 */
-.form-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-.form-table tr {
-  margin-bottom: 0.8rem;
-  display: table-row; /* 恢復表格的自然結構 */
-}
-.form-table td {
-  padding: 0.4rem 0;
-  vertical-align: middle;
-  display: table-cell; /* 恢復表格的自然結構 */
-}
-.form-table label {
-  font-size: 1rem;
-  width: 130px; /* 固定標籤寬度以匹配截圖 */
-  display: inline-block;
-  font-weight: 500;
-}
-.label-none {
-  display: none !important;
-}
+    /* 輸入框、下拉式選單 */
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    select {
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #d8d8d8;
+      border-radius: 4px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"],
+    input[type="number"] {
+      width: calc(100% - 160px);
+    }
+    input:focus,
+    select:focus {
+      border-color: #999;
+    }
+    input::placeholder {
+      font-weight: 100;
+      opacity: 0.5;
+      color: gray;
+    }
+    .input--sm {
+      width: 70px !important;
+    }
+    .input--md {
+      width: 180px !important;
+    }
+    .input--lg {
+      width: 400px !important;
+    }
+    /* 按鈕們 */
+    .button-bar {
+      margin-top: 25px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      cursor: pointer;
+      background-color: #00ca9d;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: background-color 0.2s, transform 0.2s;
+    }
+    .button-group {
+      display: flex;
+      align-items: center;
+      margin-left: 275px; /* 與 #knockBtn 的偏移一致 */
+    }
+    #knockBtn {
+      margin-left: 0; /* 移除獨立偏移，由 button-group 控制 */
+      text-align: center; /* 確保文字居中 */
+    }
+    button:hover {
+      background-color: #00b38b;
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button.del-color {
+      color: #353535;
+      background-color: #f5f5f5;
+      border: 1px solid #dcdcdc;
+    }
+    button.del-color:hover {
+      background-color: #e5e5e5;
+    }
 
-/* 輸入框、下拉式選單 */
-input[type="text"],
-input[type="number"],
-input[type="password"],
-select {
-  padding: 0.5rem;
-  font-size: 1rem;
-  border: 1px solid #d8d8d8;
-  border-radius: 4px;
-  outline: none;
-  transition: border-color 0.2s;
-  width: 100%;
-  max-width: 250px; /* 調整輸入框寬度以匹配截圖 */
-}
-input:focus,
-select:focus {
-  border-color: #999;
-}
-input::placeholder {
-  font-weight: 100;
-  opacity: 0.5;
-  color: gray;
-}
-.input--sm {
-  max-width: 80px !important;
-}
-.input--md {
-  max-width: 250px !important;
-}
-.input--lg {
-  max-width: 250px !important;
-}
+    /* Table flex */
+    .flex-container {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    .flex-item {
+      flex: 1;
+    }
+    .flex-2 {
+      flex: 2;
+    }
+    .flex-3 {
+      flex: 3;
+    }
+    .flex-4 {
+      flex: 4;
+    }
+    .flex-5 {
+      flex: 5;
+    }
 
-/* 按鈕們 */
-.button-bar {
-  margin-top: 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.8rem;
-}
-button {
-  padding: 0.6rem 1.5rem;
-  cursor: pointer;
-  background-color: #00ca9d;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  transition: background-color 0.2s, transform 0.2s;
-}
-.button-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-#knockBtn {
-  padding: 0.6rem 2rem;
-}
-button:hover {
-  background-color: #00b38b;
-}
-button:active {
-  transform: translateY(0);
-}
-button.del-color {
-  color: #353535;
-  background-color: #f5f5f5;
-  border: 1px solid #dcdcdc;
-}
-button.del-color:hover {
-  background-color: #e5e5e5;
-}
+    /* The container */
+    .container {
+      display: block;
+      position: relative;
+      padding-left: 35px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      font-size: 22px;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
 
-/* Table flex */
-.flex-container {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-.flex-item {
-  flex: 1;
-}
-.flex-2 {
-  flex: 2;
-}
-.flex-3 {
-  flex: 3;
-}
-.flex-4 {
-  flex: 4;
-}
-.flex-5 {
-  flex: 5;
-}
+    /* Hide the browser's default checkbox */
+    .container input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
 
-/* The container */
-.container {
-  display: inline-block;
-  position: relative;
-  padding-left: 1.8rem;
-  margin: 0;
-  cursor: pointer;
-  font-size: 0.9rem;
-  user-select: none;
-}
+    /* Create a custom checkbox */
+    .checkmark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 25px;
+      width: 25px;
+      background-color: #eee;
+    }
 
-/* Hide the browser's default checkbox */
-.container input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  height: 0;
-  width: 0;
-}
+    /* On mouse-over, add a grey background color */
+    .container:hover input ~ .checkmark {
+      background-color: #ccc;
+    }
 
-/* Create a custom checkbox */
-.checkmark {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 1.2rem;
-  width: 1.2rem;
-  background-color: #eee;
-}
+    /* When the checkbox is checked, add a blue background */
+    .container input:checked ~ .checkmark {
+      background-color: #2196F3;
+    }
 
-/* On mouse-over, add a grey background color */
-.container:hover input ~ .checkmark {
-  background-color: #ccc;
-}
+    /* Create the checkmark/indicator (hidden when not checked) */
+    .checkmark:after {
+      content: "";
+      position: absolute;
+      display: none;
+    }
 
-/* When the checkbox is checked, add a blue background */
-.container input:checked ~ .checkmark {
-  background-color: #2196F3;
-}
+    /* Show the checkmark when checked */
+    .container input:checked ~ .checkmark:after {
+      display: block;
+    }
 
-/* Create the checkmark/indicator (hidden when not checked) */
-.checkmark:after {
-  content: "";
-  position: absolute;
-  display: none;
-}
+    /* Style the checkmark/indicator */
+    .container .checkmark:after {
+      left: 9px;
+      top: 5px;
+      width: 5px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 3px 3px 0;
+      -webkit-transform: rotate(45deg);
+      -ms-transform: rotate(45deg);
+      transform: rotate(45deg);
+    }
+    .moreSetting {
+      color: #21adf3;
+    }
 
-/* Show the checkmark when checked */
-.container input:checked ~ .checkmark:after {
-  display: block;
-}
+    /* 顯示日誌(進度欄) */
+    #log {
+      margin-top: 25px;
+      width: 100%;
+      height: 200px;
+      overflow-y: auto;
+      background-color: #f9f9f9;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 10px;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      color: #333;
+    }
 
-/* Style the checkmark/indicator */
-.container .checkmark:after {
-  left: 0.4rem;
-  top: 0.2rem;
-  width: 0.3rem;
-  height: 0.6rem;
-  border: solid white;
-  border-width: 0 0.2rem 0.2rem 0;
-  transform: rotate(45deg);
-}
-.moreSetting {
-  color: #21adf3;
-  font-size: 0.9rem;
-}
+    .status {
+      margin-left: 10px;
+      font-weight: bold;
+    }
+    .status.failed {
+      color: red;
+    }
+    .status.successful {
+      color: green;
+    }
+    .status.na {
+      color: gray;
+    }
 
-/* 顯示日誌(進度欄) */
-#log {
-  margin-top: 1.5rem;
-  width: 100%;
-  height: 12rem;
-  overflow-y: auto;
-  background-color: #f9f9f9;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 0.8rem;
-  font-family: Consolas, Monaco, monospace;
-  font-size: 0.9rem;
-  white-space: pre-wrap;
-  color: #333;
-}
+    /* 狀態欄超連結 */
+    #statusLink a {
+      color: #1a0dab;
+      text-decoration: none;
+    }
+    #statusLink a:hover {
+      text-decoration: underline;
+    }
 
-.status {
-  margin-left: 0.6rem;
-  font-weight: bold;
-}
-.status.failed {
-  color: red;
-}
-.status.successful {
-  color: green;
-}
-.status.na {
-  color: gray;
-}
+    /* 新增：TOTP 功能相關樣式 */
+    .totp-key-container {
+      align-items: center;
+    }
 
-/* 狀態欄超連結 */
-#statusLink a {
-  color: #1a0dab;
-  text-decoration: none;
-}
-#statusLink a:hover {
-  text-decoration: underline;
-}
+    .verify-code-container {
+      display: flex;
+      align-items: center;
+      margin-left: 150px;
+      margin-top: 5px;
+    }
 
-/* TOTP 功能相關樣式 */
-.totp-key-container {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.verify-code-container {
-  display: flex;
-  align-items: center;
-  margin-left: 130px; /* 與標籤寬度一致 */
-}
-#qrSection {
-  margin-top: 0.5rem;
-  width: 100%;
-}
-#currentTotpContainer {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 1rem;
-  margin: 0.5rem 0;
-  justify-content: center;
-}
-#currentTotpCode {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #333;
-  user-select: all;
-  text-align: center;
-  min-width: 4rem;
-}
-#copyTotpBtn {
-  padding: 0.4rem 1rem;
-  font-size: 0.9rem;
-}
-#totpProgressContainer {
-  display: block;
-}
-.progress-Box {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  justify-content: center;
-  min-width: 10rem;
-}
-#totpProgressBar {
-  width: 6rem;
-  height: 0.4rem;
-  background-color: #e0e0e0;
-  border-radius: 20px;
-  overflow: hidden;
-}
-#totpProgress {
-  height: 100%;
-  width: 0%;
-  background-color: #09c199;
-  transition: width 1s linear;
-}
-#totpCountdown {
-  font-size: 0.9rem;
-  color: #333;
-  min-width: 3rem;
-  text-align: center;
-}
+    #qrSection {
+      margin-top: 20px;
+    }
 
-/* 掃描介面 */
-#scannerContainer {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.8);
-  z-index: 1000;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  padding: 1.5rem;
-  text-align: center;
-}
-#scannerVideo {
-  width: 90%;
-  max-width: 40rem;
-  height: auto;
-  border: 2px solid #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  position: relative;
-}
-#scannerOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: 4px dashed #00ca9d;
-  box-sizing: border-box;
-  pointer-events: none;
-}
-#scannerInstructions {
-  color: #fff;
-  font-size: 1.2rem;
-  text-align: center;
-  margin: 1rem 0;
-}
-#closeScannerBtn {
-  margin-top: 1.5rem;
-  padding: 0.8rem 1.5rem;
-  cursor: pointer;
-  background-color: #9a9a9a;
-  color: #e8e8e8;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  transition: background-color 0.2s, transform 0.1s;
-}
-#closeScannerBtn:hover {
-  background-color: #7f7f7f;
-}
-#closeScannerBtn:active {
-  transform: translateY(0);
-}
+    #currentTotpContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    #currentTotpCode {
+      font-size: 36px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+      user-select: all;
+      text-align: center;
+    }
 
-/* select checked checkbox */
-.custom-checkbox {
-  appearance: none;
-  width: 1.2rem;
-  height: 1.2rem;
-  border: 1px solid #848484;
-  border-radius: 3px;
-  background-color: white;
-  cursor: pointer;
-  outline: none;
-  position: relative;
-  vertical-align: middle;
-}
-.custom-checkbox:checked {
-  background-color: #09C199;
-  border-color: #09C199;
-}
-.custom-checkbox:checked::after {
-  content: "";
-  position: absolute;
-  left: 0.3rem;
-  top: 0.1rem;
-  width: 0.3rem;
-  height: 0.5rem;
-  border: solid white;
-  border-width: 0 0.15rem 0.15rem 0;
-  transform: rotate(40deg);
-}
+    #totpProgressContainer {
+    }
+    .progress-Box {
+      margin: auto;
+      justify-content: center;
+    }
+    #totpProgressBar {
+      width: 30%;
+      height: 8px;
+      background-color: #e0e0e0;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    #totpProgress {
+      height: 100%;
+      width: 100%;
+      background-color: #09c199;
+      transition: width 1s linear;
+    }
+    #totpCountdown {
+      top: -25px;
+      right: 0;
+      font-size: 14px;
+      color: #333;
+    }
 
-/* 標籤的樣式 */
-label {
-  font-size: 1rem;
-  cursor: pointer;
-}
+    /* 掃描介面 */
+    #scannerContainer {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 20px;
+      text-align: center;
+    }
+    /* 修改 video 標籤：加入 muted playsinline 與 webkit-playsinline 屬性 */
+    #scannerVideo {
+      width: 500px;
+      height: 400px;
+      max-width: 90%;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    #scannerOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 4px dashed #00ca9d;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    #scannerInstructions {
+      color: #fff;
+      font-size: 18px;
+      text-align: center;
+    }
+    #closeScannerBtn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      cursor: pointer;
+      background-color: #9a9a9a;
+      color: #e8e8e8;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+    #closeScannerBtn:hover {
+      background-color: #7f7f7f;
+    }
+    #closeScannerBtn:active {
+      transform: translateY(0);
+    }
 
-/* 設定按鈕與下拉選單樣式 */
-.settings-container {
-  position: relative;
-  display: inline-block;
-}
-#settingsBtn {
-  background: none;
-  border: none;
-  padding: 0.5rem;
-  cursor: pointer;
-  font-size: 1.2rem;
-  line-height: 1;
-  vertical-align: middle;
-  color: #555;
-}
-#settingsBtn:hover {
-  color: #000;
-}
-#settingsMenu {
-  display: none;
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  background-color: white;
-  border: 1px solid #ccc;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-  z-index: 100;
-  border-radius: 4px;
-  min-width: 10rem;
-}
-#settingsMenu a {
-  display: block;
-  padding: 0.8rem 1rem;
-  text-decoration: none;
-  color: #333;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-#settingsMenu a:hover {
-  background-color: #f5f5f5;
-}
-
-/* 手機螢幕（寬度小於600px） */
-@media (max-width: 600px) {
+    /* 手機或窄螢幕時 RWD 調整 */
+    @media (max-width: 600px) {
+  /* 確保滿版顯示 */
   #container {
-    width: 100%;
-    margin: 1rem;
-    padding: 1rem;
+    margin: 0;
+    padding: 15px;
+    max-width: 100%;
+    border-radius: 0;
+    box-shadow: none;
   }
-  h3, h4 {
-    font-size: 1.4rem;
+  /* 標題 */
+  h3 {
+    font-size: 28px;
   }
-  .form-table tr {
-    margin-bottom: 0.5rem;
+  h4 {
+    font-size: 22px;
+  }
+  /* 表單表格 */
+  .form-table {
+    margin: 10px 0;
   }
   .form-table td {
     display: block;
     width: 100%;
-    padding: 0.3rem 0;
+    padding: 8px 0;
   }
   .form-table label {
+    display: block;
     width: 100%;
-    margin-bottom: 0.3rem;
-    font-size: 0.9rem;
+    margin-bottom: 8px;
+    font-size: 18px;
   }
+  /* 輸入框和下拉選單 */
   input[type="text"],
   input[type="number"],
   input[type="password"],
   select {
-    max-width: 100%;
-    font-size: 0.9rem;
-    padding: 0.5rem;
+    width: 100% !important;
+    padding: 12px;
+    font-size: 18px;
+    border-radius: 6px;
   }
-  .input--sm, .input--md, .input--lg {
-    max-width: 100% !important;
-  }
+  /* 按鈕 */
   .button-bar {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 15px;
+    margin-top: 20px;
   }
   button {
     width: 100%;
-    padding: 0.8rem;
-    font-size: 0.9rem;
+    padding: 14px;
+    font-size: 18px;
+    border-radius: 6px;
   }
   .button-group {
+    margin-left: 0;
     width: 100%;
     justify-content: center;
   }
+  /* TOTP 相關 */
+  .totp-key-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .totp-key-container button {
+    margin-top: 10px;
+  }
   .verify-code-container {
     margin-left: 0;
-  }
-  #currentTotpContainer {
-    flex-direction: column;
-    gap: 0.5rem;
+    margin-top: 10px;
   }
   #currentTotpCode {
-    font-size: 1rem;
-  }
-  #copyTotpBtn {
-    width: 100%;
-  }
-  .progress-Box {
-    min-width: 100%;
-    justify-content: space-between;
+    font-size: 40px;
   }
   #totpProgressBar {
-    width: 100%;
+    width: 60%;
+    height: 10px;
   }
   #totpCountdown {
-    font-size: 0.8rem;
+    font-size: 16px;
   }
+  /* 日誌區域 */
+  #log {
+    font-size: 16px;
+    height: 250px;
+    padding: 12px;
+  }
+  /* Notice 區域 */
+  .notice {
+    font-size: 16px;
+    padding: 12px;
+    margin: 10px 0;
+  }
+  /* 掃描介面 */
   #scannerVideo {
     width: 100%;
-    max-width: 20rem;
+    max-width: 320px;
+    height: auto;
   }
   #scannerInstructions {
-    font-size: 1rem;
+    font-size: 18px;
+    margin: 15px 0;
   }
+  #closeScannerBtn {
+    padding: 14px 28px;
+    font-size: 18px;
+  }
+  /* 模態框 */
   .modal-content {
     width: 95%;
-    padding: 1rem;
+    padding: 15px;
   }
   .modal-content h4 {
-    font-size: 1.2rem;
+    font-size: 22px;
   }
   .modal-content label {
-    font-size: 0.8rem;
+    font-size: 18px;
   }
-  #log {
-    height: 10rem;
-    font-size: 0.8rem;
+  .modal-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .select-all-label {
+    font-size: 18px;
+  }
+  /* 設定選單 */
+  #settingsMenu {
+    min-width: 200px;
+    right: 0;
+    top: 100%;
+  }
+  #settingsMenu a {
+    font-size: 18px;
+    padding: 12px 15px;
+  }
+  #settingsBtn {
+    font-size: 24px;
+  }
+  /* 複選框 */
+  .custom-checkbox {
+    width: 20px;
+    height: 20px;
+  }
+  .custom-checkbox:checked::after {
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
   }
 }
+    /* select checked checkbox */
+    .custom-checkbox {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1px solid #848484;
+      border-radius: 3px;
+      background-color: white;
+      cursor: pointer;
+      outline: none;
+      position: relative;
+      vertical-align: bottom;
+    }
+    .custom-checkbox:checked {
+      background-color: #09C199;
+      border-color: #09C199;
+    }
+    .custom-checkbox:checked::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 4px;
+      height: 7px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(40deg);
+    }
+    .custom-checkbox:hover {}
+    /* 標籤的樣式 */
+    label {
+      font-size: 16px;
+      cursor: pointer;
+    }
+    /* --- 新增：設定按鈕與下拉選單樣式 --- */
+    .settings-container {
+      position: relative; /* 讓下拉選單可以相對定位 */
+      display: inline-block; /* 讓容器只佔據按鈕寬度 */
+    }
 
-/* 平板螢幕（寬度在600px到900px之間） */
-@media (min-width: 601px) and (max-width: 900px) {
-  #container {
-    width: 90%;
-    padding: 1.5rem;
-  }
-  h3, h4 {
-    font-size: 1.5rem;
-  }
-  .form-table label {
-    font-size: 0.95rem;
-  }
-  input[type="text"],
-  input[type="number"],
-  input[type="password"],
-  select {
-    font-size: 0.95rem;
-  }
-  button {
-    font-size: 0.95rem;
-  }
-  #currentTotpContainer {
-    gap: 0.8rem;
-  }
-  .progress-Box {
-    min-width: 8rem;
-  }
-  #totpProgressBar {
-    width: 5rem;
-  }
-  #scannerVideo {
-    max-width: 30rem;
-  }
-}
+    #settingsBtn {
+      background: none;
+      border: none;
+      padding: 5px;
+      cursor: pointer;
+      font-size: 20px; /* 調整圖示大小 */
+      line-height: 1;
+      vertical-align: middle; /* 與其他按鈕對齊 */
+      margin-right: 10px; /* 與其他按鈕間距 */
+      color: #555; /* 圖示顏色 */
+    }
+    #settingsBtn:hover {
+      color: #000;
+    }
+
+    #settingsMenu {
+      display: none; /* 預設隱藏 */
+      position: absolute;
+      bottom: 100%; /* 出現在按鈕上方 */
+      left: 0;
+      background-color: white;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      z-index: 100; /* 確保在其他元素之上 */
+      border-radius: 4px;
+      min-width: 150px; /* 最小寬度 */
+    }
+
+    #settingsMenu a {
+      display: block;
+      padding: 10px 15px;
+      text-decoration: none;
+      color: #333;
+      font-size: 14px;
+      white-space: nowrap; /* 防止文字換行 */
+    }
+
+    #settingsMenu a:hover {
+      background-color: #f5f5f5;
+    }
+    /* --- 結束：設定按鈕與下拉選單樣式 --- */
   </style>
 </head>
 <body>
