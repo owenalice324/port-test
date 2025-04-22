@@ -475,68 +475,78 @@
 
     /* 手機或窄螢幕時 RWD 調整 */
     @media (max-width: 600px) {
-      #container {
-        margin: 20px auto;
-        padding: 15px;
-      }
-      .form-table td {
-        display: block;
-        width: 100%;
-        border-bottom: 1px solid #ddd;
-      }
-      .form-table tr {
-        margin-bottom: 10px;
-      }
-      .form-table label {
-        display: inline-block;
-        margin-bottom: 6px;
-      }
-      .button-bar {
-        display: flex;
-        flex-direction: column;
-      }
-      button {
-        width: 100%;
-        margin: 5px 0;
-      }
-      .button-group {
-        margin-left: auto; /* 窄螢幕下居中 */
-        margin-right: auto;
-        width: 100%; /* 按鈕組全寬 */
-      }
-      .totp-key-container {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .totp-key-container button {
-        width: 100%;
-        margin-top: 10px;
-      }
-      .verify-code-container {
-        flex-direction: row;
-        align-items: center;
-      }
-      #currentTotpContainer {
-        flex-direction: column;
-        align-items: center;
-      }
-      #copyTotpBtn {
-        margin-top: 10px;
-      }
-      #totpProgressContainer {
-        width: 100%;
-      }
-      #totpCountdown {
-        top: -20px;
-        font-size: 12px;
-      }
-      #scannerVideo {
-        width: 300px;
-      }
-      #scannerInstructions {
-        font-size: 16px;
-      }
-    }
+  #container {
+    margin: 10px;
+    padding: 15px;
+    min-height: auto; /* 避免容器過高 */
+  }
+
+  .form-table {
+    width: 100%;
+    margin: 10px auto;
+  }
+
+  .form-table td {
+    display: block;
+    width: 100%;
+    padding: 5px 0;
+  }
+
+  .form-table label {
+    display: block;
+    margin-bottom: 5px;
+    width: 100%;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="password"],
+  select {
+    width: 100% !important; /* 確保輸入框全寬 */
+  }
+
+  .button-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .button-group {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  #log {
+    max-height: 150px; /* 減少記錄區域高度 */
+    min-height: 100px;
+    margin-top: 15px;
+  }
+
+  .notice {
+    margin: 10px 0;
+    padding: 10px;
+  }
+
+  .totp-key-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .verify-code-container {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  #totpProgressBar {
+    width: 80%; /* 調整進度條寬度 */
+  }
+
+  #scannerVideo {
+    width: 90%;
+    max-height: 70vh; /* 限制掃描器視頻高度 */
+  }
+}
     /* select checked checkbox */
     .custom-checkbox {
       appearance: none;
