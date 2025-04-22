@@ -473,17 +473,55 @@
       transform: translateY(0);
     }
 
-    /* 手機或窄螢幕時 RWD 調整 */
     @media (max-width: 600px) {
   #container {
     margin: 10px;
     padding: 15px;
-    min-height: auto; /* 避免容器過高 */
+    min-height: auto;
   }
 
   .form-table {
     width: 100%;
     margin: 10px auto;
+  }
+
+  /* 確保第一行保持水平排列 */
+  .form-table tr.flex-container {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .form-table tr.flex-container td {
+    display: flex;
+    flex-direction: column;
+    width: auto; /* 允許根據內容調整 */
+    padding: 5px;
+  }
+
+  /* Profile Name 輸入框 */
+  #profileName {
+    width: 100% !important; /* 縮短寬度，約佔60% */
+    height: 36px; /* 固定高度 */
+    padding: 8px;
+    box-sizing: border-box;
+  }
+
+  /* Select Profile 下拉選單 */
+  #profileSelect {
+    width: 100% !important; /* 拉長寬度，佔滿其容器 */
+    height: 36px; /* 與輸入框等高 */
+    padding: 8px ;
+    box-sizing: border-box;
+  }
+
+  /* 調整 flex-item 的寬度比例 */
+  .form-table tr.flex-container td.flex-4 {
+    flex: 3; /* Profile Name 佔較多空間 */
+  }
+
+  .form-table tr.flex-container td.flex-1 {
+    flex: 2; /* Select Profile 佔較少空間，但拉長 */
   }
 
   .form-table td {
@@ -502,7 +540,7 @@
   input[type="number"],
   input[type="password"],
   select {
-    width: 100% !important; /* 確保輸入框全寬 */
+    width: 100% !important;
   }
 
   .button-bar {
@@ -518,7 +556,7 @@
   }
 
   #log {
-    max-height: 150px; /* 減少記錄區域高度 */
+    max-height: 150px;
     min-height: 100px;
     margin-top: 15px;
   }
@@ -539,12 +577,12 @@
   }
 
   #totpProgressBar {
-    width: 80%; /* 調整進度條寬度 */
+    width: 80%;
   }
 
   #scannerVideo {
     width: 90%;
-    max-height: 70vh; /* 限制掃描器視頻高度 */
+    max-height: 70vh;
   }
 }
     /* select checked checkbox */
