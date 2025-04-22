@@ -12,6 +12,11 @@
 
   <style>
     /* 全局設定 */
+        html, body {
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
     * {
       box-sizing: border-box;
     }
@@ -465,25 +470,37 @@
     }
 
     /* 手機或窄螢幕時 RWD 調整 */
-    @media (max-width: 600px) {
-  /* 確保滿版顯示 */
+
+@media (max-width: 600px) {
+  /* 確保滿屏顯示 */
+  html, body {
+    height: 100vh;
+    margin: 0;
+    overflow-x: hidden;
+  }
   #container {
     margin: 0;
     padding: 15px;
     max-width: 100%;
+    min-height: 100vh; /* 確保內容至少填滿螢幕 */
     border-radius: 0;
     box-shadow: none;
+    display: flex;
+    flex-direction: column;
   }
   /* 標題 */
   h3 {
     font-size: 28px;
+    margin: 10px 0;
   }
   h4 {
     font-size: 22px;
+    margin: 8px 0;
   }
   /* 表單表格 */
   .form-table {
     margin: 10px 0;
+    width: 100%;
   }
   .form-table td {
     display: block;
@@ -511,6 +528,7 @@
     flex-direction: column;
     gap: 15px;
     margin-top: 20px;
+    width: 100%;
   }
   button {
     width: 100%;
@@ -548,8 +566,10 @@
   /* 日誌區域 */
   #log {
     font-size: 16px;
-    height: 250px;
+    height: 200px; /* 限制高度，避免過分延伸 */
     padding: 12px;
+    margin: 10px 0;
+    flex-grow: 1; /* 允許日誌區域擴展以填滿剩餘空間 */
   }
   /* Notice 區域 */
   .notice {
@@ -558,6 +578,9 @@
     margin: 10px 0;
   }
   /* 掃描介面 */
+  #scannerContainer {
+    padding: 10px;
+  }
   #scannerVideo {
     width: 100%;
     max-width: 320px;
@@ -587,6 +610,11 @@
     gap: 10px;
   }
   .select-all-label {
+    font-size: 18px;
+  }
+  .modal-buttons button {
+    width: 100%;
+    padding: 14px;
     font-size: 18px;
   }
   /* 設定選單 */
