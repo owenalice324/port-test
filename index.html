@@ -6,7 +6,7 @@
   <!-- 引入 Google Fonts (Noto Sans TC) 讓整體字型更美觀 -->
   <link rel="preconnect" href="https://fonts.googleapis.com/">
   <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
-  <link href="./DrayTek PortKnockingTool V1.3_RC1_files/css2" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
   <!-- 引入 jsQR 庫（改用您提供的 CDN 連結） -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
 
@@ -193,8 +193,13 @@
       font-size: 14px;
       transition: background-color 0.2s, transform 0.2s;
     }
+    .button-group {
+      display: flex;
+      align-items: center;
+      margin-left: 260px; /* 與 #knockBtn 的偏移一致 */
+    }
     #knockBtn {
-      margin-left: 260px; /* 將中心點對齊 copyTotpBtn 的中心點 */
+      margin-left: 0; /* 移除獨立偏移，由 button-group 控制 */
       text-align: center; /* 確保文字居中 */
     }
     button:hover {
@@ -485,6 +490,11 @@
         width: 100%;
         margin: 5px 0;
       }
+      .button-group {
+        margin-left: auto; /* 窄螢幕下居中 */
+        margin-right: auto;
+        width: 100%; /* 按鈕組全寬 */
+      }
       .totp-key-container {
         flex-direction: column;
         align-items: stretch;
@@ -714,6 +724,7 @@
     </table>
 
     <div class="button-bar">
+      <div class="button-group">
       <div class="settings-container">
       <button id="settingsBtn" title="Settings">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
@@ -727,6 +738,7 @@
       </div>
       </div>
       <button id="knockBtn">Knock Ports</button>
+      </div>
       <input type="file" id="importFile" accept=".conf" style="display: none;">
     </div>
 
@@ -751,6 +763,11 @@
       </div>
     </div>
   </div>
+<div class="container notice-container">
+   <div class="notice">
+      <p><strong>Notice:</strong> Profiles are stored in your browser's local storage. They will be lost if you clear browsing data or use incognito mode. Please export profiles to save them.</p>
+    </div>
+</div>
 
   <!-- Import Modal -->
   <div id="importModal" class="export-modal">
