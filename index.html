@@ -1462,7 +1462,7 @@
       const profileNames = Object.keys(profiles);
       const profileList = document.getElementById('exportProfileList');
       profileList.innerHTML = '';
-
+      document.getElementById('selectAllCheckbox').checked = false; // 重置 Select All 勾選框
       profileNames.forEach(name => {
         const div = document.createElement('div');
         div.innerHTML = `
@@ -1657,6 +1657,7 @@
     function generateImportModalContent(profiles, fileName) {
       const profileList = document.getElementById('importProfileList');
       profileList.innerHTML = '';
+      document.getElementById('selectAllImportCheckbox').checked = false; // 重置 Select All 勾選框
       profiles.forEach((profile, index) => {
         if (profile.profileName) {
           const div = document.createElement('div');
@@ -1776,6 +1777,7 @@
       const profileNames = Object.keys(profiles);
       const profileList = document.getElementById('deleteProfileList');
       profileList.innerHTML = '';
+      document.getElementById('selectAllDeleteCheckbox').checked = false; // 重置 Select All 勾選框
 
       profileNames.forEach(name => {
         const div = document.createElement('div');
