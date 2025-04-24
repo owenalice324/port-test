@@ -98,6 +98,29 @@
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
+    .modal-scrollable {
+      max-height: 250px; /* 固定高度以觸發滾動 */
+      overflow-y: auto; /* 啟用垂直滾動 */
+      margin: 15px 0; /* 上下間距 */
+      padding: 0 10px; /* 內邊距，避免內容緊貼邊緣 */
+    }
+    /* 自訂滾動條樣式 */
+    .modal-scrollable::-webkit-scrollbar {
+      width: 8px; /* 滾動條寬度 */
+    }
+    .modal-scrollable::-webkit-scrollbar-thumb {
+      background-color: #00ca9d; /* 滾動條顏色，與主題一致 */
+      border-radius: 4px;
+    }
+    .modal-scrollable::-webkit-scrollbar-track {
+      background-color: #f1f1f1; /* 滾動條背景 */
+      border-radius: 4px;
+    }
+    /* 確保 checkbox 標籤整齊 */
+    .modal-scrollable label {
+      display: block; /* 每個 checkbox 獨佔一行 */
+      padding: 2px 0; /* 垂直間距 */
+    }
     .modal-content h4 {
       margin: 0 0 15px;
       text-align: center;
@@ -505,7 +528,7 @@
 
   /* Profile Name 輸入框 */
   #profileName {
-    width: 100% !important; /* 縮短寬度，約佔60% */
+    width: 90% !important; /* 縮短寬度，約佔60% */
     height: 36px; /* 固定高度 */
     padding: 8px;
     box-sizing: border-box;
@@ -517,7 +540,7 @@
 
   /* Select Profile 下拉選單 */
   #profileSelect {
-    width: 100% !important; /* 拉長寬度，佔滿其容器 */
+    width: 80% !important; /* 拉長寬度，佔滿其容器 */
     height: 36px; /* 與輸入框等高 */
     padding: 8px ;
     box-sizing: border-box;
@@ -649,6 +672,9 @@
       margin-right: 10px; /* 與其他按鈕間距 */
       color: #555; /* 圖示顏色 */
     }
+    #settingsBtn:focus {
+      outline: none; /* 移除點擊時的預設外框 */
+    }
     #settingsBtn:hover {
       color: #000;
     }
@@ -656,8 +682,8 @@
     #settingsMenu {
       display: none; /* 預設隱藏 */
       position: absolute;
-      bottom: 100%; /* 出現在按鈕上方 */
-      left: 0;
+      top: 100%; /* 出現在按鈕下方 */
+      left: -120px; /* 向左偏移，使選單與下拉選單對齊 */
       background-color: white;
       border: 1px solid #ccc;
       box-shadow: 0 2px 5px rgba(0,0,0,0.15);
@@ -673,6 +699,27 @@
       color: #333;
       font-size: 14px;
       white-space: nowrap; /* 防止文字換行 */
+    }
+    /* Profile 選擇區域的容器 */
+    .profile-select-container {
+      display: flex;
+      align-items: center; /* 垂直居中 */
+      gap: 5px; /* 按鈕與下拉選單的間距 */
+    }
+    /* 行動裝置調整 */
+    @media (max-width: 600px) {
+      .profile-select-container {
+        flex-direction: row; /* 保持水平排列 */
+         flex-wrap: nowrap; /* 防止換行 */
+         justify-content: space-between; /* 分散對齊，齒輪靠右 */
+      }
+      .settings-container {
+         margin-left: auto; /* 確保齒輪靠右 */
+         margin-top: 14px; /* 齒輪略微下移 */
+         flex-shrink: 0; /* 防止齒輪被壓縮 */
+         position: relative; /* 微調定位 */
+         right: -10px; /* 向右移動，確保不溢出 */
+      }
     }
 
     #settingsMenu a:hover {
@@ -695,7 +742,21 @@
           </td>
           <td class="flex-item flex-1">
             <label for="profileSelect" class="label-none">Profile Select</label>
-            <select id="profileSelect" class="custom-select"><option value="">-- Select --</option></select>
+            <div class="profile-select-container">
+             <select id="profileSelect" class="custom-select"><option value="">-- Select --</option></select>
+             <div class="settings-container">
+               <button id="settingsBtn" title="Settings">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+                    <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.858 2.929 2.929 0 0 1 0 5.858z"/>
+                  </svg>
+                </button>
+                <div id="settingsMenu">
+                  <a href="#" id="importOption">Import Profile</a>
+                  <a href="#" id="exportOption">Export Profile</a>
+                  <a href="#" id="deleteOption">Delete Profile</a>
+                </div>
+              </div>
+            </div>
           </td>
         </tr>
         <tr>
@@ -793,18 +854,6 @@
 
     <div class="button-bar">
       <div class="button-group">
-      <div class="settings-container">
-      <button id="settingsBtn" title="Settings">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
-            <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.858 2.929 2.929 0 0 1 0 5.858z"/>
-          </svg>
-      </button>
-      <div id="settingsMenu">
-        <a href="#" id="importOption">Import Profile</a>
-        <a href="#" id="exportOption">Export Profile</a>
-        <a href="#" id="deleteOption">Delete Profile</a>
-      </div>
-      </div>
       <button id="knockBtn">Knock Ports</button>
       </div>
       <input type="file" id="importFile" accept=".conf" style="display: none;">
@@ -818,8 +867,10 @@
     <div id="exportModal" class="export-modal">
       <div class="modal-content">
         <h4>Export Profiles</h4>
-        <div id="exportProfileList">
+        <div class="modal-scrollable">
+          <div id="exportProfileList">
           <!-- Profile checkboxes will be dynamically inserted here -->
+          </div>
         </div>
         <div class="modal-buttons">
           <label class="select-all-label">
@@ -836,8 +887,10 @@
   <div id="importModal" class="export-modal">
     <div class="modal-content">
       <h4>Import Profiles</h4>
-      <div id="importProfileList">
+      <div class="modal-scrollable">
+        <div id="importProfileList">
         <!-- Profile checkboxes will be dynamically inserted here -->
+        </div>
       </div>
       <div class="modal-buttons">
         <label class="select-all-label">
@@ -852,8 +905,10 @@
     <div id="deleteModal" class="export-modal">
       <div class="modal-content">
         <h4>Delete Profiles</h4>
-        <div id="deleteProfileList">
+        <div class="modal-scrollable">
+          <div id="deleteProfileList">
           <!-- Profile checkboxes will be dynamically inserted here -->
+          </div>
         </div>
         <div class="modal-buttons">
           <label class="select-all-label">
