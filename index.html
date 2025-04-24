@@ -555,7 +555,10 @@
   .form-table tr.flex-container td.flex-1 {
     flex: 2; /* Select Profile 佔較少空間，但拉長 */
   }
-
+  /* --- 新增：調整 Select Profile 的父容器 TD 的左邊內距 --- */
+  .form-table tr.flex-container td:nth-child(2) {
+    padding-left: 0; /* 移除左邊內距，讓 Select 更靠左 */
+  }
   .form-table td {
     display: block;
     width: 100%;
@@ -718,7 +721,7 @@
          margin-top: 14px; /* 齒輪略微下移 */
          flex-shrink: 0; /* 防止齒輪被壓縮 */
          position: relative; /* 微調定位 */
-         right: -10px; /* 向右移動，確保不溢出 */
+         right: 5px; /* 向右移動，確保不溢出 */
       }
     }
 
@@ -1340,6 +1343,7 @@
       }
 
       document.getElementById('knockBtn').addEventListener('click', () => {
+        const MAX_PROFILES = 200;
         const profileName = document.getElementById('profileName').value.trim();
         const srvip = document.getElementById('ip').value.trim();
         const firstport = parseInt(document.getElementById('1stport').value, 10);
@@ -1364,7 +1368,19 @@
             return;
           }
         }
+ 
+        // --- 新增：儲存前檢查 Profile 數量上限 ---
+        const services = getAllServices();
+        const currentProfileCount = Object.keys(services).length;
+        const isExistingProfile = services.hasOwnProperty(profileName);
 
+        // 只有當這是一個"新" Profile 且總數已達上限時才阻止
+        if (!isExistingProfile && currentProfileCount >= MAX_PROFILES) {
+          alert(`Profile limit of ${MAX_PROFILES} has been reached. Cannot save new profile. Please delete some profiles before trying to save and knock again.`);
+          log(`Save aborted: Profile limit (${MAX_PROFILES}) reached when trying to save new profile "${profileName}".`);
+            return; // 阻止儲存和 Knocking
+        }
+        // --- 檢查結束 ---
         saveService(
           profileName, 
           srvip, 
