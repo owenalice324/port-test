@@ -540,7 +540,7 @@
 
   /* Select Profile 下拉選單 */
   #profileSelect {
-    width: 80% !important; /* 拉長寬度，佔滿其容器 */
+    width: 100% !important; /* 拉長寬度，佔滿其容器 */
     height: 36px; /* 與輸入框等高 */
     padding: 8px ;
     box-sizing: border-box;
@@ -1502,6 +1502,7 @@
 
     // --- 匯出功能 ---
     function exportProfile() {
+      document.getElementById('log').textContent = '';
       const profiles = getAllServices();
       const profileNames = Object.keys(profiles);
       if (profileNames.length === 0) {
@@ -1589,6 +1590,7 @@
     }
     // --- 匯入功能 (修改後：匯入即儲存) ---
     function handleImport(event) {
+      document.getElementById('log').textContent = '';
       const file = event.target.files[0];
       if (!file) {
         return;
@@ -1644,6 +1646,7 @@
       reader.onerror = function(e) {
         alert("Error reading file.");
         console.error("Error reading file:", e);
+        document.getElementById('importFile').value = null;
         log("Error reading file.");
         event.target.value = null;
       };
@@ -1652,6 +1655,15 @@
     }
 
     function processSingleProfileImport(portknockingData, fileName) {
+      // --- 新增：定義數量上限 ---
+      const MAX_PROFILES = 200;
+      // --- 新增：檢查目前 Profile 數量是否已達上限 ---
+      const currentProfileCount = Object.keys(getAllServices()).length;
+      if (currentProfileCount >= MAX_PROFILES) {
+        alert(`已達到 ${MAX_PROFILES} 個設定檔的數量上限，無法匯入新的設定檔。\nProfile limit of ${MAX_PROFILES} has been reached. Cannot import new profile. Please delete some profiles first.`);
+        log(`Import failed: Profile limit (${MAX_PROFILES}) reached.`);
+        return false; // 返回 false 表示因超限而失敗
+      }
       const profileNameToSave = portknockingData.profileName;
       const ipToSave = portknockingData.ip;
       const firstportToSave = portknockingData.firstport;
@@ -1703,10 +1715,11 @@
           startTotpTimer();
 
           // 清空檔案輸入框的值
-          event.target.value = null;
+          //event.target.value = null;
 
       log("Profile '" + profileNameToSave + "' imported and saved successfully from " + fileName);
       alert("Profile '" + profileNameToSave + "' has been imported and saved successfully!");
+      return true; // 返回 true 表示成功
     }
 
     function generateImportModalContent(profiles, fileName) {
@@ -1729,6 +1742,7 @@
     }
 
     function confirmImport() {
+      const MAX_PROFILES = 200;
       const checkboxes = document.querySelectorAll('.import-checkbox:checked');
       const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
       const fileName = document.getElementById('confirmImportBtn').dataset.fileName;
@@ -1737,7 +1751,14 @@
         alert('Please select at least one profile to import.');
         return;
       }
-
+      // --- 新增：檢查匯入後是否會超過上限 ---
+      const currentProfileCount = Object.keys(getAllServices()).length;
+      const selectedCount = selectedIndices.length;
+      if (currentProfileCount + selectedCount > MAX_PROFILES) {
+        alert(`選擇匯入的設定檔數量 (${selectedCount}) 加上現有數量 (${currentProfileCount}) 將超過 ${MAX_PROFILES} 個上限，請減少選擇或先刪除一些設定檔。\nImporting ${selectedCount} profile(s) would exceed the limit of ${MAX_PROFILES} (current: ${currentProfileCount}). Please select fewer or delete some profiles first.`);
+        log(`Import failed: Limit check failed (current: ${currentProfileCount}, selected: ${selectedCount}, limit: ${MAX_PROFILES}).`);
+        return; // 阻止匯入
+      }
       const importedData = JSON.parse(document.getElementById('importFile').dataset.importedContent || '{}');
       const profiles = importedData.portknocking || [];
       const selectedProfiles = selectedIndices.map(index => profiles[index]);
@@ -1785,7 +1806,7 @@
 
       document.getElementById('importFile').value = null;
       log(`Imported ${selectedProfiles.length} profile(s) from ${fileName}`);
-      alert(`Successfully imported ${selectedProfiles.length} profile(s) from ${fileName}`);
+      //alert(`Successfully imported ${selectedProfiles.length} profile(s) from ${fileName}`);
       document.getElementById('importModal').style.display = 'none';
     }
     function confirmDelete() {
@@ -1817,6 +1838,7 @@
     }
     // --- 刪除功能 ---
    function deleteProfile() {
+      document.getElementById('log').textContent = '';
       const profiles = getAllServices();
       const profileNames = Object.keys(profiles);
       if (profileNames.length === 0) {
