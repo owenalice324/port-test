@@ -1755,7 +1755,8 @@
       const currentProfileCount = Object.keys(getAllServices()).length;
       const selectedCount = selectedIndices.length;
       if (currentProfileCount + selectedCount > MAX_PROFILES) {
-        alert(`選擇匯入的設定檔數量 (${selectedCount}) 加上現有數量 (${currentProfileCount}) 將超過 ${MAX_PROFILES} 個上限，請減少選擇或先刪除一些設定檔。\nImporting ${selectedCount} profile(s) would exceed the limit of ${MAX_PROFILES} (current: ${currentProfileCount}). Please select fewer or delete some profiles first.`);
+        // --- 修改 alert 訊息，僅保留英文 ---
+        alert(`Importing ${selectedCount} profile(s) would exceed the limit of ${MAX_PROFILES} (current: ${currentProfileCount}). Please select fewer or delete some profiles first.`);
         log(`Import failed: Limit check failed (current: ${currentProfileCount}, selected: ${selectedCount}, limit: ${MAX_PROFILES}).`);
         return; // 阻止匯入
       }
