@@ -540,26 +540,22 @@
 
   /* Select Profile 下拉選單 */
   #profileSelect {
-    width: 100% !important; /* 拉長寬度，佔滿其容器 */
-    height: 36px; /* 與輸入框等高 */
-    padding: 8px ;
+    flex-grow: 1; /* 允許下拉選單佔據可用空間 */
+    width: auto; /* 移除固定或計算寬度 */
     box-sizing: border-box;
     margin-top: 20px;
   }
 
   /* 調整 flex-item 的寬度比例 */
   .form-table tr.flex-container td.flex-4 {
-    flex: 3; /* Profile Name 佔較多空間 */
+    flex: 2; /* Profile Name 佔較多空間 (可調整) */
   }
 
   .form-table tr.flex-container td.flex-1 {
-    flex: 2; /* Select Profile 佔較少空間，但拉長 */
+    flex: 3; /* 將 Select/Gear 欄位比例調高 */
   }
-  /* --- 新增：調整 Select Profile 的父容器 TD 的左邊內距 --- */
-  .form-table tr.flex-container td:nth-child(2) {
-    padding-left: 0; /* 移除左邊內距，讓 Select 更靠左 */
-  }
-  .form-table td {
+
+  .form-table tr:not(.flex-container) td { /* 讓通用 td 規則不影響第一行 */
     display: block;
     width: 100%;
     padding: 5px 0;
@@ -712,16 +708,17 @@
     /* 行動裝置調整 */
     @media (max-width: 600px) {
       .profile-select-container {
-        flex-direction: row; /* 保持水平排列 */
+         display: flex; /* 確保是 flex */
+         align-items: center; /* 垂直居中 */
+         flex-direction: row; /* 保持水平排列 */
          flex-wrap: nowrap; /* 防止換行 */
-         justify-content: space-between; /* 分散對齊，齒輪靠右 */
       }
       .settings-container {
-         margin-left: auto; /* 確保齒輪靠右 */
-         margin-top: 14px; /* 齒輪略微下移 */
          flex-shrink: 0; /* 防止齒輪被壓縮 */
          position: relative; /* 微調定位 */
-         right: 5px; /* 向右移動，確保不溢出 */
+         margin-left: auto; /* 保持靠右 */
+         margin-top: 20px; /* --- 修改：與 Select 的 margin-top 對齊 --- */
+         /* right: 5px; 移除這個微調 */
       }
     }
 
