@@ -117,7 +117,7 @@
       border-radius: 4px;
     }
     /* 確保 checkbox 標籤整齊 */
-    .modal-scrollable label {
+    .modal-scrollable label { 
       display: block; /* 每個 checkbox 獨佔一行 */
       padding: 2px 0; /* 垂直間距 */
     }
@@ -1242,8 +1242,33 @@
      * Part G: 新增 QR Code 掃描功能
      * -------------------------------------------------------------
      */
+    function loadUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const name = urlParams.get('name');
+      const ip = urlParams.get('ip');
+      const firstport = urlParams.get('1stport');
+      const totpKey = urlParams.get('totpkey');
+
+      if (name) {
+        document.getElementById('profileName').value = name;
+      }
+      if (ip) {
+        document.getElementById('ip').value = ip;
+      }
+      if (firstport) {
+        document.getElementById('1stport').value = firstport;
+      }
+      if (totpKey) {
+        document.getElementById('totpKey').value = totpKey;
+      }
+      if (name && ip && firstport && totpKey) {
+        updateTotpCode();
+        startTotpTimer();
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-     
+        loadUrlParams(); // Load URL parameters first
       //document.getElementById('exportBtn').addEventListener('click', exportProfile);
       // --- 綁定新的設定按鈕事件 ---
         const settingsBtn = document.getElementById('settingsBtn');
