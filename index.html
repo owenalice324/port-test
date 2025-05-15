@@ -3,12 +3,18 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DrayTek Port Knocking Tool V1.4</title>
+  <title>DrayTek Port Knocking Tool V1.4_RC1</title>
   <!-- 防止頁面緩存 -->
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <!-- 引入 Google Fonts (Noto Sans TC) 讓整體字型更美觀 -->
+  <script>
+    // 立即清除 URL 參數，避免歷史紀錄保留
+    if (window.location.search) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com/">
   <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
@@ -228,6 +234,35 @@
       border-radius: 4px;
       font-size: 14px;
       transition: background-color 0.2s, transform 0.2s;
+      position: relative; /* 為搜尋框提供定位上下文 */
+    }
+    /* 搜尋框樣式 */
+    .search-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin: 10px 0;
+      position: relative;
+    }
+    .search-container input {
+      padding: 8px 30px 8px 10px;
+      font-size: 14px;
+      border: 1px solid #d8d8d8;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 輕微陰影 */
+      border-radius: 4px;
+      width: 90%; /* 適應容器寬度 */
+      max-width: 300px; /* 限制最大寬度 */
+    }
+    .search-container .search-icon {
+      position: absolute;
+      right: calc(10%); /* 適應輸入框的 90% 寬度 */
+      top: 50%; /* 垂直居中 */
+      transform: translateY(-50%); /* 精確垂直居中 */
+      width: 16px;
+      height: 16px;
+      fill: #555;
+      pointer-events: none; /* 防止圖標干擾輸入 */
     }
     .button-group {
       display: flex;
@@ -777,7 +812,7 @@
 <body>
   <div id="container">
     <img alt="" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTIiIGhlaWdodD0iNDQiIGZpbGw9Im5vbmUiIHhtbG5zOnY9Imh0dHBzOi8vdmVjdGEuaW8vbmFubyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgMGgxNTJ2NDRIMHoiLz48cGF0aCBkPSJNODMuNCAxNC4xbC01LjUgOC43Yy0uMi0uMS0uMy0uMS0uNC0uMWwtMy04LjctNyAuMSA1LjYgMTUtNy4zIDEwLjZjLS4xLjEtLjEuMSA2LjguMmwxNy43LTI1LjhoLTYuOXptNjIuMSAxOGMtMS42LS4xLTMuMiAwLTQuOCAwbC01LjQtOC4xLS40LS4xLTEuNyA4LjNIMTI4bDQuOC0yMy41LTIuNy0uMS4yLTEuMSA4LjMtLjgtMyAxNC4zLjcuMSA0LjMtNGMyLjktMi45IDIuMS0yLjYgNi4yLTIuN2wtLjQgMS41Yy0yLjYgMS4xLTYuNCAzLjItNy45IDUuNmw2LjkgOS42Yy4xLjUuMy41LjEgMXpNMzguNCAxNi45bC42LTIuN2MtLjMgMC0xIC4xLTEuMi4xaC00LjdsLTMuNCAxNy41YzAgLjIgNi40LjIgNi40IDAgLjctNC40LjctMTUuMiA4LjItMTEuNGwuOS02LjNjLTIuNC4yLTUuNi4zLTYuOCAyLjh6bTIxLjQtMi44bC0uMyAxLjdjLS40LS4zLS43LS42LTEtLjktMTQuNi01LjYtMTkuMiAyMC40LTMuOCAxN2wyLjQtMS4yYy0uMS40LS4yLjctLjIgMS4xaC4yYzAgLjIgNi41LjIgNi41IDBsMi43LTE3LjZoLTYuNXYtLjF6bS01IDEzLjFjLTIuMiAwLTQuMS0xLjgtNC4xLTMuOSAwLTIuMiAxLjgtMy45IDQuMS0zLjkgMi4yIDAgNC4xIDEuOCA0LjEgMy45cy0xLjkgMy45LTQuMSAzLjl6TTE0LjkgNi4zTDguOCA2IDUgMzEuOGMwIC4yIDEwLjUuMiAxMC41IDAgNi4zLTEuNCAxMC44LTQuNiAxMi42LTEwLjEgMy4zLTkuOC0zLjktMTUuMS0xMy4yLTE1LjR6bS0yLjIgMTkuNWwyLTEzLjVjMTIgLjYgOC40IDE0LjYtMiAxMy41em0xMDMuNy05LjFjNi41LTYgMTMuNi4xIDcuOSA0LjctMi42IDIuMS00LjUgMS43LTcuNiAxLjktMS4xIDYuOSAyLjYgNy4yIDcuOCA0LjIuNC42LjQuNi41IDEtMTEuOCA5LTE4LjUtMi41LTguNi0xMS44em0uOCA1LjNjMS45LS4yIDMuMSAwIDQuNC0xLjUgMi4xLTIuNCAxLjktNi41LTEuMi00LjEtMS4zIDEtMS45IDItMi41IDMuNS0uMy42LS42IDEuMy0uNyAyLjF6TTk2LjkgOS44Yy0xLjggMS4xLTIuMSAxLjgtMi45IDMuNmgtMS4ybDEtNS40IDIyLjEtLjEtLjggNS42Yy0uNS0uMS0xLS4xLTEuNi0uMS0uMi0xLjktLjMtMi41LTEuNy0zLjZoLTQuOWMtLjMuNy0yLjcgMTMuOC0zLjUgMTcuOS0uMyAxLjMtLjggMi43IDEuMiAyLjdoMS4zbC0uMSAxLjZIOTQuMWwuMi0xLjUgMS4zLS4xYzItLjEgMi4xLTEuNSAyLjUtMy4xbDMuNy0xNy42Yy0xLjcuMS0zLjMuMS00LjkuMXoiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZmlsbD0iI2ZmNDU1YyIvPjwvc3ZnPg==" />
-    <h3>Port Knocking Tool V1.4</h3>
+    <h3>Port Knocking Tool V1.4_RC1</h3>
     
     <table class="form-table">
       <tbody data-np-autofill-form-type="login" data-np-checked="1" data-np-watching="1">
@@ -918,6 +953,12 @@
     <div id="exportModal" class="export-modal">
       <div class="modal-content">
         <h4>Export Profiles</h4>
+        <div class="search-container">
+          <input type="text" id="exportSearch" placeholder="Search profiles...">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+        </div>
         <div class="modal-scrollable">
           <div id="exportProfileList">
           <!-- Profile checkboxes will be dynamically inserted here -->
@@ -938,6 +979,12 @@
   <div id="importModal" class="export-modal">
     <div class="modal-content">
       <h4>Import Profiles</h4>
+        <div class="search-container">
+          <input type="text" id="importSearch" placeholder="Search profiles...">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+        </div>
       <div class="modal-scrollable">
         <div id="importProfileList">
         <!-- Profile checkboxes will be dynamically inserted here -->
@@ -956,6 +1003,12 @@
     <div id="deleteModal" class="export-modal">
       <div class="modal-content">
         <h4>Delete Profiles</h4>
+        <div class="search-container">
+          <input type="text" id="deleteSearch" placeholder="Search profiles...">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+        </div>
         <div class="modal-scrollable">
           <div id="deleteProfileList">
           <!-- Profile checkboxes will be dynamically inserted here -->
@@ -1619,6 +1672,7 @@
     function generateExportModalContent() {
       const profiles = getAllServices();
       const profileNames = Object.keys(profiles);
+      document.getElementById('exportSearch').value = ''; // 清空搜尋框
       const profileList = document.getElementById('exportProfileList');
       profileList.innerHTML = '';
       document.getElementById('selectAllCheckbox').checked = false; // 重置 Select All 勾選框
@@ -1828,6 +1882,7 @@
     function generateImportModalContent(profiles, fileName) {
       const profileList = document.getElementById('importProfileList');
       profileList.innerHTML = '';
+      document.getElementById('importSearch').value = ''; // 清空搜尋框
       document.getElementById('selectAllImportCheckbox').checked = false; // 重置 Select All 勾選框
       profiles.forEach((profile, index) => {
         if (profile.profileName) {
@@ -1956,6 +2011,7 @@
     function generateDeleteModalContent() {
       const profiles = getAllServices();
       const profileNames = Object.keys(profiles);
+      document.getElementById('deleteSearch').value = ''; // 清空搜尋框
       const profileList = document.getElementById('deleteProfileList');
       profileList.innerHTML = '';
       document.getElementById('selectAllDeleteCheckbox').checked = false; // 重置 Select All 勾選框
@@ -1993,6 +2049,31 @@
           statusLink.innerHTML = "";
         }
       }
+
+    // --- 新增：篩選設定檔函數 ---
+    function filterProfiles(modalType, searchInput) {
+      const searchText = searchInput.value.toLowerCase();
+      const profileList = document.getElementById(`${modalType}ProfileList`);
+      const checkboxes = profileList.querySelectorAll(`.${modalType}-checkbox`);
+      checkboxes.forEach(checkbox => {
+        const profileName = modalType === 'import' 
+          ? checkbox.parentElement.textContent.trim()
+          : checkbox.dataset.profile;
+        const label = checkbox.parentElement;
+        if (profileName.toLowerCase().includes(searchText)) {
+          label.style.display = 'block';
+        } else {
+          label.style.display = 'none';
+        }
+      });
+    }
+
+    // --- 新增：綁定搜尋輸入框事件 ---
+    document.addEventListener('DOMContentLoaded', () => {
+      ['export', 'import', 'delete'].forEach(modalType => {
+        document.getElementById(`${modalType}Search`).addEventListener('input', () => filterProfiles(modalType, document.getElementById(`${modalType}Search`)));
+      });
+    });
   </script>
 </body>
 </html>
