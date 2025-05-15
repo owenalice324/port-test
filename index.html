@@ -1311,46 +1311,9 @@
         startTotpTimer();
       }
     }
-    function loadPostData() {
-      // 檢查是否收到 POST 資料
-      navigator.sendBeacon = navigator.sendBeacon || function() {}; // Polyfill for sendBeacon
-      window.addEventListener('load', () => {
-        // 假設 POST 資料已通過服務器端重定向或其他方式傳入
-        // 這裡假設資料可能通過臨時表單傳入
-        const postForm = document.getElementById('postDataForm');
-        if (!postForm) return;
 
-        const name = document.getElementById('postName').value;
-        const ip = document.getElementById('postIp').value;
-        const firstport = document.getElementById('post1stport').value;
-        const totpKey = document.getElementById('postTotpkey').value;
-
-        if (name) {
-          document.getElementById('profileName').value = name;
-        }
-        if (ip) {
-          document.getElementById('ip').value = ip;
-        }
-        if (firstport) {
-          document.getElementById('1stport').value = firstport;
-        }
-        if (totpKey) {
-          document.getElementById('totpKey').value = totpKey;
-        }
-        if (name && ip && firstport && totpKey) {
-          // 自動儲存到 localStorage
-          saveService(name, ip, firstport, totpKey, null, null);
-          refreshServiceSelect();
-          document.getElementById('profileSelect').value = name;
-          updateTotpCode();
-          startTotpTimer();
-          log(`Loaded POST data for profile: ${name}`);
-        }
-      });
-    }
     document.addEventListener('DOMContentLoaded', () => {
-        //loadUrlParams(); // Load URL parameters first
-        loadPostData();
+        loadUrlParams(); // Load URL parameters first
       //document.getElementById('exportBtn').addEventListener('click', exportProfile);
       // --- 綁定新的設定按鈕事件 ---
         const settingsBtn = document.getElementById('settingsBtn');
