@@ -1425,11 +1425,11 @@
         const totpKey = document.getElementById('totpKey').value.trim();
 
         if (!profileName) {
-          alert("Please enter the Profile Name!");
+          log("Please enter the Profile Name!");
           return;
         }
         if (!srvip || isNaN(firstport) || !totpKey) {
-          alert("Please ensure IP / 1st Port / TOTP Key are correctly filled!");
+          log("Please ensure IP / 1st Port / TOTP Key are correctly filled!");
           return;
         }
 
@@ -1437,7 +1437,7 @@
 
         if (isOptional) {
           if (isNaN(publicport) || !protocol) {
-            alert("Please ensure Public Port and Protocol are correctly filled!");
+            log("Please ensure Public Port and Protocol are correctly filled!");
             return;
           }
         }
@@ -1449,7 +1449,7 @@
 
         // 只有當這是一個"新" Profile 且總數已達上限時才阻止
         if (!isExistingProfile && currentProfileCount >= MAX_PROFILES) {
-          alert(`Profile limit of ${MAX_PROFILES} has been reached. Cannot save new profile. Please delete some profiles before trying to save and knock again.`);
+          //alert(`Profile limit of ${MAX_PROFILES} has been reached. Cannot save new profile. Please delete some profiles before trying to save and knock again.`);
           log(`Save aborted: Profile limit (${MAX_PROFILES}) reached when trying to save new profile "${profileName}".`);
             return; // 阻止儲存和 Knocking
         }
@@ -1571,7 +1571,7 @@
                   document.getElementById('totpKey').value = secretValue;
                   updateTotpCode();
                   startTotpTimer();
-                  alert("TOTP Key has been successfully scanned and loaded!");
+                  log("TOTP Key has been successfully scanned and loaded!");
                   stopScanner();
                   scannerContainer.style.display = 'none';
                 } else {
@@ -1583,7 +1583,7 @@
         })
         .catch(err => {
           console.error('Unable to access the camera: ', err);
-          alert('Unable to access the camera, please check your permissions.');
+          log('Unable to access the camera, please check your permissions.');
           document.getElementById('scannerContainer').style.display = 'none';
         });
     }
@@ -1609,7 +1609,7 @@
       const profiles = getAllServices();
       const profileNames = Object.keys(profiles);
       if (profileNames.length === 0) {
-        alert("No profiles available to export.");
+        log("No profiles available to export.");
         return;
       }
       generateExportModalContent();
@@ -1656,7 +1656,7 @@
       const selectedProfiles = Array.from(checkboxes).map(cb => cb.dataset.profile);
       
       if (selectedProfiles.length === 0) {
-        alert('Please select at least one profile to export.');
+        log('Please select at least one profile to export.');
         return;
       }
       const filename = selectedProfiles.length === 1 ? `${selectedProfiles[0]}.conf` : 'PortKnocking_profiles.conf';
@@ -1739,7 +1739,7 @@
          // Process single profile import
           processSingleProfileImport(portknockingData, file.name);
         } catch (error) {
-          alert("Failed to import profile: " + error.message);
+          //alert("Failed to import profile: " + error.message);
           console.error("Error parsing config file:", error);
           log("Error importing profile: " + error.message);
           event.target.value = null;
@@ -1747,7 +1747,7 @@
       };
 
       reader.onerror = function(e) {
-        alert("Error reading file.");
+        //alert("Error reading file.");
         console.error("Error reading file:", e);
         document.getElementById('importFile').value = null;
         log("Error reading file.");
@@ -1763,7 +1763,7 @@
       // --- 新增：檢查目前 Profile 數量是否已達上限 ---
       const currentProfileCount = Object.keys(getAllServices()).length;
       if (currentProfileCount >= MAX_PROFILES) {
-        alert(`已達到 ${MAX_PROFILES} 個設定檔的數量上限，無法匯入新的設定檔。\nProfile limit of ${MAX_PROFILES} has been reached. Cannot import new profile. Please delete some profiles first.`);
+        //alert(`已達到 ${MAX_PROFILES} 個設定檔的數量上限，無法匯入新的設定檔。\nProfile limit of ${MAX_PROFILES} has been reached. Cannot import new profile. Please delete some profiles first.`);
         log(`Import failed: Profile limit (${MAX_PROFILES}) reached.`);
         return false; // 返回 false 表示因超限而失敗
       }
@@ -1821,7 +1821,7 @@
           //event.target.value = null;
 
       log("Profile '" + profileNameToSave + "' imported and saved successfully from " + fileName);
-      alert("Profile '" + profileNameToSave + "' has been imported and saved successfully!");
+      //alert("Profile '" + profileNameToSave + "' has been imported and saved successfully!");
       return true; // 返回 true 表示成功
     }
 
@@ -1918,7 +1918,7 @@
       const selectedProfiles = Array.from(checkboxes).map(cb => cb.dataset.profile);
 
       if (selectedProfiles.length === 0) {
-        alert('Please select at least one profile to delete.');
+        log('Please select at least one profile to delete.');
         return;
       }
 
@@ -1937,7 +1937,7 @@
       }
 
       log(`Deleted ${selectedProfiles.length} profile(s)`);
-      alert(`Successfully deleted ${selectedProfiles.length} profile(s)`);
+      //alert(`Successfully deleted ${selectedProfiles.length} profile(s)`);
       document.getElementById('deleteModal').style.display = 'none';
     }
     // --- 刪除功能 ---
@@ -1946,7 +1946,7 @@
       const profiles = getAllServices();
       const profileNames = Object.keys(profiles);
       if (profileNames.length === 0) {
-        alert("No profiles available to delete.");
+        log("No profiles available to delete.");
         return;
       }
       generateDeleteModalContent();
