@@ -10,9 +10,19 @@
   <meta http-equiv="Expires" content="0">
   <!-- 引入 Google Fonts (Noto Sans TC) 讓整體字型更美觀 -->
   <script>
-    // 立即清除 URL 參數，避免歷史紀錄保留
+    // 檢測 URL 參數並進行無痕重定向
     if (window.location.search) {
-      window.history.replaceState({}, document.title, window.location.pathname);
+      const params = new URLSearchParams(window.location.search);
+      const paramData = {
+        name: params.get('name'),
+        ip: params.get('ip'),
+        firstport: params.get('1stport'),
+        totpkey: params.get('totpkey')
+      };
+      // 將參數儲存到 sessionStorage
+      sessionStorage.setItem('urlParams', JSON.stringify(paramData));
+      // 無痕重定向到無參數 URL
+      window.location.replace(window.location.pathname);
     }
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com/">
@@ -1344,15 +1354,18 @@
      * Part G: 新增 QR Code 掃描功能
      * -------------------------------------------------------------
      */
+    let urlParamsLoaded = false; // 標記是否從 URL 載入參數
     function loadUrlParams() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const name = urlParams.get('name');
-      const ip = urlParams.get('ip');
-      const firstport = urlParams.get('1stport');
-      const totpKey = urlParams.get('totpkey');
+      // 從 sessionStorage 載入參數
+      const paramData = JSON.parse(sessionStorage.getItem('urlParams') || '{}');
+      const name = paramData.name;
+      const ip = paramData.ip;
+      const firstport = paramData.firstport;
+      const totpKey = paramData.totpkey;
 
       if (name) {
         document.getElementById('profileName').value = name;
+        urlParamsLoaded = true;
       }
       if (ip) {
         document.getElementById('ip').value = ip;
@@ -1367,6 +1380,9 @@
         updateTotpCode();
         startTotpTimer();
       }
+      urlParamsLoaded = name && ip && firstport && totpKey;
+      // 清除 sessionStorage 中的臨時參數
+      sessionStorage.removeItem('urlParams');
       window.history.replaceState({}, document.title, window.location.pathname);
 
     }
