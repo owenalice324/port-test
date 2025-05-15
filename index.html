@@ -1098,16 +1098,14 @@
     function copyTotpCode() {
       const totpCode = document.getElementById('currentTotpCode').textContent;
       if (totpCode === "--" || totpCode === "Invalid") {
-        alert("There is no valid TOTP code to copy!");
+        log("Cannot copy: No valid TOTP code available.");
         return;
       }
       navigator.clipboard.writeText(totpCode)
         .then(() => {
-          alert("TOTP code has been copied to the clipboard!");
           log("Copied TOTP code");
         })
         .catch(err => {
-          alert("Copy failed, please copy manually.");
           console.error('Clipboard copy failed:', err);
           log("Failed to copy TOTP code: " + err.message);
         });
@@ -1313,9 +1311,36 @@
         startTotpTimer();
       }
     }
+    function loadPostData() {
+      // 檢查是否從 POST 請求導向而來
+      if (window.performance.navigation.type === 1 || !document.getElementById('postDataForm')) {
+        return; // 如果是頁面刷新或無 POST 表單，直接返回
+      }
+      const name = document.getElementById('postName').value;
+      const ip = document.getElementById('postIp').value;
+      const firstport = document.getElementById('post1stport').value;
+      const totpKey = document.getElementById('postTotpkey').value;
 
+      if (name) {
+        document.getElementById('profileName').value = name;
+      }
+      if (ip) {
+        document.getElementById('ip').value = ip;
+      }
+      if (firstport) {
+        document.getElementById('1stport').value = firstport;
+      }
+      if (totpKey) {
+        document.getElementById('totpKey').value = totpKey;
+      }
+      if (name && ip && firstport && totpKey) {
+        updateTotpCode();
+        startTotpTimer();
+      }
+    }
     document.addEventListener('DOMContentLoaded', () => {
-        loadUrlParams(); // Load URL parameters first
+        //loadUrlParams(); // Load URL parameters first
+        loadPostData();
       //document.getElementById('exportBtn').addEventListener('click', exportProfile);
       // --- 綁定新的設定按鈕事件 ---
         const settingsBtn = document.getElementById('settingsBtn');
