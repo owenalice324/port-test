@@ -2,18 +2,25 @@
 <html>
 <head>
   <script>
-    // 監聽歷史記錄變化，防止 redirect.html 記錄
     (function() {
+      console.log('Head script executed at:', new Date().toISOString());
+      // 初始清理 URL
+      if (window.location.search || window.location.href.includes('redirect.html')) {
+        console.log('Cleaning initial URL:', window.location.href);
+        window.history.replaceState({}, document.title, '/port-test/');
+      }
+      // 監聽 popstate 事件
       window.addEventListener('popstate', function(event) {
-        if (window.location.href.includes('redirect.html')) {
-          // 如果檢測到 redirect.html，立即導向乾淨 URL
-          window.location.replace('/port-test/');
+        console.log('Popstate triggered:', window.location.href, event.state);
+        if (window.location.href.includes('redirect.html') || window.location.search) {
+          console.log('Detected redirect.html or query params, cleaning URL');
+          window.history.replaceState({}, document.title, '/port-test/');
         }
       });
-      // 初始檢查，確保當前 URL 是乾淨的
-      if (window.location.search) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
+      // 定期檢查歷史記錄
+      setInterval(() => {
+        console.log('History check:', window.location.href, 'History length:', window.history.length);
+      }, 1000);
     })();
   </script>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
