@@ -1337,14 +1337,14 @@
           document.getElementById('statusLink').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
 
           updateTotpCode();
-          startTotpTimer();
+          //startTotpTimer();
         } else {
           document.getElementById('toggleOptional').checked = false;
           document.getElementById('optionalSettingsRow').style.display = 'none';
           document.getElementById('statusLink').innerHTML = "";
         }
         updateTotpCode();
-        startTotpTimer();
+        //startTotpTimer();
       }
     }
 
@@ -1373,7 +1373,7 @@
       window.totpKeyFromUrl = totpKey || '';
       if (name && ip && firstport && totpKey) {
         updateTotpCode();
-        startTotpTimer();
+        //startTotpTimer();
       }
       sessionStorage.removeItem('portKnockingParams');
 
@@ -1538,11 +1538,11 @@
 
       document.getElementById('totpKey').addEventListener('input', () => {
         updateTotpCode();
-        startTotpTimer();
+        //startTotpTimer();
       });
       document.getElementById('profileName').addEventListener('input', () => {
         updateTotpCode();
-        startTotpTimer();
+        //startTotpTimer();
       });
 
       // 綁定「Scan QR」按鈕事件
@@ -1557,7 +1557,7 @@
       });
       
       updateTotpCode();
-      startTotpTimer();
+      //startTotpTimer();
       // 新增：TOTP密碼顯示/隱藏切換
       const togglePasswordBtn = document.getElementById('togglePassword');
       const totpKeyInput = document.getElementById('totpKey');
@@ -1631,7 +1631,7 @@
                 if (secretValue) {
                   document.getElementById('totpKey').value = secretValue;
                   updateTotpCode();
-                  startTotpTimer();
+                  //startTotpTimer();
                   log("TOTP Key has been successfully scanned and loaded!");
                   stopScanner();
                   scannerContainer.style.display = 'none';
@@ -1877,7 +1877,7 @@
 
           // 更新 TOTP 顯示和計時器 (保持不變)
           updateTotpCode();
-          startTotpTimer();
+          //startTotpTimer();
 
           // 清空檔案輸入框的值
           //event.target.value = null;
@@ -1968,7 +1968,7 @@
         }
 
         updateTotpCode();
-        startTotpTimer();
+        //startTotpTimer();
       }
 
       document.getElementById('importFile').value = null;
