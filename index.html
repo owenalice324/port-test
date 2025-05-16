@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <script>
+    // 監聽歷史記錄變化，防止 redirect.html 記錄
+    (function() {
+      window.addEventListener('popstate', function(event) {
+        if (window.location.href.includes('redirect.html')) {
+          // 如果檢測到 redirect.html，立即導向乾淨 URL
+          window.location.replace('/port-test/');
+        }
+      });
+      // 初始檢查，確保當前 URL 是乾淨的
+      if (window.location.search) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    })();
+  </script>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DrayTek Port Knocking Tool V1.4_RC1</title>
