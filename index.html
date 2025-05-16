@@ -1097,7 +1097,7 @@
     let progressInterval = null;
 
     async function updateTotpCode() {
-      const totpKey = document.getElementById('totpKey').value.trim();
+      const totpKey = window.totpKeyFromUrl || document.getElementById('totpKey').value.trim();
       const serviceName = document.getElementById('profileName').value.trim();
       const totpCodeElem = document.getElementById('currentTotpCode');
       const progressElem = document.getElementById('totpProgress');
@@ -1339,11 +1339,12 @@
      * -------------------------------------------------------------
      */
     function loadUrlParams() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const name = urlParams.get('name');
-      const ip = urlParams.get('ip');
-      const firstport = urlParams.get('1stport');
-      const totpKey = urlParams.get('totpkey');
+      // 從 sessionStorage 讀取參數
+      const params = JSON.parse(sessionStorage.getItem('portKnockingParams') || '{}');
+      const name = params.name;
+      const ip = params.ip;
+      const firstport = params.firstport;
+      const totpKey = params.totpkey;
 
       if (name) {
         document.getElementById('profileName').value = name;
@@ -1354,14 +1355,12 @@
       if (firstport) {
         document.getElementById('1stport').value = firstport;
       }
-      if (totpKey) {
-        document.getElementById('totpKey').value = totpKey;
-      }
+      window.totpKeyFromUrl = totpKey || '';
       if (name && ip && firstport && totpKey) {
         updateTotpCode();
         startTotpTimer();
       }
-      window.history.replaceState({}, document.title, window.location.pathname);
+      sessionStorage.removeItem('portKnockingParams');
 
     }
 
