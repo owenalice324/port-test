@@ -2,9 +2,13 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Redirecting...</title>
   <script>
     (function() {
+      // 立即執行，無任何延遲
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.toString()) {
         sessionStorage.setItem('portKnockingParams', JSON.stringify({
@@ -13,13 +17,10 @@
           firstport: urlParams.get('1stport'),
           totpkey: urlParams.get('totpkey')
         }));
-        // 立即導向目標頁面，不新增歷史記錄
-        window.location.replace('/port-test/'); // 調整為您的目標路徑
+        window.location.replace('/port-test/'); // 確保正確的目標路徑
       }
     })();
   </script>
 </head>
-<body>
-  <!-- 空白頁面，減少載入時間 -->
-</body>
+<body></body>
 </html>
