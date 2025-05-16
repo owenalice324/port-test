@@ -1,28 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script>
-    (function() {
-      console.log('Head script executed at:', new Date().toISOString());
-      // 初始清理 URL
-      if (window.location.search || window.location.href.includes('redirect.html')) {
-        console.log('Cleaning initial URL:', window.location.href);
-        window.history.replaceState({}, document.title, '/port-test/');
-      }
-      // 監聽 popstate 事件
-      window.addEventListener('popstate', function(event) {
-        console.log('Popstate triggered:', window.location.href, event.state);
-        if (window.location.href.includes('redirect.html') || window.location.search) {
-          console.log('Detected redirect.html or query params, cleaning URL');
-          window.history.replaceState({}, document.title, '/port-test/');
-        }
-      });
-      // 定期檢查歷史記錄
-      setInterval(() => {
-        console.log('History check:', window.location.href, 'History length:', window.history.length);
-      }, 1000);
-    })();
-  </script>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DrayTek Port Knocking Tool V1.4_RC1</title>
@@ -30,6 +8,12 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
+  <!-- 引入 Google Fonts (Noto Sans TC) 讓整體字型更美觀 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+  <!-- 引入 jsQR 庫（改用您提供的 CDN 連結） -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
 
   <style>
     /* 全局設定 */
@@ -576,7 +560,7 @@
     #confirmExportBtn,
     #confirmImportBtn,
     #confirmDeleteBtn {
-      margin-left: 35px; /* 增加左邊距，將按鈕向右推 (可調整此數值) */
+      margin-left: 70px; /* 增加左邊距，將按鈕向右推 (可調整此數值) */
     }
     @media (max-width: 600px) {
   #container {
@@ -1113,7 +1097,7 @@
     let progressInterval = null;
 
     async function updateTotpCode() {
-      const totpKey = window.totpKeyFromUrl || document.getElementById('totpKey').value.trim();
+      const totpKey = document.getElementById('totpKey').value.trim();
       const serviceName = document.getElementById('profileName').value.trim();
       const totpCodeElem = document.getElementById('currentTotpCode');
       const progressElem = document.getElementById('totpProgress');
@@ -1338,14 +1322,14 @@
           document.getElementById('statusLink').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
 
           updateTotpCode();
-          //startTotpTimer();
+          startTotpTimer();
         } else {
           document.getElementById('toggleOptional').checked = false;
           document.getElementById('optionalSettingsRow').style.display = 'none';
           document.getElementById('statusLink').innerHTML = "";
         }
         updateTotpCode();
-        //startTotpTimer();
+        startTotpTimer();
       }
     }
 
@@ -1355,12 +1339,11 @@
      * -------------------------------------------------------------
      */
     function loadUrlParams() {
-      // 從 sessionStorage 讀取參數
-      const params = JSON.parse(sessionStorage.getItem('portKnockingParams') || '{}');
-      const name = params.name;
-      const ip = params.ip;
-      const firstport = params.firstport;
-      const totpKey = params.totpkey;
+      const urlParams = new URLSearchParams(window.location.search);
+      const name = urlParams.get('name');
+      const ip = urlParams.get('ip');
+      const firstport = urlParams.get('1stport');
+      const totpKey = urlParams.get('totpkey');
 
       if (name) {
         document.getElementById('profileName').value = name;
@@ -1371,12 +1354,14 @@
       if (firstport) {
         document.getElementById('1stport').value = firstport;
       }
-      window.totpKeyFromUrl = totpKey || '';
+      if (totpKey) {
+        document.getElementById('totpKey').value = totpKey;
+      }
       if (name && ip && firstport && totpKey) {
         updateTotpCode();
-        //startTotpTimer();
+        startTotpTimer();
       }
-      sessionStorage.removeItem('portKnockingParams');
+      window.history.replaceState({}, document.title, window.location.pathname);
 
     }
 
@@ -1539,11 +1524,11 @@
 
       document.getElementById('totpKey').addEventListener('input', () => {
         updateTotpCode();
-        //startTotpTimer();
+        startTotpTimer();
       });
       document.getElementById('profileName').addEventListener('input', () => {
         updateTotpCode();
-        //startTotpTimer();
+        startTotpTimer();
       });
 
       // 綁定「Scan QR」按鈕事件
@@ -1558,7 +1543,7 @@
       });
       
       updateTotpCode();
-      //startTotpTimer();
+      startTotpTimer();
       // 新增：TOTP密碼顯示/隱藏切換
       const togglePasswordBtn = document.getElementById('togglePassword');
       const totpKeyInput = document.getElementById('totpKey');
@@ -1632,7 +1617,7 @@
                 if (secretValue) {
                   document.getElementById('totpKey').value = secretValue;
                   updateTotpCode();
-                  //startTotpTimer();
+                  startTotpTimer();
                   log("TOTP Key has been successfully scanned and loaded!");
                   stopScanner();
                   scannerContainer.style.display = 'none';
@@ -1701,16 +1686,21 @@
       const isChecked = event.target.checked;
       const targetId = event.target.id;
       let selector;
+      let modalType;
       if (targetId === 'selectAllImportCheckbox') {
-        selector = '.import-checkbox';
+        modalType = 'import';
       } else if (targetId === 'selectAllDeleteCheckbox') {
-        selector = '.delete-checkbox';
+        modalType = 'delete';
       } else {
-        selector = '.export-checkbox';
+        modalType = 'export';
       }
-      const checkboxes = document.querySelectorAll(selector);
+      const profileList = document.getElementById(`${modalType}ProfileList`);
+      const checkboxes = profileList.querySelectorAll(`.${modalType}-checkbox`);
       checkboxes.forEach(checkbox => {
-        checkbox.checked = isChecked;
+        const label = checkbox.parentElement;
+        if (label.style.display !== 'none') {
+          checkbox.checked = isChecked;
+        }
       });
     }
 
@@ -1878,7 +1868,7 @@
 
           // 更新 TOTP 顯示和計時器 (保持不變)
           updateTotpCode();
-          //startTotpTimer();
+          startTotpTimer();
 
           // 清空檔案輸入框的值
           //event.target.value = null;
@@ -1969,7 +1959,7 @@
         }
 
         updateTotpCode();
-        //startTotpTimer();
+        startTotpTimer();
       }
 
       document.getElementById('importFile').value = null;
