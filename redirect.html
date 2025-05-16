@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting...</title>
+  <script>
+    (function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.toString()) {
+        sessionStorage.setItem('portKnockingParams', JSON.stringify({
+          name: urlParams.get('name'),
+          ip: urlParams.get('ip'),
+          firstport: urlParams.get('1stport'),
+          totpkey: urlParams.get('totpkey')
+        }));
+        // 立即導向目標頁面，不新增歷史記錄
+        window.location.replace('/port-test/'); // 調整為您的目標路徑
+      }
+    })();
+  </script>
+</head>
+<body>
+  <!-- 空白頁面，減少載入時間 -->
+</body>
+</html>
