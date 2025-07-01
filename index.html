@@ -1365,6 +1365,21 @@
         updateTotpCode();
         startTotpTimer();
       }
+
+        // 如果只有 name 參數，從 localStorage 載入對應 profile
+        if (name && !ip && !firstport && !totpKey) {
+        const data = getServiceData(name);
+        if (data) {
+            document.getElementById('ip').value = data.ip || '';
+            document.getElementById('1stport').value = data.firstport || '';
+            document.getElementById('totpKey').value = data.totpKey || '';
+            updateTotpCode();
+            startTotpTimer();
+        } else {
+            log(`Profile "${name}" not found in localStorage.`);
+        }
+        }
+
       if (auto && name && ip && firstport && totpKey) {
        // 自動執行 port knocking
        saveService(name, ip, firstport, totpKey, null, null);
