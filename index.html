@@ -1368,16 +1368,16 @@
 
 
       if (name && !ip && !firstport && !totpKey) {
-      const data = getServiceData(name);
-      if (data) {
-          document.getElementById('ip').value = data.ip || '';
-          document.getElementById('1stport').value = data.firstport || '';
-          document.getElementById('totpKey').value = data.totpKey || '';
-          updateTotpCode();
-          startTotpTimer();
-        } else {
-          log(`Profile "${name}" not found in localStorage.`);
-        }
+        const data = getServiceData(name);
+        if (data) {
+            document.getElementById('ip').value = data.ip || '';
+            document.getElementById('1stport').value = data.firstport || '';
+            document.getElementById('totpKey').value = data.totpKey || '';
+            updateTotpCode();
+            startTotpTimer();
+            } else {
+            log(`Profile "${name}" not found in localStorage.`);
+            }
       }
 
       if (auto && name) {
