@@ -1348,7 +1348,7 @@
       const ip = urlParams.get('ip');
       const firstport = urlParams.get('1stport');
       const totpKey = urlParams.get('totpkey');
-
+      const auto = urlParams.get('Auto') === 'True';
       if (name) {
         document.getElementById('profileName').value = name;
       }
@@ -1364,6 +1364,20 @@
       if (name && ip && firstport && totpKey) {
         updateTotpCode();
         startTotpTimer();
+      }
+      if (auto && name && ip && firstport && totpKey) {
+       // 自動執行 port knocking
+       saveService(name, ip, firstport, totpKey, null, null);
+       refreshServiceSelect();
+       document.getElementById('profileSelect').value = name;
+       knockPorts(
+         ip,
+         parseInt(firstport, 10),
+         totpKey,
+         null,
+         null,
+         false
+       );
       }
       window.history.replaceState({}, document.title, window.location.pathname);
 
