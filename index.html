@@ -1375,12 +1375,26 @@
             document.getElementById('totpKey').value = data.totpKey || '';
             updateTotpCode();
             startTotpTimer();
-            } else {
-            log(`Profile "${name}" not found in localStorage.`);
+            // 如果有 Auto=True，執行自動敲門
+            if (auto) {
+                saveService(name, data.ip, data.firstport, data.totpKey, null, null);
+                refreshServiceSelect();
+                document.getElementById('profileSelect').value = name;
+                knockPorts(
+                data.ip,
+                parseInt(data.firstport, 10),
+                data.totpKey,
+                null,
+                null,
+                false
+                );
             }
+        } else {
+            log(`Profile "${name}" not found in localStorage.`);
+        }
       }
 
-      if (auto && name) {
+      if (auto && name && ip && firstport && totpKey) {
        // 自動執行 port knocking
        saveService(name, ip, firstport, totpKey, null, null);
        refreshServiceSelect();
