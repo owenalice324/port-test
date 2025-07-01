@@ -1,37 +1,2111 @@
-     // 如果只有 name 參數，從 localStorage 載入對應 profile
-     if (name && !ip && !firstport && !totpKey) {
-       const data = getServiceData(name);
-       if (data) {
-         document.getElementById('ip').value = data.ip || '';
-         document.getElementById('1stport').value = data.firstport || '';
-         document.getElementById('totpKey').value = data.totpKey || '';
-         updateTotpCode();
-         startTotpTimer();
-       } else {
-         log(`Profile "${name}" not found in localStorage.`);
-       }
-     }
-     // 如果有 name、ip 和 Auto=True，從 localStorage 載入缺失的參數並執行自動敲門
-     if (auto && name && ip && (!firstport || !totpKey)) {
-       const data = getServiceData(name);
-       if (data) {
-         document.getElementById('ip').value = data.ip || ip;
-         document.getElementById('1stport').value = data.firstport || '';
-         document.getElementById('totpKey').value = data.totpKey || '';
-         updateTotpCode();
-         startTotpTimer();
-         saveService(name, data.ip || ip, data.firstport, data.totpKey, null, null);
-         refreshServiceSelect();
-         document.getElementById('profileSelect').value = name;
-         knockPorts(
-           data.ip || ip,
-           parseInt(data.firstport, 10),
-           data.totpKey,
-           null,
-           null,
-           false
-         );
-       } else {
-         log(`Profile "${name}" not found in localStorage for auto knocking.`);
-       }
-     } 
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DrayTek Port Knocking Tool V1.4_RC1</title>
+  <!-- 防止頁面緩存 -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <!-- 引入 Google Fonts (Noto Sans TC) 讓整體字型更美觀 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+  <!-- 引入 jsQR 庫（改用您提供的 CDN 連結） -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+
+  <style>
+    /* 全局設定 */
+    * {
+      box-sizing: border-box;
+    }
+        html, body {
+      height: 100%;
+      overflow-x: hidden; /* 防止水平滾動 */
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans TC', sans-serif;
+      background: linear-gradient(120deg, #E9EFF1, #E9EFF1);
+      min-height: 100vh; /* 至少填滿視口 */
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 置中容器，加入陰影與白底卡片風格 */
+    #container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px 30px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      
+    }
+
+    /* 標題 */
+    h3, h4 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      text-align: center;
+      color: #333;
+      font-weight: 700;
+    }
+
+    /* 可選設定容器 */
+    .optional-container {
+      padding: 20px;
+      border-radius: 8px;
+      background-color: #fffbf0; 
+    }
+
+    /* Notice section */
+    .notice {
+      margin: 15px;
+      padding: 15px;
+      background-color: #fffbf0;
+      border: 1px solid #ffe082;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      font-size: 14px;
+      color: #333;
+    }
+    .notice p {
+      margin: 5px 0;
+    }
+    .notice-container {
+      margin-top: 20px;
+      margin-bottom: 20px;
+      max-width: 800px;
+    }
+
+    /* Export Modal */
+    .export-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: #fff;
+      max-width: 400px;
+      width: 90%;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .modal-scrollable {
+      max-height: 250px; /* 固定高度以觸發滾動 */
+      overflow-y: auto; /* 啟用垂直滾動 */
+      margin: 15px 0; /* 上下間距 */
+      padding: 0 10px; /* 內邊距，避免內容緊貼邊緣 */
+    }
+    /* 自訂滾動條樣式 */
+    .modal-scrollable::-webkit-scrollbar {
+      width: 8px; /* 滾動條寬度 */
+    }
+    .modal-scrollable::-webkit-scrollbar-thumb {
+      background-color: #00ca9d; /* 滾動條顏色，與主題一致 */
+      border-radius: 4px;
+    }
+    .modal-scrollable::-webkit-scrollbar-track {
+      background-color: #f1f1f1; /* 滾動條背景 */
+      border-radius: 4px;
+    }
+    /* 確保 checkbox 標籤整齊 */
+    .modal-scrollable label { 
+      display: block; /* 每個 checkbox 獨佔一行 */
+      padding: 2px 0; /* 垂直間距 */
+    }
+    .modal-content h4 {
+      margin: 0 0 15px;
+      text-align: center;
+    }
+    .modal-content label {
+      display: flex;
+      align-items: center;
+      margin: 8px 0;
+      font-size: 14px;
+    }
+    .modal-buttons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .select-all-label {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+    .select-all-label input {
+      margin-right: 5px;
+    }
+    /* 表單表格 */
+    .form-table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 100%;
+      text-align: left;
+      border-radius: 8px;
+      overflow: hidden; /* 讓邊角看起來更平滑 */
+    }
+    .form-table td {
+      padding: 5px 0;
+      vertical-align: middle;
+      position: relative; /* 使容器內的元素能夠定位 */
+    }
+    .form-table tr:last-child td {
+      border-bottom: none;
+    }
+    .form-table label {
+      font-size: 14px;
+      width: 150px;
+      display: inline-block;
+    }
+    .label-none {
+      display: none !important;
+    }
+
+    /* 輸入框、下拉式選單 */
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    select {
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #d8d8d8;
+      border-radius: 4px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"],
+    input[type="number"] {
+      width: calc(100% - 160px);
+    }
+    input:focus,
+    select:focus {
+      border-color: #999;
+    }
+    input::placeholder {
+      font-weight: 100;
+      opacity: 0.5;
+      color: gray;
+    }
+    .input--sm {
+      width: 70px !important;
+    }
+    .input--md {
+      width: 180px !important;
+    }
+    .input--lg {
+      width: 400px !important;
+    }
+    /* 按鈕們 */
+    .button-bar {
+      margin-top: 25px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      cursor: pointer;
+      background-color: #00ca9d;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: background-color 0.2s, transform 0.2s;
+      position: relative; /* 為搜尋框提供定位上下文 */
+    }
+    /* 搜尋框樣式 */
+    .search-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin: 10px 0;
+      position: relative;
+    }
+    .search-container input {
+      padding: 8px 30px 8px 10px;
+      font-size: 14px;
+      border: 1px solid #d8d8d8;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 輕微陰影 */
+      border-radius: 4px;
+      width: 90%; /* 適應容器寬度 */
+      max-width: 300px; /* 限制最大寬度 */
+    }
+    .search-container .search-icon {
+      position: absolute;
+      right: calc(10%); /* 適應輸入框的 90% 寬度 */
+      top: 50%; /* 垂直居中 */
+      transform: translateY(-50%); /* 精確垂直居中 */
+      width: 16px;
+      height: 16px;
+      fill: #555;
+      pointer-events: none; /* 防止圖標干擾輸入 */
+    }
+    .button-group {
+      display: flex;
+      align-items: center;
+      margin-left: 310px; /* 與 #knockBtn 的偏移一致 */
+    }
+    #knockBtn {
+      margin-left: 0; /* 移除獨立偏移，由 button-group 控制 */
+      text-align: center; /* 確保文字居中 */
+    }
+    button:hover {
+      background-color: #00b38b;
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button.del-color {
+      color: #353535;
+      background-color: #f5f5f5;
+      border: 1px solid #dcdcdc;
+    }
+    button.del-color:hover {
+      background-color: #e5e5e5;
+    }
+
+    /* Table flex */
+    .flex-container {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    .flex-item {
+      flex: 1;
+    }
+    .flex-2 {
+      flex: 2;
+    }
+    .flex-3 {
+      flex: 3;
+    }
+    .flex-4 {
+      flex: 4;
+    }
+    .flex-5 {
+      flex: 5;
+    }
+
+    /* The container */
+    .container {
+      display: block;
+      position: relative;
+      padding-left: 35px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      font-size: 22px;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    /* Hide the browser's default checkbox */
+    .container input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    /* Create a custom checkbox */
+    .checkmark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 25px;
+      width: 25px;
+      background-color: #eee;
+    }
+
+    /* On mouse-over, add a grey background color */
+    .container:hover input ~ .checkmark {
+      background-color: #ccc;
+    }
+
+    /* When the checkbox is checked, add a blue background */
+    .container input:checked ~ .checkmark {
+      background-color: #2196F3;
+    }
+
+    /* Create the checkmark/indicator (hidden when not checked) */
+    .checkmark:after {
+      content: "";
+      position: absolute;
+      display: none;
+    }
+
+    /* Show the checkmark when checked */
+    .container input:checked ~ .checkmark:after {
+      display: block;
+    }
+
+    /* Style the checkmark/indicator */
+    .container .checkmark:after {
+      left: 9px;
+      top: 5px;
+      width: 5px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 3px 3px 0;
+      -webkit-transform: rotate(45deg);
+      -ms-transform: rotate(45deg);
+      transform: rotate(45deg);
+    }
+    .moreSetting {
+      color: #21adf3;
+    }
+
+    /* 顯示日誌(進度欄) */
+    #log {
+      margin-top: 25px;
+      width: 100%;
+      height: 200px;
+      overflow-y: auto;
+      background-color: #f9f9f9;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 10px;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      color: #333;
+    }
+
+    .status {
+      margin-left: 10px;
+      font-weight: bold;
+    }
+    .status.failed {
+      color: red;
+    }
+    .status.successful {
+      color: green;
+    }
+    .status.na {
+      color: gray;
+    }
+
+    /* 狀態欄超連結 */
+    #statusLink a {
+      color: #1a0dab;
+      text-decoration: none;
+    }
+    #statusLink a:hover {
+      text-decoration: underline;
+    }
+
+    /* 新增：TOTP 功能相關樣式 */
+    .totp-key-container {
+      align-items: center;
+    }
+
+    .verify-code-container {
+      display: flex;
+      align-items: center;
+      margin-left: 150px;
+      margin-top: 5px;
+    }
+   /* 新增：TOTP輸入框的眼睛圖標樣式 */
+    .totp-key-container {
+      position: relative;
+    }
+    .toggle-password {
+      position: absolute;
+      left: 525px;
+      top: 30%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .toggle-password svg {
+      width: 20px;
+      height: 20px;
+      fill: #555;
+    }
+    .toggle-password:hover svg {
+      fill: #000;
+    }
+    .toggle-password:focus {
+      outline: none;
+    }
+
+    /* 結束：眼睛圖標樣式 */
+    #qrSection {
+      margin-top: 20px;
+    }
+
+    #currentTotpContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    #currentTotpCode {
+      font-size: 36px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+      user-select: all;
+      text-align: center;
+    }
+
+    #totpProgressContainer {
+    }
+    .progress-Box {
+      margin: auto;
+      justify-content: center;
+    }
+    #totpProgressBar {
+      width: 30%;
+      height: 8px;
+      background-color: #e0e0e0;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    #totpProgress {
+      height: 100%;
+      width: 100%;
+      background-color: #09c199;
+      transition: width 1s linear;
+    }
+    #totpCountdown {
+      top: -25px;
+      right: 0;
+      font-size: 14px;
+      color: #333;
+    }
+
+    /* 掃描介面 */
+    #scannerContainer {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 20px;
+      text-align: center;
+    }
+    /* 修改 video 標籤：加入 muted playsinline 與 webkit-playsinline 屬性 */
+    #scannerVideo {
+      width: 500px;
+      height: 400px;
+      max-width: 90%;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    #scannerOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 4px dashed #00ca9d;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    #scannerInstructions {
+      color: #fff;
+      font-size: 18px;
+      text-align: center;
+    }
+    #closeScannerBtn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      cursor: pointer;
+      background-color: #9a9a9a;
+      color: #e8e8e8;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+    #closeScannerBtn:hover {
+      background-color: #7f7f7f;
+    }
+    #closeScannerBtn:active {
+      transform: translateY(0);
+    }
+    #confirmExportBtn,
+    #confirmImportBtn,
+    #confirmDeleteBtn {
+      margin-left: 70px; /* 增加左邊距，將按鈕向右推 (可調整此數值) */
+    }
+    @media (max-width: 600px) {
+  #container {
+    margin: 10px;
+    padding: 15px;
+    min-height: auto;
+  }
+  #confirmExportBtn,
+  #confirmImportBtn,
+  #confirmDeleteBtn {
+    margin-left: 20px; /* 增加左邊距，將按鈕向右推 (可調整此數值) */
+  }
+  .form-table {
+    width: 100%;
+    margin: 10px auto;
+  }
+
+  /* 確保第一行保持水平排列 */
+  .form-table tr.flex-container {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .form-table tr.flex-container td {
+    display: flex;
+    flex-direction: column;
+    width: auto; /* 允許根據內容調整 */
+    padding: 5px;
+  }
+
+  /* Profile Name 輸入框 */
+  #profileName {
+    width: 90% !important; /* 縮短寬度，約佔60% */
+    height: 36px; /* 固定高度 */
+    padding: 8px;
+    box-sizing: border-box;
+  }
+
+  #scanTotpBtn {
+    margin-top: 10px; /* 往下移動 10px (可調整此數值) */
+  }
+
+  /* Select Profile 下拉選單 */
+  #profileSelect {
+    flex-grow: 1; /* 允許下拉選單佔據可用空間 */
+    width: auto; /* 移除固定或計算寬度 */
+    box-sizing: border-box;
+    margin-top: 20px;
+  }
+
+  /* 調整 flex-item 的寬度比例 */
+  .form-table tr.flex-container td.flex-4 {
+    flex: 2; /* Profile Name 佔較多空間 (可調整) */
+  }
+
+  .form-table tr.flex-container td.flex-1 {
+    flex: 3; /* 將 Select/Gear 欄位比例調高 */
+  }
+
+  .form-table tr:not(.flex-container) td { /* 讓通用 td 規則不影響第一行 */
+    display: block;
+    width: 100%;
+    padding: 5px 0;
+  }
+  
+  .form-table label {
+    display: block;
+    margin-bottom: 5px;
+    width: 100%;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="password"],
+  select {
+    width: 100% !important;
+  }
+
+  .button-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-left: 0;
+  }
+
+  .button-group {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  #log {
+    max-height: 150px;
+    min-height: 100px;
+    margin-top: 15px;
+  }
+
+  .notice {
+    margin: 10px 0;
+    padding: 10px;
+  }
+
+  .totp-key-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .verify-code-container {
+    margin-left: 0;
+    margin-top: 10px;
+    justify-content: flex-start;
+  }
+
+  #totpProgressBar {
+    width: 80%;
+  }
+
+  #scannerVideo {
+    width: 90%;
+    max-height: 70vh;
+  }
+}
+    /* select checked checkbox */
+    .custom-checkbox {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1px solid #848484;
+      border-radius: 3px;
+      background-color: white;
+      cursor: pointer;
+      outline: none;
+      position: relative;
+      vertical-align: bottom;
+    }
+    .custom-checkbox:checked {
+      background-color: #09C199;
+      border-color: #09C199;
+    }
+    .custom-checkbox:checked::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 4px;
+      height: 7px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(40deg);
+    }
+    .custom-checkbox:hover {}
+    /* 標籤的樣式 */
+    label {
+      font-size: 16px;
+      cursor: pointer;
+    }
+    /* --- 新增：設定按鈕與下拉選單樣式 --- */
+    .settings-container {
+      position: relative; /* 讓下拉選單可以相對定位 */
+      display: inline-block; /* 讓容器只佔據按鈕寬度 */
+    }
+
+    #settingsBtn {
+      background: none;
+      border: none;
+      padding: 5px;
+      cursor: pointer;
+      font-size: 20px; /* 調整圖示大小 */
+      line-height: 1;
+      vertical-align: middle; /* 與其他按鈕對齊 */
+      margin-right: 10px; /* 與其他按鈕間距 */
+      color: #555; /* 圖示顏色 */
+    }
+    #settingsBtn:focus {
+      outline: none; /* 移除點擊時的預設外框 */
+    }
+    #settingsBtn:hover {
+      color: #000;
+    }
+
+    #settingsMenu {
+      display: none; /* 預設隱藏 */
+      position: absolute;
+      top: 100%; /* 出現在按鈕下方 */
+      left: -120px; /* 向左偏移，使選單與下拉選單對齊 */
+      background-color: white;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      z-index: 100; /* 確保在其他元素之上 */
+      border-radius: 4px;
+      min-width: 150px; /* 最小寬度 */
+    }
+
+    #settingsMenu a {
+      display: block;
+      padding: 10px 15px;
+      text-decoration: none;
+      color: #333;
+      font-size: 14px;
+      white-space: nowrap; /* 防止文字換行 */
+    }
+    /* Profile 選擇區域的容器 */
+    .profile-select-container {
+      display: flex;
+      align-items: center; /* 垂直居中 */
+      gap: 5px; /* 按鈕與下拉選單的間距 */
+    }
+    /* 行動裝置調整 */
+    @media (max-width: 600px) {
+      .profile-select-container {
+         display: flex; /* 確保是 flex */
+         align-items: center; /* 垂直居中 */
+         flex-direction: row; /* 保持水平排列 */
+         flex-wrap: nowrap; /* 防止換行 */
+      }
+      .settings-container {
+         flex-shrink: 0; /* 防止齒輪被壓縮 */
+         position: relative; /* 微調定位 */
+         margin-left: auto; /* 保持靠右 */
+         margin-top: 20px; /* --- 修改：與 Select 的 margin-top 對齊 --- */
+         /* right: 5px; 移除這個微調 */
+      }
+      .toggle-password {
+      position: absolute;
+      left: 70px;
+      top: 12%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    }
+
+    #settingsMenu a:hover {
+      background-color: #f5f5f5;
+    }
+    /* --- 結束：設定按鈕與下拉選單樣式 --- */
+  </style>
+</head>
+<body>
+  <div id="container">
+    <img alt="" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTIiIGhlaWdodD0iNDQiIGZpbGw9Im5vbmUiIHhtbG5zOnY9Imh0dHBzOi8vdmVjdGEuaW8vbmFubyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgMGgxNTJ2NDRIMHoiLz48cGF0aCBkPSJNODMuNCAxNC4xbC01LjUgOC43Yy0uMi0uMS0uMy0uMS0uNC0uMWwtMy04LjctNyAuMSA1LjYgMTUtNy4zIDEwLjZjLS4xLjEtLjEuMSA2LjguMmwxNy43LTI1LjhoLTYuOXptNjIuMSAxOGMtMS42LS4xLTMuMiAwLTQuOCAwbC01LjQtOC4xLS40LS4xLTEuNyA4LjNIMTI4bDQuOC0yMy41LTIuNy0uMS4yLTEuMSA4LjMtLjgtMyAxNC4zLjcuMSA0LjMtNGMyLjktMi45IDIuMS0yLjYgNi4yLTIuN2wtLjQgMS41Yy0yLjYgMS4xLTYuNCAzLjItNy45IDUuNmw2LjkgOS42Yy4xLjUuMy41LjEgMXpNMzguNCAxNi45bC42LTIuN2MtLjMgMC0xIC4xLTEuMi4xaC00LjdsLTMuNCAxNy41YzAgLjIgNi40LjIgNi40IDAgLjctNC40LjctMTUuMiA4LjItMTEuNGwuOS02LjNjLTIuNC4yLTUuNi4zLTYuOCAyLjh6bTIxLjQtMi44bC0uMyAxLjdjLS40LS4zLS43LS42LTEtLjktMTQuNi01LjYtMTkuMiAyMC40LTMuOCAxN2wyLjQtMS4yYy0uMS40LS4yLjctLjIgMS4xaC4yYzAgLjIgNi41LjIgNi41IDBsMi43LTE3LjZoLTYuNXYtLjF6bS01IDEzLjFjLTIuMiAwLTQuMS0xLjgtNC4xLTMuOSAwLTIuMiAxLjgtMy45IDQuMS0zLjkgMi4yIDAgNC4xIDEuOCA0LjEgMy45cy0xLjkgMy45LTQuMSAzLjl6TTE0LjkgNi4zTDguOCA2IDUgMzEuOGMwIC4yIDEwLjUuMiAxMC41IDAgNi4zLTEuNCAxMC44LTQuNiAxMi42LTEwLjEgMy4zLTkuOC0zLjktMTUuMS0xMy4yLTE1LjR6bS0yLjIgMTkuNWwyLTEzLjVjMTIgLjYgOC40IDE0LjYtMiAxMy41em0xMDMuNy05LjFjNi41LTYgMTMuNi4xIDcuOSA0LjctMi42IDIuMS00LjUgMS43LTcuNiAxLjktMS4xIDYuOSAyLjYgNy4yIDcuOCA0LjIuNC42LjQuNi41IDEtMTEuOCA5LTE4LjUtMi41LTguNi0xMS44em0uOCA1LjNjMS45LS4yIDMuMSAwIDQuNC0xLjUgMi4xLTIuNCAxLjktNi41LTEuMi00LjEtMS4zIDEtMS45IDItMi41IDMuNS0uMy42LS42IDEuMy0uNyAyLjF6TTk2LjkgOS44Yy0xLjggMS4xLTIuMSAxLjgtMi45IDMuNmgtMS4ybDEtNS40IDIyLjEtLjEtLjggNS42Yy0uNS0uMS0xLS4xLTEuNi0uMS0uMi0xLjktLjMtMi41LTEuNy0zLjZoLTQuOWMtLjMuNy0yLjcgMTMuOC0zLjUgMTcuOS0uMyAxLjMtLjggMi43IDEuMiAyLjdoMS4zbC0uMSAxLjZIOTQuMWwuMi0xLjUgMS4zLS4xYzItLjEgMi4xLTEuNSAyLjUtMy4xbDMuNy0xNy42Yy0xLjcuMS0zLjMuMS00LjkuMXoiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZmlsbD0iI2ZmNDU1YyIvPjwvc3ZnPg==" />
+    <h3>Port Knocking Tool V1.4_RC1</h3>
+    
+    <table class="form-table">
+      <tbody data-np-autofill-form-type="login" data-np-checked="1" data-np-watching="1">
+        <tr class="flex-container">
+          <td class="flex-item flex-4">
+            <label for="profileName">Profile Name</label>
+            <input type="text" id="profileName" class="input--lg" placeholder="MyTestProfile">
+          </td>
+          <td class="flex-item flex-1">
+            <label for="profileSelect" class="label-none">Profile Select</label>
+            <div class="profile-select-container">
+             <select id="profileSelect" class="custom-select"><option value="">-- Select --</option></select>
+             <div class="settings-container">
+               <button id="settingsBtn" title="Settings">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+                    <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.858 2.929 2.929 0 0 1 0 5.858z"/>
+                  </svg>
+                </button>
+                <div id="settingsMenu">
+                  <a href="#" id="importOption">Import Profile</a>
+                  <a href="#" id="exportOption">Export Profile</a>
+                  <a href="#" id="deleteOption">Delete Profile</a>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <label>IP or Domain Name</label>
+            <input type="text" id="ip" class="input--lg" placeholder="10.3.14.20" autocomplete="off">
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <label>1st Port</label>
+            <input type="number" id="1stport" class="input--sm" placeholder="1222" autocomplete="off">
+          </td>
+        </tr>
+        <!-- TOTP Key 與相關功能 -->
+        <tr>
+          <td>
+            <div class="totp-key-container">
+              <label>TOTP Key</label>
+              <!-- 將 type 改為 password 以隱藏輸入 -->
+              <input type="password" id="totpKey" class="input--lg" placeholder="JBSWY3DPEHPK3PXP" autocomplete="off">
+              <button type="button" class="toggle-password" id="togglePassword" title="Toggle visibility">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                </svg>
+              </button>
+              <button id="scanTotpBtn">Scan QR</button>
+              <!-- 新增 Verify Code 勾選框 -->
+              <div class="verify-code-container">
+                <input type="checkbox" id="verifyCodeCheckbox" class="custom-checkbox" checked>
+                <label for="verifyCodeCheckbox">Show Verify Code</label>
+              </div>
+            </div>
+            <!-- TOTP 驗證碼及進度條 -->
+            <div id="qrSection">
+              <!-- 當前 TOTP 驗證碼及複製按鈕 -->
+              <div id="currentTotpContainer" style="display: flex;">
+                <div id="currentTotpCode">--</div>
+                <button id="copyTotpBtn">Copy</button>
+              </div>
+              <!-- 進度條與倒數字 -->
+              <div class="flex-container progress-Box">
+                <div id="totpProgressBar">
+                  <div id="totpProgress" style="width: 0%;"></div>
+                </div>
+                <div id="totpCountdown">-- Sec</div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <!-- 可選設定切換按鈕 -->
+        <tr class="flex-container">
+          <td>
+            <input type="checkbox" id="toggleOptional" class="custom-checkbox">
+            <label for="toggleOptional" class="moreSetting">More Settings</label>
+          </td>
+        </tr>
+        <!-- 可選設定區塊 -->
+        <tr id="optionalSettingsRow" style="display: none;">
+          <td colspan="2">
+            <div class="optional-container">
+              <h4>Checking port knocking status</h4>
+              <div id="optionalSettings">
+                <table class="form-table">
+                  <tbody>
+                    <tr>
+                      <td>
+                        <label for="publicport">Public Port</label>
+                        <input type="number" id="publicport" class="input--sm" placeholder="443">
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <label for="protocol">Protocol</label>
+                        <select id="protocol">
+                          <option value="http">HTTP</option>
+                          <option value="https">HTTPS</option>
+                          <option value="ftp">FTP</option>
+                          <option value="telnet">Telnet</option>
+                          <option value="ssh">SSH</option>
+                          <option value="snmp">SNMP</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <!-- Status Link 行 -->
+                    <tr>
+                      <td colspan="2">
+                        <label>Status Link</label>
+                        <span id="statusLink"></span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="button-bar">
+      <div class="button-group">
+      <button id="knockBtn">Knock Ports</button>
+      </div>
+      <input type="file" id="importFile" accept=".conf" style="display: none;">
+    </div>
+
+    <pre id="log"></pre>
+    <div class="notice">
+      <p><strong>Notice:</strong> Profiles are stored in your browser's local storage. They will be lost if you clear browsing data or use incognito mode. Please export profiles to save them.</p>
+    </div>
+    <!-- Export Modal -->
+    <div id="exportModal" class="export-modal">
+      <div class="modal-content">
+        <h4>Export Profiles</h4>
+        <div class="search-container">
+          <input type="text" id="exportSearch" placeholder="Search profiles...">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+        </div>
+        <div class="modal-scrollable">
+          <div id="exportProfileList">
+          <!-- Profile checkboxes will be dynamically inserted here -->
+          </div>
+        </div>
+        <div class="modal-buttons">
+          <label class="select-all-label">
+            <input type="checkbox" id="selectAllCheckbox" class="custom-checkbox"> Select All
+          </label>
+          <button id="confirmExportBtn">Confirm</button>
+          <button id="cancelExportBtn" class="del-color">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Modal -->
+  <div id="importModal" class="export-modal">
+    <div class="modal-content">
+      <h4>Import Profiles</h4>
+        <div class="search-container">
+          <input type="text" id="importSearch" placeholder="Search profiles...">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+        </div>
+      <div class="modal-scrollable">
+        <div id="importProfileList">
+        <!-- Profile checkboxes will be dynamically inserted here -->
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <label class="select-all-label">
+            <input type="checkbox" id="selectAllImportCheckbox" class="custom-checkbox"> Select All
+        </label>
+        <button id="confirmImportBtn">Confirm</button>
+        <button id="cancelImportBtn" class="del-color">Cancel</button>
+      </div>
+    </div>
+  </div>
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="export-modal">
+      <div class="modal-content">
+        <h4>Delete Profiles</h4>
+        <div class="search-container">
+          <input type="text" id="deleteSearch" placeholder="Search profiles...">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+        </div>
+        <div class="modal-scrollable">
+          <div id="deleteProfileList">
+          <!-- Profile checkboxes will be dynamically inserted here -->
+          </div>
+        </div>
+        <div class="modal-buttons">
+          <label class="select-all-label">
+            <input type="checkbox" id="selectAllDeleteCheckbox" class="custom-checkbox"> Select All
+          </label>
+          <button id="confirmDeleteBtn">Confirm</button>
+          <button id="cancelDeleteBtn" class="del-color">Cancel</button>
+        </div>
+      </div>
+    </div>
+  <!-- 新增：掃描介面 -->
+  <div id="scannerContainer">
+    <div>
+      <!-- 修改 video 標籤，加入 muted playsinline 與 webkit-playsinline -->
+      <video id="scannerVideo" autoplay muted playsinline webkit-playsinline></video>
+      <canvas id="scannerCanvas" style="display:none;"></canvas>
+      <div id="scannerOverlay"></div>
+      <div id="scannerInstructions">Please input the QRCode in to the frame</div>
+      <button id="closeScannerBtn">Close Scanner</button>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * -------------------------------------------------------------
+     * Part A: TOTP 計算 (Base32 + HMAC-SHA1) 在前端完成
+     * -------------------------------------------------------------
+     */
+    function base32ToBytes(base32Str) {
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+      let bits = '';
+      // 去除 '=' padding 和空白後轉大寫
+      base32Str = base32Str.replace(/=+$/, '').replace(/\s+/g, '').toUpperCase();
+      for (let char of base32Str) {
+        const val = alphabet.indexOf(char);
+        if (val === -1) throw new Error(`Invalid Base32 character: ${char}`);
+        bits += val.toString(2).padStart(5, '0');
+      }
+      const bytes = [];
+      for (let i = 0; i + 7 < bits.length; i += 8) {
+        bytes.push(parseInt(bits.substring(i, i + 8), 2));
+      }
+      return new Uint8Array(bytes);
+    }
+
+    async function hmacSha1(key, data) {
+      // 使用 Web Crypto API
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        key,
+        { name: 'HMAC', hash: { name: 'SHA-1' } },
+        false,
+        ['sign']
+      );
+      const signature = await crypto.subtle.sign('HMAC', cryptoKey, data);
+      return new Uint8Array(signature);
+    }
+
+    async function generateTOTP(base32Key, intervalSec = 30) {
+      // 1. Base32 解碼
+      const keyBytes = base32ToBytes(base32Key);
+      // 2. 取得當前時間戳 / 30秒
+      let counter = Math.floor(Date.now() / 1000 / intervalSec);
+      const counterBytes = new Uint8Array(8);
+      for (let i = 7; i >= 0; i--) {
+        counterBytes[i] = counter & 0xff;
+        counter >>= 8;
+      }
+      // 3. HMAC-SHA1 計算
+      const hmacResult = await hmacSha1(keyBytes, counterBytes);
+      // 4. 動態截取
+      const offset = hmacResult[hmacResult.length - 1] & 0x0f;
+      const binary =
+          ((hmacResult[offset] & 0x7f) << 24) |
+          ((hmacResult[offset + 1] & 0xff) << 16) |
+          ((hmacResult[offset + 2] & 0xff) << 8)  |
+          (hmacResult[offset + 3] & 0xff);
+      // 5. 取後 6 碼
+      const otp = binary % 1_000_000;
+      return otp.toString().padStart(6, '0');
+    }
+
+    /**
+     * -------------------------------------------------------------
+     * Part B: 實時顯示 TOTP 驗證碼並添加進度條與複製按鈕
+     * -------------------------------------------------------------
+     */
+    let progressInterval = null;
+
+    async function updateTotpCode() {
+      const totpKey = document.getElementById('totpKey').value.trim();
+      const serviceName = document.getElementById('profileName').value.trim();
+      const totpCodeElem = document.getElementById('currentTotpCode');
+      const progressElem = document.getElementById('totpProgress');
+      const countdownElem = document.getElementById('totpCountdown');
+
+      if (!totpKey || !serviceName) {
+        totpCodeElem.textContent = "--";
+        progressElem.style.width = '0%';
+        countdownElem.textContent = "-- Sec";
+        clearInterval(progressInterval);
+        return;
+      }
+      try {
+        const code = await generateTOTP(totpKey);
+        totpCodeElem.textContent = code;
+      } catch (err) {
+        totpCodeElem.textContent = `Invalid`;
+      }
+    }
+
+    function startTotpTimer(intervalSec = 30) {
+      const progressElem = document.getElementById('totpProgress');
+      const countdownElem = document.getElementById('totpCountdown');
+
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+
+      function updateTimer() {
+        const currentTime = Math.floor(Date.now() / 1000);
+        const remaining = intervalSec - (currentTime % intervalSec);
+        const percentage = (remaining / intervalSec) * 100;
+        progressElem.style.width = `${percentage}%`;
+        countdownElem.textContent = `${remaining} Sec`;
+
+        if (remaining === intervalSec) {
+          updateTotpCode();
+        }
+      }
+      updateTimer(); 
+      progressInterval = setInterval(updateTimer, 1000);
+    }
+
+    /**
+     * -------------------------------------------------------------
+     * Part C: 複製 TOTP 驗證碼功能
+     * -------------------------------------------------------------
+     */
+    function copyTotpCode() {
+      const totpCode = document.getElementById('currentTotpCode').textContent;
+      if (totpCode === "--" || totpCode === "Invalid") {
+        log("Cannot copy: No valid TOTP code available.");
+        return;
+      }
+      navigator.clipboard.writeText(totpCode)
+        .then(() => {
+          log("Copied TOTP code");
+        })
+        .catch(err => {
+          console.error('Clipboard copy failed:', err);
+          log("Failed to copy TOTP code: " + err.message);
+        });
+    }
+
+    /**
+     * -------------------------------------------------------------
+     * Part D: 已移除 QR Code 生成與顯示相關功能
+     * -------------------------------------------------------------
+     */
+    /**
+     * -------------------------------------------------------------
+     * Part E: fetch + no-cors + 人工 Timeout + 敲門流程
+     * -------------------------------------------------------------
+     */
+    function timedFetch(url, options = {}, timeoutMs = 3000) {
+      const controller = new AbortController();
+      const signal = controller.signal;
+      const fetchPromise = fetch(url, { ...options, signal });
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.log(`Fetch to ${url} timed out after ${timeoutMs}ms`);
+      }, timeoutMs);
+      return fetchPromise
+        .then(response => {
+          console.log(`Fetch to ${url} succeeded`);
+          return response;
+        })
+        .catch(error => {
+          if (error.name === 'AbortError') {
+            console.log(`Fetch to ${url} aborted due to timeout`);
+          } else {
+            console.log(`Fetch to ${url} failed: ${error}`);
+          }
+          throw error;
+        })
+        .finally(() => clearTimeout(timeoutId));
+    }
+
+    async function knockPorts(ip, firstPort, totpKey, publicport, protocol, isOptional) {
+      const logElem = document.getElementById('log');
+      logElem.textContent = "";
+
+      try {
+        const tokenStr = await generateTOTP(totpKey);
+        const token = parseInt(tokenStr, 10);
+        logElem.textContent += `TOTP generated: ${tokenStr}\n`;
+
+        const knock2 = 1000 + Math.floor(token / 1000);
+        const knock3 = 2000 + (token % 1000);
+        const ports = [firstPort, knock2, knock3];
+
+        logElem.textContent += "Starting Port Knocking Sequence:\n";
+        const defaultProtocol = 'https';
+        const ordinals = ['1st', '2nd', '3rd'];
+        let i = 0;
+        for (let p of ports) {
+          const ordinal = ordinals[i] || `${i + 1}th`;
+          logElem.textContent += `Knocking on ${ordinal} port: ${p}\n`;
+          try {
+            await timedFetch(`${defaultProtocol}://${ip}:${p}`, { method: 'GET', mode: 'no-cors' }, 1000);
+          } catch (error) {
+            //
+          }
+          i++;
+        }
+
+        if (isOptional) {
+          logElem.textContent += "\nPorts knocking completed.\nYou can now access the server.";
+          if (protocol && ip && publicport) {
+            const link = `${protocol}://${ip}:${publicport}`;
+            document.getElementById('statusLink').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+          } else {
+            document.getElementById('statusLink').innerHTML = "";
+          }
+
+        } else {
+          logElem.textContent += "\nPorts knocking completed.\nYou can now access the server.";
+          document.getElementById('statusLink').innerHTML = "";
+        }
+
+      } catch (err) {
+        logElem.textContent += `TOTP calculation failed: ${err}\n`;
+      }
+    }
+
+    /**
+     * -------------------------------------------------------------
+     * Part F: 儲存與載入 Service 資料 (localStorage)
+     * -------------------------------------------------------------
+     */
+    function getAllServices() {
+      const raw = localStorage.getItem('portKnockingServices');
+      if (!raw) {
+        return {};
+      }
+      return JSON.parse(raw);
+    }
+
+    function saveService(serviceName, ip, firstport, totpKey, publicport, protocol) {
+      const services = getAllServices();
+      services[serviceName] = {
+        ip,
+        firstport,
+        totpKey,
+        publicport,
+        protocol
+      };
+      localStorage.setItem('portKnockingServices', JSON.stringify(services));
+    }
+
+    function deleteService(serviceName) {
+      const services = getAllServices();
+      if (services[serviceName]) {
+        delete services[serviceName];
+        localStorage.setItem('portKnockingServices', JSON.stringify(services));
+      }
+    }
+
+    function getServiceData(serviceName) {
+      const services = getAllServices();
+      return services[serviceName] || null;
+    }
+
+    function refreshServiceSelect() {
+      const serviceSelect = document.getElementById('profileSelect');
+      const services = getAllServices();
+      const keys = Object.keys(services);
+
+      serviceSelect.innerHTML = "";
+      const placeholder = document.createElement('option');
+      placeholder.value = "";
+      placeholder.text = "-- Select --";
+      serviceSelect.appendChild(placeholder);
+
+      keys.forEach(sName => {
+        const opt = document.createElement('option');
+        opt.value = sName;
+        opt.text = sName;
+        serviceSelect.appendChild(opt);
+      });
+    }
+
+    function onServiceSelectChanged() {
+      const serviceSelect = document.getElementById('profileSelect');
+      const selected = serviceSelect.value;
+      if (!selected) return;
+
+      const data = getServiceData(selected);
+      if (data) {
+        document.getElementById('profileName').value = selected;
+        document.getElementById('ip').value = data.ip || "";
+        document.getElementById('1stport').value = data.firstport || "";
+        document.getElementById('totpKey').value = data.totpKey || "";
+
+        if (data.publicport && data.protocol) {
+          document.getElementById('toggleOptional').checked = true;
+          document.getElementById('optionalSettingsRow').style.display = 'table-row';
+          document.getElementById('publicport').value = data.publicport;
+          document.getElementById('protocol').value = data.protocol;
+
+          const link = `${data.protocol}://${data.ip}:${data.publicport}`;
+          document.getElementById('statusLink').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+
+          updateTotpCode();
+          startTotpTimer();
+        } else {
+          document.getElementById('toggleOptional').checked = false;
+          document.getElementById('optionalSettingsRow').style.display = 'none';
+          document.getElementById('statusLink').innerHTML = "";
+        }
+        updateTotpCode();
+        startTotpTimer();
+      }
+    }
+
+    /**
+     * -------------------------------------------------------------
+     * Part G: 新增 QR Code 掃描功能
+     * -------------------------------------------------------------
+     */
+    function loadUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const name = urlParams.get('name');
+      const ip = urlParams.get('ip');
+      const firstport = urlParams.get('1stport');
+      const totpKey = urlParams.get('totpkey');
+      const auto = urlParams.get('Auto') === 'True';
+      if (name) {
+        document.getElementById('profileName').value = name;
+      }
+      if (ip) {
+        document.getElementById('ip').value = ip;
+      }
+      if (firstport) {
+        document.getElementById('1stport').value = firstport;
+      }
+      if (totpKey) {
+        document.getElementById('totpKey').value = totpKey;
+      }
+      if (name && ip && firstport && totpKey) {
+        updateTotpCode();
+        startTotpTimer();
+      }
+
+        // 如果只有 name 參數，從 localStorage 載入對應 profile
+        if (name && !ip && !firstport && !totpKey) {
+        const data = getServiceData(name);
+        if (data) {
+            document.getElementById('ip').value = data.ip || '';
+            document.getElementById('1stport').value = data.firstport || '';
+            document.getElementById('totpKey').value = data.totpKey || '';
+            updateTotpCode();
+            startTotpTimer();
+        } else {
+            log(`Profile "${name}" not found in localStorage.`);
+        }
+        }
+
+      if (auto && name && ip && firstport && totpKey) {
+       // 自動執行 port knocking
+       saveService(name, ip, firstport, totpKey, null, null);
+       refreshServiceSelect();
+       document.getElementById('profileSelect').value = name;
+       knockPorts(
+         ip,
+         parseInt(firstport, 10),
+         totpKey,
+         null,
+         null,
+         false
+       );
+      }
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadUrlParams(); // Load URL parameters first
+      //document.getElementById('exportBtn').addEventListener('click', exportProfile);
+      // --- 綁定新的設定按鈕事件 ---
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsMenu = document.getElementById('settingsMenu');
+  
+        settingsBtn.addEventListener('click', (event) => {
+          event.stopPropagation(); // 防止觸發 window 的點擊事件
+          settingsMenu.style.display = settingsMenu.style.display === 'block' ? 'none' : 'block';
+        });
+  
+        // --- 點擊選單外的區域關閉選單 ---
+        window.addEventListener('click', () => {
+          if (settingsMenu.style.display === 'block') {
+            settingsMenu.style.display = 'none';
+          }
+        });
+  
+        // --- 綁定匯出選項事件 ---
+        document.getElementById('exportOption').addEventListener('click', (e) => {
+          e.preventDefault(); // 防止連結跳轉
+          exportProfile();
+          settingsMenu.style.display = 'none'; // 關閉選單
+        });
+        // --- 綁定匯入選項事件 (觸發隱藏的檔案輸入框) ---
+        document.getElementById('importOption').addEventListener('click', (e) => {
+          e.preventDefault(); // 防止連結跳轉
+        document.getElementById('importFile').click();
+        settingsMenu.style.display = 'none'; // 關閉選單
+      });
+
+      // --- 綁定檔案輸入框的變更事件 ---
+      document.getElementById('importFile').addEventListener('change', handleImport);
+      document.getElementById('copyTotpBtn').addEventListener('click', copyTotpCode);
+      // --- 綁定刪除選項事件 ---
+      document.getElementById('deleteOption').addEventListener('click', (e) => {
+        e.preventDefault();
+        deleteProfile();
+        settingsMenu.style.display = 'none';
+      });
+      document.getElementById('selectAllCheckbox').addEventListener('change', toggleSelectAll);
+      document.getElementById('selectAllImportCheckbox').addEventListener('change', toggleSelectAll);
+      document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
+      document.getElementById('cancelImportBtn').addEventListener('click', () => {
+        document.getElementById('importModal').style.display = 'none';
+        document.getElementById('importFile').value = null;
+      });
+      document.getElementById('selectAllDeleteCheckbox').addEventListener('change', toggleSelectAll);
+      document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
+      document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+        document.getElementById('deleteModal').style.display = 'none';
+      });
+      document.getElementById('confirmExportBtn').addEventListener('click', confirmExport);
+      document.getElementById('cancelExportBtn').addEventListener('click', () => {
+        document.getElementById('exportModal').style.display = 'none';
+      });
+      refreshServiceSelect();
+      document.getElementById('profileSelect').addEventListener('change', onServiceSelectChanged);
+
+      document.getElementById('toggleOptional').addEventListener('change', (e) => {
+        const optionalSettingsRow = document.getElementById('optionalSettingsRow');
+        if (e.target.checked) {
+          optionalSettingsRow.style.display = 'table-row';
+        } else {
+          optionalSettingsRow.style.display = 'none';
+          document.getElementById('statusLink').innerHTML = "";
+        }
+      });
+
+      document.getElementById('verifyCodeCheckbox').addEventListener('change', (e) => {
+        const currentTotpContainer = document.getElementById('currentTotpContainer');
+        const totpProgressContainer = document.getElementById('totpProgressContainer');
+        if (e.target.checked) {
+          currentTotpContainer.style.display = 'flex';
+          totpProgressContainer.style.display = 'block';
+        } else {
+          currentTotpContainer.style.display = 'none';
+          totpProgressContainer.style.display = 'none';
+        }
+      });
+
+      document.getElementById('protocol').addEventListener('input', updateStatusLink);
+      document.getElementById('ip').addEventListener('input', updateStatusLink);
+      document.getElementById('publicport').addEventListener('input', updateStatusLink);
+
+      // 判斷是否為手機 & 是否使用 http/https
+      function isMobileDevice() {
+        return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      }
+      function isHttpProtocol() {
+        return window.location.protocol === 'http:' || window.location.protocol === 'https:';
+      }
+      if (!isMobileDevice() || !isHttpProtocol()) {
+        document.getElementById('scanTotpBtn').style.display = 'none';
+      }
+
+      document.getElementById('knockBtn').addEventListener('click', () => {
+        const MAX_PROFILES = 200;
+        const profileName = document.getElementById('profileName').value.trim();
+        const srvip = document.getElementById('ip').value.trim();
+        const firstport = parseInt(document.getElementById('1stport').value, 10);
+        const publicport = parseInt(document.getElementById('publicport').value, 10);
+        const protocol = document.getElementById('protocol').value.trim();
+        const totpKey = document.getElementById('totpKey').value.trim();
+
+        if (!profileName) {
+          log("Please enter the Profile Name!");
+          return;
+        }
+        if (!srvip || isNaN(firstport) || !totpKey) {
+          log("Please ensure IP / 1st Port / TOTP Key are correctly filled!");
+          return;
+        }
+
+        const isOptional = document.getElementById('toggleOptional').checked;
+
+        if (isOptional) {
+          if (isNaN(publicport) || !protocol) {
+            log("Please ensure Public Port and Protocol are correctly filled!");
+            return;
+          }
+        }
+ 
+        // --- 新增：儲存前檢查 Profile 數量上限 ---
+        const services = getAllServices();
+        const currentProfileCount = Object.keys(services).length;
+        const isExistingProfile = services.hasOwnProperty(profileName);
+
+        // 只有當這是一個"新" Profile 且總數已達上限時才阻止
+        if (!isExistingProfile && currentProfileCount >= MAX_PROFILES) {
+          //alert(`Profile limit of ${MAX_PROFILES} has been reached. Cannot save new profile. Please delete some profiles before trying to save and knock again.`);
+          log(`Save aborted: Profile limit (${MAX_PROFILES}) reached when trying to save new profile "${profileName}".`);
+            return; // 阻止儲存和 Knocking
+        }
+        // --- 檢查結束 ---
+        saveService(
+          profileName, 
+          srvip, 
+          firstport,
+          totpKey, 
+          isOptional ? publicport : null, 
+          isOptional ? protocol : null
+        );
+        refreshServiceSelect();
+        knockPorts(
+          srvip, 
+          firstport, 
+          totpKey, 
+          isOptional ? publicport : null, 
+          isOptional ? protocol : null, 
+          isOptional
+        );
+      });
+
+      document.getElementById('copyTotpBtn').addEventListener('click', copyTotpCode);
+
+      document.getElementById('totpKey').addEventListener('input', () => {
+        updateTotpCode();
+        startTotpTimer();
+      });
+      document.getElementById('profileName').addEventListener('input', () => {
+        updateTotpCode();
+        startTotpTimer();
+      });
+
+      // 綁定「Scan QR」按鈕事件
+      document.getElementById('scanTotpBtn').addEventListener('click', () => {
+        document.getElementById('scannerContainer').style.display = 'flex';
+        startScanner();
+      });
+
+      document.getElementById('closeScannerBtn').addEventListener('click', () => {
+        stopScanner();
+        document.getElementById('scannerContainer').style.display = 'none';
+      });
+      
+      updateTotpCode();
+      startTotpTimer();
+      // 新增：TOTP密碼顯示/隱藏切換
+      const togglePasswordBtn = document.getElementById('togglePassword');
+      const totpKeyInput = document.getElementById('totpKey');
+      togglePasswordBtn.addEventListener('click', () => {
+        const isPassword = totpKeyInput.type === 'password';
+        totpKeyInput.type = isPassword ? 'text' : 'password';
+        togglePasswordBtn.innerHTML = isPassword
+          ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>`
+          : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`;
+      });
+
+      // 確保初始狀態與輸入框一致
+      if (totpKeyInput.type === 'password') {
+        togglePasswordBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`;
+      }
+      const verifyCodeCheckbox = document.getElementById('verifyCodeCheckbox');
+      const currentTotpContainer = document.getElementById('currentTotpContainer');
+      const totpProgressContainer = document.getElementById('totpProgressContainer');
+      if (verifyCodeCheckbox.checked) {
+        currentTotpContainer.style.display = 'flex';
+        totpProgressContainer.style.display = 'block';
+      } else {
+        currentTotpContainer.style.display = 'none';
+        totpProgressContainer.style.display = 'none';
+      }
+    });
+
+    /**
+     * -------------------------------------------------------------
+     * Part H: QR Code 掃描功能實現 (使用 jsQR)
+     * -------------------------------------------------------------
+     */
+    let videoStream = null;
+    let scanIntervalId = null;
+
+    function startScanner() {
+      const scannerContainer = document.getElementById('scannerContainer');
+      const video = document.getElementById('scannerVideo');
+      const canvas = document.getElementById('scannerCanvas');
+      const canvasContext = canvas.getContext('2d');
+
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => {
+          videoStream = stream;
+          video.srcObject = stream;
+          video.play();
+
+          video.addEventListener('loadedmetadata', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+          });
+
+          scanIntervalId = setInterval(() => {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+              canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+              const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+              if (code) {
+                const qrData = code.data;
+                let secretValue = null;
+                try {
+                  const url = new URL(qrData);
+                  secretValue = url.searchParams.get('secret');
+                } catch (error) {
+                  const secretMatch = qrData.match(/secret=([^&]+)/);
+                  if (secretMatch) {
+                    secretValue = secretMatch[1];
+                  }
+                }
+                if (secretValue) {
+                  document.getElementById('totpKey').value = secretValue;
+                  updateTotpCode();
+                  startTotpTimer();
+                  log("TOTP Key has been successfully scanned and loaded!");
+                  stopScanner();
+                  scannerContainer.style.display = 'none';
+                } else {
+                  console.log("Scanned QR Code does not contain the 'secret=' string.");
+                }
+              }
+            }
+          }, 500);
+        })
+        .catch(err => {
+          console.error('Unable to access the camera: ', err);
+          log('Unable to access the camera, please check your permissions.');
+          document.getElementById('scannerContainer').style.display = 'none';
+        });
+    }
+
+    function stopScanner() {
+      const video = document.getElementById('scannerVideo');
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+      }
+      video.srcObject = null;
+      clearInterval(scanIntervalId);
+    }
+
+       /**
+     * -------------------------------------------------------------
+     * Part I: Profile Import/Export Functionality (.cfg format)
+     * -------------------------------------------------------------
+     */
+
+    // --- 匯出功能 ---
+    function exportProfile() {
+      document.getElementById('log').textContent = '';
+      const profiles = getAllServices();
+      const profileNames = Object.keys(profiles);
+      if (profileNames.length === 0) {
+        log("No profiles available to export.");
+        return;
+      }
+      generateExportModalContent();
+      document.getElementById('exportModal').style.display = 'flex';
+    }
+
+    function generateExportModalContent() {
+      const profiles = getAllServices();
+      const profileNames = Object.keys(profiles);
+      document.getElementById('exportSearch').value = ''; // 清空搜尋框
+      const profileList = document.getElementById('exportProfileList');
+      profileList.innerHTML = '';
+      document.getElementById('selectAllCheckbox').checked = false; // 重置 Select All 勾選框
+      profileNames.forEach(name => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <label>
+            <input type="checkbox" class="custom-checkbox export-checkbox" data-profile="${name}">
+            ${name}
+          </label>
+        `;
+        profileList.appendChild(div);
+      });
+    }
+
+    function toggleSelectAll(event) {
+      const isChecked = event.target.checked;
+      const targetId = event.target.id;
+      let selector;
+      let modalType;
+      if (targetId === 'selectAllImportCheckbox') {
+        modalType = 'import';
+      } else if (targetId === 'selectAllDeleteCheckbox') {
+        modalType = 'delete';
+      } else {
+        modalType = 'export';
+      }
+      const profileList = document.getElementById(`${modalType}ProfileList`);
+      const checkboxes = profileList.querySelectorAll(`.${modalType}-checkbox`);
+      checkboxes.forEach(checkbox => {
+        const label = checkbox.parentElement;
+        if (label.style.display !== 'none') {
+          checkbox.checked = isChecked;
+        }
+      });
+    }
+
+    function confirmExport() {
+      const checkboxes = document.querySelectorAll('.export-checkbox:checked');
+      const selectedProfiles = Array.from(checkboxes).map(cb => cb.dataset.profile);
+      
+      if (selectedProfiles.length === 0) {
+        log('Please select at least one profile to export.');
+        return;
+      }
+      const filename = selectedProfiles.length === 1 ? `${selectedProfiles[0]}.conf` : 'PortKnocking_profiles.conf';
+      const profiles = getAllServices();
+      const exportData = {
+        portknocking: selectedProfiles.map(name => {
+          const data = profiles[name];
+          const profileData = {
+            profileName: name,
+            ip: data.ip,
+            firstport: data.firstport,
+            totpKey: data.totpKey
+          };
+          if (data.publicport && data.protocol) {
+            profileData.publicport = data.publicport;
+            profileData.protocol = data.protocol;
+          }
+          return profileData;
+        })
+      };
+
+      const configContent = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([configContent], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+
+      log(`Exported ${selectedProfiles.length} profile(s) to ${filename}`);
+      document.getElementById('exportModal').style.display = 'none';
+    }
+    // --- 匯入功能 (修改後：匯入即儲存) ---
+    function handleImport(event) {
+      document.getElementById('log').textContent = '';
+      const file = event.target.files[0];
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+      let importedData = null;
+      reader.onload = function(e) {
+        const content = e.target.result;
+        try {
+          // Parse JSON content
+          importedData = JSON.parse(content);
+
+          // Validate portknocking section
+          if (!importedData.portknocking) {
+            throw new Error("Imported file is missing 'portknocking' section.");
+          }
+
+          let profilesToImport = [];
+          if (Array.isArray(importedData.portknocking)) {
+            profilesToImport = importedData.portknocking;
+            if (profilesToImport.length > 1) {
+              // Show modal for multiple profiles
+              document.getElementById('importFile').dataset.importedContent = JSON.stringify(importedData);
+              generateImportModalContent(profilesToImport, file.name);
+              document.getElementById('importModal').style.display = 'flex';
+              return;
+            } else if (profilesToImport.length === 1) {
+              // Single profile in array
+              portknockingData = profilesToImport[0];
+            } else {
+              throw new Error("Imported file has an empty 'portknocking' array.");
+            }
+          } else {
+            // Single profile as object (existing format)
+            portknockingData = importedData.portknocking;
+          }
+
+          // Validate required fields
+          if (!portknockingData.profileName || !portknockingData.ip || !portknockingData.firstport || !portknockingData.totpKey) {
+            throw new Error("Imported file is missing required fields (profileName, ip, 1stport, totpKey) in 'portknocking' section.");
+          }
+         // Process single profile import
+          processSingleProfileImport(portknockingData, file.name);
+        } catch (error) {
+          //alert("Failed to import profile: " + error.message);
+          console.error("Error parsing config file:", error);
+          log("Error importing profile: " + error.message);
+          event.target.value = null;
+        }
+      };
+
+      reader.onerror = function(e) {
+        //alert("Error reading file.");
+        console.error("Error reading file:", e);
+        document.getElementById('importFile').value = null;
+        log("Error reading file.");
+        event.target.value = null;
+      };
+
+      reader.readAsText(file);
+    }
+
+    function processSingleProfileImport(portknockingData, fileName) {
+      // --- 新增：定義數量上限 ---
+      const MAX_PROFILES = 200;
+      // --- 新增：檢查目前 Profile 數量是否已達上限 ---
+      const currentProfileCount = Object.keys(getAllServices()).length;
+      if (currentProfileCount >= MAX_PROFILES) {
+        //alert(`已達到 ${MAX_PROFILES} 個設定檔的數量上限，無法匯入新的設定檔。\nProfile limit of ${MAX_PROFILES} has been reached. Cannot import new profile. Please delete some profiles first.`);
+        log(`Import failed: Profile limit (${MAX_PROFILES}) reached.`);
+        return false; // 返回 false 表示因超限而失敗
+      }
+      const profileNameToSave = portknockingData.profileName;
+      const ipToSave = portknockingData.ip;
+      const firstportToSave = portknockingData.firstport;
+      const totpKeyToSave = portknockingData.totpKey;
+      const publicportToSave = portknockingData.publicport || null;
+      const protocolToSave = portknockingData.protocol || null;
+
+          // --- 填入表單 ---
+          document.getElementById('profileName').value = portknockingData.profileName;
+          document.getElementById('ip').value = portknockingData.ip;
+          document.getElementById('1stport').value = portknockingData.firstport;
+          document.getElementById('totpKey').value = portknockingData.totpKey;
+
+          // 處理可選設定
+          const optionalSettingsRow = document.getElementById('optionalSettingsRow');
+          const toggleOptionalCheckbox = document.getElementById('toggleOptional');
+          if (portknockingData.publicport && portknockingData.protocol) {
+            document.getElementById('publicport').value = portknockingData.publicport;
+            document.getElementById('protocol').value = portknockingData.protocol;
+            toggleOptionalCheckbox.checked = true;
+            optionalSettingsRow.style.display = 'table-row';
+            updateStatusLink(); // 更新狀態連結顯示
+          } else {
+            document.getElementById('publicport').value = '';
+            document.getElementById('protocol').value = 'http';
+            toggleOptionalCheckbox.checked = false;
+            optionalSettingsRow.style.display = 'none';
+            document.getElementById('statusLink').innerHTML = "";
+          }
+
+          // --- ★ 新增：立即儲存匯入的資料 ---
+          saveService(
+              profileNameToSave,
+              ipToSave,
+              firstportToSave,
+              totpKeyToSave,
+              publicportToSave,
+              protocolToSave
+          );
+
+          // --- ★ 新增：立即更新下拉選單 ---
+          refreshServiceSelect();
+
+          // --- ★ 新增：自動選中剛匯入的設定檔 ---
+          document.getElementById('profileSelect').value = profileNameToSave;
+
+          // 更新 TOTP 顯示和計時器 (保持不變)
+          updateTotpCode();
+          startTotpTimer();
+
+          // 清空檔案輸入框的值
+          //event.target.value = null;
+
+      log("Profile '" + profileNameToSave + "' imported and saved successfully from " + fileName);
+      //alert("Profile '" + profileNameToSave + "' has been imported and saved successfully!");
+      return true; // 返回 true 表示成功
+    }
+
+    function generateImportModalContent(profiles, fileName) {
+      const profileList = document.getElementById('importProfileList');
+      profileList.innerHTML = '';
+      document.getElementById('importSearch').value = ''; // 清空搜尋框
+      document.getElementById('selectAllImportCheckbox').checked = false; // 重置 Select All 勾選框
+      profiles.forEach((profile, index) => {
+        if (profile.profileName) {
+          const div = document.createElement('div');
+          div.innerHTML = `
+            <label>
+              <input type="checkbox" class="custom-checkbox import-checkbox" data-index="${index}">
+              ${profile.profileName}
+            </label>
+          `;
+          profileList.appendChild(div);
+        }
+      });
+      document.getElementById('confirmImportBtn').dataset.fileName = fileName;
+    }
+
+    function confirmImport() {
+      const MAX_PROFILES = 200;
+      const checkboxes = document.querySelectorAll('.import-checkbox:checked');
+      const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+      const fileName = document.getElementById('confirmImportBtn').dataset.fileName;
+
+      if (selectedIndices.length === 0) {
+        alert('Please select at least one profile to import.');
+        return;
+      }
+      // --- 新增：檢查匯入後是否會超過上限 ---
+      const currentProfileCount = Object.keys(getAllServices()).length;
+      const selectedCount = selectedIndices.length;
+      if (currentProfileCount + selectedCount > MAX_PROFILES) {
+        // --- 修改 alert 訊息，僅保留英文 ---
+        alert(`Importing ${selectedCount} profile(s) would exceed the limit of ${MAX_PROFILES} (current: ${currentProfileCount}). Please select fewer or delete some profiles first.`);
+        log(`Import failed: Limit check failed (current: ${currentProfileCount}, selected: ${selectedCount}, limit: ${MAX_PROFILES}).`);
+        return; // 阻止匯入
+      }
+      const importedData = JSON.parse(document.getElementById('importFile').dataset.importedContent || '{}');
+      const profiles = importedData.portknocking || [];
+      const selectedProfiles = selectedIndices.map(index => profiles[index]);
+
+      selectedProfiles.forEach(profile => {
+        if (profile.profileName && profile.ip && profile.firstport && profile.totpKey) {
+          saveService(
+            profile.profileName,
+            profile.ip,
+            profile.firstport,
+            profile.totpKey,
+            profile.publicport || null,
+            profile.protocol || null
+          );
+        }
+      });
+
+      refreshServiceSelect();
+      if (selectedProfiles.length > 0) {
+        document.getElementById('profileSelect').value = selectedProfiles[0].profileName;
+        document.getElementById('profileName').value = selectedProfiles[0].profileName;
+        document.getElementById('ip').value = selectedProfiles[0].ip;
+        document.getElementById('1stport').value = selectedProfiles[0].firstport;
+        document.getElementById('totpKey').value = selectedProfiles[0].totpKey;
+
+        const optionalSettingsRow = document.getElementById('optionalSettingsRow');
+        const toggleOptionalCheckbox = document.getElementById('toggleOptional');
+        if (selectedProfiles[0].publicport && selectedProfiles[0].protocol) {
+          document.getElementById('publicport').value = selectedProfiles[0].publicport;
+          document.getElementById('protocol').value = selectedProfiles[0].protocol;
+          toggleOptionalCheckbox.checked = true;
+          optionalSettingsRow.style.display = 'table-row';
+          updateStatusLink();
+        } else {
+          document.getElementById('publicport').value = '';
+          document.getElementById('protocol').value = 'http';
+          toggleOptionalCheckbox.checked = false;
+          optionalSettingsRow.style.display = 'none';
+          document.getElementById('statusLink').innerHTML = "";
+        }
+
+        updateTotpCode();
+        startTotpTimer();
+      }
+
+      document.getElementById('importFile').value = null;
+      log(`Imported ${selectedProfiles.length} profile(s) from ${fileName}`);
+      //alert(`Successfully imported ${selectedProfiles.length} profile(s) from ${fileName}`);
+      document.getElementById('importModal').style.display = 'none';
+    }
+    function confirmDelete() {
+      const checkboxes = document.querySelectorAll('.delete-checkbox:checked');
+      const selectedProfiles = Array.from(checkboxes).map(cb => cb.dataset.profile);
+
+      if (selectedProfiles.length === 0) {
+        log('Please select at least one profile to delete.');
+        return;
+      }
+
+      selectedProfiles.forEach(profileName => {
+        deleteService(profileName);
+      });
+
+      refreshServiceSelect();
+      if (selectedProfiles.includes(document.getElementById('profileName').value)) {
+        document.getElementById('profileName').value = '';
+        document.getElementById('ip').value = '';
+        document.getElementById('1stport').value = '';
+        document.getElementById('totpKey').value = '';
+        document.getElementById('toggleOptional').checked = false;
+        document.getElementById('optionalSettingsRow').style.display = 'none';
+      }
+
+      log(`Deleted ${selectedProfiles.length} profile(s)`);
+      //alert(`Successfully deleted ${selectedProfiles.length} profile(s)`);
+      document.getElementById('deleteModal').style.display = 'none';
+    }
+    // --- 刪除功能 ---
+   function deleteProfile() {
+      document.getElementById('log').textContent = '';
+      const profiles = getAllServices();
+      const profileNames = Object.keys(profiles);
+      if (profileNames.length === 0) {
+        log("No profiles available to delete.");
+        return;
+      }
+      generateDeleteModalContent();
+      document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function generateDeleteModalContent() {
+      const profiles = getAllServices();
+      const profileNames = Object.keys(profiles);
+      document.getElementById('deleteSearch').value = ''; // 清空搜尋框
+      const profileList = document.getElementById('deleteProfileList');
+      profileList.innerHTML = '';
+      document.getElementById('selectAllDeleteCheckbox').checked = false; // 重置 Select All 勾選框
+
+      profileNames.forEach(name => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <label>
+            <input type="checkbox" class="custom-checkbox delete-checkbox" data-profile="${name}">
+            ${name}
+          </label>
+        `;
+        profileList.appendChild(div);
+      });
+    }
+    // --- 用於在 Log 區域顯示訊息的輔助函數 ---
+    function log(message) {
+        const logElem = document.getElementById('log');
+        const timestamp = new Date().toLocaleTimeString();
+        logElem.textContent += `[${timestamp}] ${message}\n`;
+        // 自動捲動到底部
+        logElem.scrollTop = logElem.scrollHeight;
+    }
+
+    function updateStatusLink() {
+        const protocol = document.getElementById('protocol').value.trim();
+        const ip = document.getElementById('ip').value.trim();
+        const publicport = document.getElementById('publicport').value.trim();
+        const statusLink = document.getElementById('statusLink');
+
+        if (protocol && ip && publicport) {
+          const link = `${protocol}://${ip}:${publicport}`;
+          statusLink.innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+        } else {
+          statusLink.innerHTML = "";
+        }
+      }
+
+    // --- 新增：篩選設定檔函數 ---
+    function filterProfiles(modalType, searchInput) {
+      const searchText = searchInput.value.toLowerCase();
+      const profileList = document.getElementById(`${modalType}ProfileList`);
+      const checkboxes = profileList.querySelectorAll(`.${modalType}-checkbox`);
+      checkboxes.forEach(checkbox => {
+        const profileName = modalType === 'import' 
+          ? checkbox.parentElement.textContent.trim()
+          : checkbox.dataset.profile;
+        const label = checkbox.parentElement;
+        if (profileName.toLowerCase().includes(searchText)) {
+          label.style.display = 'block';
+        } else {
+          label.style.display = 'none';
+        }
+      });
+    }
+
+    // --- 新增：綁定搜尋輸入框事件 ---
+    document.addEventListener('DOMContentLoaded', () => {
+      ['export', 'import', 'delete'].forEach(modalType => {
+        document.getElementById(`${modalType}Search`).addEventListener('input', () => filterProfiles(modalType, document.getElementById(`${modalType}Search`)));
+      });
+    });
+  </script>
+</body>
+</html>
