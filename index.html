@@ -138,6 +138,7 @@
     .modal-buttons {
       display: flex;
       justify-content: space-between;
+      flex-direction: column;
       align-items: center;
       text-align: center;
       margin-top: 20px;
@@ -172,6 +173,12 @@
       align-items: center;
       font-size: 14px;
       margin-right: 10px;
+      margin-bottom: 10px; /* 勾選框間距 */
+      width: 100%; /* 確保勾選框佔滿寬度 */
+      justify-content: flex-start; /* 左對齊 */
+    }
+    .modal-buttons button {
+      margin-top: 10px; /* 按鈕與勾選框間距 */
     }
     .select-all-label input {
       margin-right: 5px;
@@ -585,6 +592,9 @@
     #confirmExportBtn,
     #confirmImportBtn,
     #confirmDeleteBtn {
+      width: 100px; /* 固定按鈕寬度 */
+      margin-left: 0; /* 移除原有的左邊距 */
+      margin-right: 10px; /* 按鈕間距 */
       margin-left: 70px; /* 增加左邊距，將按鈕向右推 (可調整此數值) */
     }
     @media (max-width: 600px) {
@@ -597,6 +607,14 @@
   #confirmImportBtn,
   #confirmDeleteBtn {
     margin-left: 20px; /* 增加左邊距，將按鈕向右推 (可調整此數值) */
+  }
+  .modal-buttons {
+    align-items: flex-start; /* 左對齊 */
+  }
+  .modal-buttons button {
+    width: 100%; /* 按鈕在行動裝置上佔滿寬度 */
+    margin-top: 10px;
+    margin-right: 0; /* 移除右邊距 */
   }
   .form-table {
     width: 100%;
@@ -987,12 +1005,17 @@
           <!-- Profile checkboxes will be dynamically inserted here -->
           </div>
         </div>
-        <div class="modal-buttons">
+        <div class="modal-buttons" style="align-items: flex-start;">
           <label class="select-all-label">
             <input type="checkbox" id="selectAllCheckbox" class="custom-checkbox"> Select All
           </label>
-          <button id="confirmExportBtn">Confirm</button>
-          <button id="cancelExportBtn" class="del-color">Cancel</button>
+          <label class="select-all-label">
+            <input type="checkbox" id="encryptTotpCheckbox" class="custom-checkbox" checked> Encrypt TOTP Key
+          </label>
+          <div style="display: flex; gap: 10px;">
+            <button id="confirmExportBtn">Confirm</button>
+            <button id="cancelExportBtn" class="del-color">Cancel</button>  
+          </label>
         </div>
       </div>
     </div>
@@ -1017,8 +1040,10 @@
         <label class="select-all-label">
             <input type="checkbox" id="selectAllImportCheckbox" class="custom-checkbox"> Select All
         </label>
-        <button id="confirmImportBtn">Confirm</button>
-        <button id="cancelImportBtn" class="del-color">Cancel</button>
+        <div style="display: flex; gap: 10px;">
+            <button id="confirmImportBtn">Confirm</button>
+            <button id="cancelImportBtn" class="del-color">Cancel</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1041,8 +1066,10 @@
           <label class="select-all-label">
             <input type="checkbox" id="selectAllDeleteCheckbox" class="custom-checkbox"> Select All
           </label>
-          <button id="confirmDeleteBtn">Confirm</button>
-          <button id="cancelDeleteBtn" class="del-color">Cancel</button>
+          <div style="display: flex; gap: 10px;">
+            <button id="confirmDeleteBtn">Confirm</button>
+            <button id="cancelDeleteBtn" class="del-color">Cancel</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1826,20 +1853,7 @@
         return;
       }
       generateExportModalContent();
-      showPassphraseModal(
-        async (passphrase) => {
-          if (!passphrase) {
-            log("Passphrase is required for export.");
-            return;
-          }
-          generateExportModalContent();
-          document.getElementById('exportModal').style.display = 'flex';
-        },
-        () => {
-          log("Export cancelled.");
-        },
-        "Enter Passphrase for Export"
-      );
+      document.getElementById('exportModal').style.display = 'flex'; 
     }
 
     function generateExportModalContent() {
@@ -1884,12 +1898,7 @@
     }
 
     function confirmExport() {
-      showPassphraseModal(
-        async (passphrase) => {
-          if (!passphrase) {
-            log("Passphrase is required.");
-            return;
-          }
+
       const checkboxes = document.querySelectorAll('.export-checkbox:checked');
       const selectedProfiles = Array.from(checkboxes).map(cb => cb.dataset.profile);
       
@@ -1899,29 +1908,78 @@
       }
       const filename = selectedProfiles.length === 1 ? `${selectedProfiles[0]}.conf` : 'PortKnocking_profiles.conf';
       const profiles = getAllServices();
-      const exportData = {
-        portknocking: selectedProfiles.map(name => {
-          const data = profiles[name];
-          const profileData = {
-            profileName: name,
-            ip: data.ip,
-            firstport: data.firstport,
-                encrypted: true
-              };
-              // 加密 TOTP Key
-              return encryptTOTPKey(data.totpKey, passphrase).then(encrypted => {
-                profileData.totpKey = encrypted;
-                if (data.publicport && data.protocol) {
-                  profileData.publicport = data.publicport;
-                  profileData.protocol = data.protocol;
-                }
-                return profileData;
-              });
-            })
-          };
+      const encryptTotp = document.getElementById('encryptTotpCheckbox').checked;
 
-          Promise.all(exportData.portknocking).then(resolvedPortknocking => {
-            exportData.portknocking = resolvedPortknocking;
+        if (encryptTotp) {
+          showPassphraseModal(
+            async (passphrase) => {
+              if (!passphrase) {
+                log("Passphrase is required for encryption.");
+                return;
+              }
+              const exportData = {
+                portknocking: selectedProfiles.map(name => {
+                  const data = profiles[name];
+                  const profileData = {
+                    profileName: name,
+                    ip: data.ip,
+                    firstport: data.firstport,
+                    encrypted: true
+                  };
+                  // 加密 TOTP Key
+                  return encryptTOTPKey(data.totpKey, passphrase).then(encrypted => {
+                    profileData.totpKey = encrypted;
+                    if (data.publicport && data.protocol) {
+                      profileData.publicport = data.publicport;
+                      profileData.protocol = data.protocol;
+                    }
+                    return profileData;
+                  });
+                })
+              };
+
+              Promise.all(exportData.portknocking).then(resolvedPortknocking => {
+                exportData.portknocking = resolvedPortknocking;
+                const configContent = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([configContent], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+
+                log(`Exported ${selectedProfiles.length} profile(s) to ${filename}`);
+                document.getElementById('exportModal').style.display = 'none';
+              }).catch(err => {
+                log(`Export failed: ${err.message}`);
+              });
+            },
+            () => {
+              log("Export cancelled.");
+              document.getElementById('exportModal').style.display = 'none';
+            },
+            "Enter Passphrase for Export"
+          );
+        } else {
+          const exportData = {
+            portknocking: selectedProfiles.map(name => {
+              const data = profiles[name];
+              const profileData = {
+                profileName: name,
+                ip: data.ip,
+                firstport: data.firstport,
+                totpKey: data.totpKey, // 直接使用明文 TOTP 金鑰
+                  encrypted: false
+                  };
+                  if (data.publicport && data.protocol) {
+                      profileData.publicport = data.publicport;
+                      profileData.protocol = data.protocol;
+                    }
+                return profileData;
+              })
+            };
             const configContent = JSON.stringify(exportData, null, 2);
             const blob = new Blob([configContent], { type: 'application/json' });
             const link = document.createElement('a');
@@ -1932,18 +1990,9 @@
             document.body.removeChild(link);
             URL.revokeObjectURL(link.href);
 
-            log(`Exported ${selectedProfiles.length} profile(s) to ${filename}`);
+            log(`Exported ${selectedProfiles.length} profile(s) to ${filename} (unencrypted)`);
             document.getElementById('exportModal').style.display = 'none';
-          }).catch(err => {
-            log(`Export failed: ${err.message}`);
-          });
-        },
-        () => {
-          log("Export cancelled.");
-          document.getElementById('exportModal').style.display = 'none';
-        },
-        "Enter Passphrase for Export"
-      );
+        }  
     }
 
     // --- 匯入功能 (修改後：匯入即儲存) ---
