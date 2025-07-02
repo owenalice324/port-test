@@ -142,6 +142,31 @@
       text-align: center;
       margin-top: 20px;
     }
+    /* 新增：助記詞輸入模態視窗樣式 */
+    .passphrase-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .passphrase-modal .modal-content {
+      background-color: #fff;
+      max-width: 400px;
+      width: 90%;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .passphrase-modal input[type="password"] {
+      width: calc(100% - 20px);
+      margin: 10px 0;
+    }
     .select-all-label {
       display: flex;
       align-items: center;
@@ -1021,6 +1046,17 @@
         </div>
       </div>
     </div>
+    <!-- 新增：助記詞輸入模態視窗 -->
+    <div id="passphraseModal" class="passphrase-modal">
+      <div class="modal-content">
+        <h4>Enter Passphrase</h4>
+        <input type="password" id="passphraseInput" placeholder="Enter your passphrase">
+        <div class="modal-buttons">
+          <button id="confirmPassphraseBtn">Confirm</button>
+          <button id="cancelPassphraseBtn" class="del-color">Cancel</button>
+        </div>
+      </div>
+    </div>
   <!-- 新增：掃描介面 -->
   <div id="scannerContainer">
     <div>
@@ -1696,7 +1732,90 @@
      * Part I: Profile Import/Export Functionality (.cfg format)
      * -------------------------------------------------------------
      */
+    // --- 新增：助記詞加密/解密功能 ---
+    async function deriveKeyFromPassphrase(passphrase, salt) {
+      const enc = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        enc.encode(passphrase),
+        { name: "PBKDF2" },
+        false,
+        ["deriveBits", "deriveKey"]
+      );
+      return await crypto.subtle.deriveKey(
+        {
+          name: "PBKDF2",
+          salt: salt,
+          iterations: 100000,
+          hash: "SHA-256"
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+      );
+    }
 
+    async function encryptTOTPKey(totpKey, passphrase) {
+      const enc = new TextEncoder();
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const key = await deriveKeyFromPassphrase(passphrase, salt);
+      const encrypted = await crypto.subtle.encrypt(
+        {
+          name: "AES-GCM",
+          iv: iv
+        },
+        key,
+        enc.encode(totpKey)
+      );
+      return {
+        encryptedTotpKey: Array.from(new Uint8Array(encrypted)),
+        salt: Array.from(salt),
+        iv: Array.from(iv)
+      };
+    }
+
+    async function decryptTOTPKey(encryptedData, passphrase) {
+      try {
+        const key = await deriveKeyFromPassphrase(passphrase, new Uint8Array(encryptedData.salt));
+        const decrypted = await crypto.subtle.decrypt(
+          {
+            name: "AES-GCM",
+            iv: new Uint8Array(encryptedData.iv)
+          },
+          key,
+          new Uint8Array(encryptedData.encryptedTotpKey)
+        );
+        const dec = new TextDecoder();
+        return dec.decode(decrypted);
+      } catch (err) {
+        throw new Error("Decryption failed: Invalid passphrase or corrupted data.");
+      }
+    }
+
+    function showPassphraseModal(callback, cancelCallback, title = "Enter Passphrase") {
+      const modal = document.getElementById('passphraseModal');
+      const input = document.getElementById('passphraseInput');
+      const confirmBtn = document.getElementById('confirmPassphraseBtn');
+      const cancelBtn = document.getElementById('cancelPassphraseBtn');
+      const modalTitle = modal.querySelector('h4');
+      modalTitle.textContent = title;
+      input.value = '';
+      modal.style.display = 'flex';
+
+      const onConfirm = () => {
+        callback(input.value);
+        modal.style.display = 'none';
+        confirmBtn.removeEventcolari
+      };
+
+      confirmBtn.addEventListener('click', onConfirm, { once: true });
+      cancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        if (cancelCallback) cancelCallback();
+      }, { once: true });
+    }
     // --- 匯出功能 ---
     function exportProfile() {
       document.getElementById('log').textContent = '';
@@ -1707,7 +1826,20 @@
         return;
       }
       generateExportModalContent();
-      document.getElementById('exportModal').style.display = 'flex';
+      showPassphraseModal(
+        async (passphrase) => {
+          if (!passphrase) {
+            log("Passphrase is required for export.");
+            return;
+          }
+          generateExportModalContent();
+          document.getElementById('exportModal').style.display = 'flex';
+        },
+        () => {
+          log("Export cancelled.");
+        },
+        "Enter Passphrase for Export"
+      );
     }
 
     function generateExportModalContent() {
@@ -1752,6 +1884,12 @@
     }
 
     function confirmExport() {
+      showPassphraseModal(
+        async (passphrase) => {
+          if (!passphrase) {
+            log("Passphrase is required.");
+            return;
+          }
       const checkboxes = document.querySelectorAll('.export-checkbox:checked');
       const selectedProfiles = Array.from(checkboxes).map(cb => cb.dataset.profile);
       
@@ -1768,28 +1906,308 @@
             profileName: name,
             ip: data.ip,
             firstport: data.firstport,
-            totpKey: data.totpKey
+                encrypted: true
+              };
+              // 加密 TOTP Key
+              return encryptTOTPKey(data.totpKey, passphrase).then(encrypted => {
+                profileData.totpKey = encrypted;
+                if (data.publicport && data.protocol) {
+                  profileData.publicport = data.publicport;
+                  profileData.protocol = data.protocol;
+                }
+                return profileData;
+              });
+            })
           };
-          if (data.publicport && data.protocol) {
-            profileData.publicport = data.publicport;
-            profileData.protocol = data.protocol;
+
+          Promise.all(exportData.portknocking).then(resolvedPortknocking => {
+            exportData.portknocking = resolvedPortknocking;
+            const configContent = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([configContent], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+
+            log(`Exported ${selectedProfiles.length} profile(s) to ${filename}`);
+            document.getElementById('exportModal').style.display = 'none';
+          }).catch(err => {
+            log(`Export failed: ${err.message}`);
+          });
+        },
+        () => {
+          log("Export cancelled.");
+          document.getElementById('exportModal').style.display = 'none';
+        },
+        "Enter Passphrase for Export"
+      );
+    }
+
+    // --- 匯入功能 (修改後：匯入即儲存) ---
+    function handleImport(event) {
+      document.getElementById('log').textContent = '';
+      const file = event.target.files[0];
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+      let importedData = null;
+      reader.onload = function(e) {
+        const content = e.target.result;
+        try {
+          // Parse JSON content
+          importedData = JSON.parse(content);
+
+          // Validate portknocking section
+          if (!importedData.portknocking) {
+            throw new Error("Imported file is missing 'portknocking' section.");
           }
-          return profileData;
-        })
+
+          let profilesToImport = [];
+          if (Array.isArray(importedData.portknocking)) {
+            profilesToImport = importedData.portknocking;
+            if (profilesToImport.length > 1) {
+              // Show modal for multiple profiles
+              document.getElementById('importFile').dataset.importedContent = JSON.stringify(importedData);
+              generateImportModalContent(profilesToImport, file.name);
+              document.getElementById('importModal').style.display = 'flex';
+              return;
+            } else if (profilesToImport.length === 1) {
+              // Single profile in array
+              portknockingData = profilesToImport[0];
+            } else {
+              throw new Error("Imported file has an empty 'portknocking' array.");
+            }
+          } else {
+            // Single profile as object (existing format)
+            portknockingData = importedData.portknocking;
+          }
+
+          // Validate required fields
+          if (!portknockingData.profileName || !portknockingData.ip || !portknockingData.firstport || !portknockingData.totpKey) {
+            throw new Error("Imported file is missing required fields (profileName, ip, 1stport, totpKey) in 'portknocking' section.");
+          }
+
+          // 檢查是否為加密的 TOTP Key
+          if (portknockingData.encrypted) {
+            showPassphraseModal(
+              async (passphrase) => {
+                if (!passphrase) {
+                  log("Passphrase is required for import.");
+                  return;
+                }
+                try {
+                  const decryptedTotpKey = await decryptTOTPKey(portknockingData.totpKey, passphrase);
+                  portknockingData.totpKey = decryptedTotpKey;
+                  processSingleProfileImport(portknockingData, file.name);
+                } catch (err) {
+                  log(`Import failed: ${err.message}`);
+                  document.getElementById('importFile').value = null;
+                }
+              },
+              () => {
+                log("Import cancelled.");
+                document.getElementById('importFile').value = null;
+              },
+              "Enter Passphrase for Import"
+            );
+          } else {
+            processSingleProfileImport(portknockingData, file.name);
+          }
+        } catch (error) {
+          console.error("Error parsing config file:", error);
+          log("Error importing profile: " + error.message);
+          document.getElementById('importFile').value = null;
+        }
       };
 
-      const configContent = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([configContent], { type: 'application/json' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
+      reader.onerror = function(e) {
+        console.error("Error reading file:", e);
+        log("Error reading file.");
+        document.getElementById('importFile').value = null;
+      };
 
-      log(`Exported ${selectedProfiles.length} profile(s) to ${filename}`);
-      document.getElementById('exportModal').style.display = 'none';
+      reader.readAsText(file);
+    }
+
+    function processSingleProfileImport(portknockingData, fileName) {
+      // --- 新增：定義數量上限 ---
+      const MAX_PROFILES = 200;
+      // --- 新增：檢查目前 Profile 數量是否已達上限 ---
+      const currentProfileCount = Object.keys(getAllServices()).length;
+      if (currentProfileCount >= MAX_PROFILES) {
+        log(`Import failed: Profile limit (${MAX_PROFILES}) reached.`);
+        return false; // 返回 false 表示因超限而失敗
+      }
+      const profileNameToSave = portknockingData.profileName;
+      const ipToSave = portknockingData.ip;
+      const firstportToSave = portknockingData.firstport;
+      const totpKeyToSave = portknockingData.totpKey;
+      const publicportToSave = portknockingData.publicport || null;
+      const protocolToSave = portknockingData.protocol || null;
+
+      // --- 填入表單 ---
+      document.getElementById('profileName').value = portknockingData.profileName;
+      document.getElementById('ip').value = portknockingData.ip;
+      document.getElementById('1stport').value = portknockingData.firstport;
+      document.getElementById('totpKey').value = portknockingData.totpKey;
+
+      // 處理可選設定
+      const optionalSettingsRow = document.getElementById('optionalSettingsRow');
+      const toggleOptionalCheckbox = document.getElementById('toggleOptional');
+      if (portknockingData.publicport && portknockingData.protocol) {
+        document.getElementById('publicport').value = portknockingData.publicport;
+        document.getElementById('protocol').value = portknockingData.protocol;
+        toggleOptionalCheckbox.checked = true;
+        optionalSettingsRow.style.display = 'table-row';
+        updateStatusLink(); // 更新狀態連結顯示
+      } else {
+        document.getElementById('publicport').value = '';
+        document.getElementById('protocol').value = 'http';
+        toggleOptionalCheckbox.checked = false;
+        optionalSettingsRow.style.display = 'none';
+        document.getElementById('statusLink').innerHTML = "";
+      }
+
+      // --- ★ 新增：立即儲存匯入的資料 ---
+      saveService(
+          profileNameToSave,
+          ipToSave,
+          firstportToSave,
+          totpKeyToSave,
+          publicportToSave,
+          protocolToSave
+      );
+
+      // --- ★ 新增：立即更新下拉選單 ---
+      refreshServiceSelect();
+
+      // --- ★ 新增：自動選中剛匯入的設定檔 ---
+      document.getElementById('profileSelect').value = profileNameToSave;
+
+      // 更新 TOTP 顯示和計時器 (保持不變)
+      updateTotpCode();
+      startTotpTimer();
+
+      log("Profile '" + profileNameToSave + "' imported and saved successfully from " + fileName);
+      return true; // 返回 true 表示成功
+    }
+
+    function generateImportModalContent(profiles, fileName) {
+      const profileList = document.getElementById('importProfileList');
+      profileList.innerHTML = '';
+      document.getElementById('importSearch').value = ''; // 清空搜尋框
+      document.getElementById('selectAllImportCheckbox').checked = false; // 重置 Select All 勾選框
+      profiles.forEach((profile, index) => {
+        if (profile.profileName) {
+          const div = document.createElement('div');
+          div.innerHTML = `
+            <label>
+              <input type="checkbox" class="custom-checkbox import-checkbox" data-index="${index}">
+              ${profile.profileName}
+            </label>
+          `;
+          profileList.appendChild(div);
+        }
+      });
+      document.getElementById('confirmImportBtn').dataset.fileName = fileName;
+    }
+
+    function confirmImport() {
+      const MAX_PROFILES = 200;
+      const checkboxes = document.querySelectorAll('.import-checkbox:checked');
+      const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+      const fileName = document.getElementById('confirmImportBtn').dataset.fileName;
+
+      if (selectedIndices.length === 0) {
+        log('Please select at least one profile to import.');
+        return;
+      }
+      // --- 新增：檢查匯入後是否會超過上限 ---
+      const currentProfileCount = Object.keys(getAllServices()).length;
+      const selectedCount = selectedIndices.length;
+      if (currentProfileCount + selectedCount > MAX_PROFILES) {
+        log(`Import failed: Limit check failed (current: ${currentProfileCount}, selected: ${selectedCount}, limit: ${MAX_PROFILES}).`);
+        return; // 阻止匯入
+      }
+      const importedData = JSON.parse(document.getElementById('importFile').dataset.importedContent || '{}');
+      const profiles = importedData.portknocking || [];
+      showPassphraseModal(
+        async (passphrase) => {
+          if (!passphrase) {
+            log("Passphrase is required for import.");
+            return;
+          }
+          try {
+            const selectedProfiles = [];
+            for (const index of selectedIndices) {
+              const profile = profiles[index];
+              if (profile.encrypted) {
+                profile.totpKey = await decryptTOTPKey(profile.totpKey, passphrase);
+              }
+              selectedProfiles.push(profile);
+            }
+
+            selectedProfiles.forEach(profile => {
+              if (profile.profileName && profile.ip && profile.firstport && profile.totpKey) {
+                saveService(
+                  profile.profileName,
+                  profile.ip,
+                  profile.firstport,
+                  profile.totpKey,
+                  profile.publicport || null,
+                  profile.protocol || null
+                );
+              }
+            });
+
+            refreshServiceSelect();
+            if (selectedProfiles.length > 0) {
+              document.getElementById('profileSelect').value = selectedProfiles[0].profileName;
+              document.getElementById('profileName').value = selectedProfiles[0].profileName;
+              document.getElementById('ip').value = selectedProfiles[0].ip;
+              document.getElementById('1stport').value = selectedProfiles[0].firstport;
+              document.getElementById('totpKey').value = selectedProfiles[0].totpKey;
+
+              const optionalSettingsRow = document.getElementById('optionalSettingsRow');
+              const toggleOptionalCheckbox = document.getElementById('toggleOptional');
+              if (selectedProfiles[0].publicport && selectedProfiles[0].protocol) {
+                document.getElementById('publicport').value = selectedProfiles[0].publicport;
+                document.getElementById('protocol').value = selectedProfiles[0].protocol;
+                toggleOptionalCheckbox.checked = true;
+                optionalSettingsRow.style.display = 'table-row';
+                updateStatusLink();
+              } else {
+                document.getElementById('publicport').value = '';
+                document.getElementById('protocol').value = 'http';
+                toggleOptionalCheckbox.checked = false;
+                optionalSettingsRow.style.display = 'none';
+                document.getElementById('statusLink').innerHTML = "";
+              }
+
+              updateTotpCode();
+              startTotpTimer();
+            }
+
+            document.getElementById('importFile').value = null;
+            log(`Imported ${selectedProfiles.length} profile(s) from ${fileName}`);
+            document.getElementById('importModal').style.display = 'none';
+          } catch (err) {
+            log(`Import failed: ${err.message}`);
+            document.getElementById('importFile').value = null;
+          }
+        },
+        () => {
+          log("Import cancelled.");
+          document.getElementById('importFile').value = null;
+          document.getElementById('importModal').style.display = 'none';
+        },
+        "Enter Passphrase for Import"
+      );
     }
     // --- 匯入功能 (修改後：匯入即儲存) ---
     function handleImport(event) {
@@ -1836,8 +2254,29 @@
           if (!portknockingData.profileName || !portknockingData.ip || !portknockingData.firstport || !portknockingData.totpKey) {
             throw new Error("Imported file is missing required fields (profileName, ip, 1stport, totpKey) in 'portknocking' section.");
           }
-         // Process single profile import
-          processSingleProfileImport(portknockingData, file.name);
+          // 檢查是否為加密的 TOTP Key
+          if (portknockingData.encrypted) {
+            showPassphraseModal(
+              async (passphrase) => {
+                if (!passphrase) {
+                  log("Passphrase is required for import.");
+                  document.getElementById('importFile').value = null;
+                  return;
+                }
+                try {
+                  portknockingData.totpKey = await decryptTOTPKey(portknockingData.totpKey, passphrase);
+                  processSingleProfileImport(portknockingData, file.name);
+                } catch (err) {
+                  log(`Import failed: ${err.message}`);
+                  document.getElementById('importFile').value = null;
+                }
+              },
+              () => log("Import cancelled."),
+              "Enter Passphrase for Import"
+            );
+          } else {
+            processSingleProfileImport(portknockingData, file.name);
+          }
         } catch (error) {
           //alert("Failed to import profile: " + error.message);
           console.error("Error parsing config file:", error);
