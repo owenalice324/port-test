@@ -1010,7 +1010,7 @@
             <input type="checkbox" id="selectAllCheckbox" class="custom-checkbox"> Select All
           </label>
           <label class="select-all-label">
-            <input type="checkbox" id="encryptTotpCheckbox" class="custom-checkbox" checked> Encrypt TOTP Key
+            <input type="checkbox" id="encryptTotpCheckbox" class="custom-checkbox"> Encrypt TOTP Key
           </label>
           <div style="display: flex; gap: 10px;">
             <button id="confirmExportBtn">Confirm</button>
@@ -1079,8 +1079,10 @@
         <h4>Enter Passphrase</h4>
         <input type="password" id="passphraseInput" placeholder="Enter your passphrase">
         <div class="modal-buttons">
-          <button id="confirmPassphraseBtn">Confirm</button>
-          <button id="cancelPassphraseBtn" class="del-color">Cancel</button>
+          <div style="display: flex; gap: 10px;">
+            <button id="confirmPassphraseBtn">Confirm</button>
+            <button id="cancelPassphraseBtn" class="del-color">Cancel</button>
+          </div>
         </div>
       </div>
     </div>
