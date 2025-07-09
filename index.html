@@ -932,7 +932,7 @@
                 <button id="copyTotpBtn">Copy</button>
               </div>
               <!-- 進度條與倒數字 -->
-              <div id="totpProgressContainer" class="flex-container progress-Box">
+              <div class="flex-container progress-Box">
                 <div id="totpProgressBar">
                   <div id="totpProgress" style="width: 0%;"></div>
                 </div>
@@ -1587,7 +1587,7 @@
         const totpProgressContainer = document.getElementById('totpProgressContainer');
         if (e.target.checked) {
           currentTotpContainer.style.display = 'flex';
-          totpProgressContainer.style.display = 'block';
+          //totpProgressContainer.style.display = 'block';
         } else {
           currentTotpContainer.style.display = 'none';
           totpProgressContainer.style.display = 'none';
@@ -1711,7 +1711,7 @@
       const totpProgressContainer = document.getElementById('totpProgressContainer');
       if (verifyCodeCheckbox.checked) {
         currentTotpContainer.style.display = 'flex';
-        totpProgressContainer.style.display = 'block';
+        //totpProgressContainer.style.display = 'block';
       } else {
         currentTotpContainer.style.display = 'none';
         totpProgressContainer.style.display = 'none';
