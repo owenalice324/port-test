@@ -290,6 +290,14 @@
       fill: #555;
       pointer-events: none; /* 防止圖標干擾輸入 */
     }
+    /* 複製按鈕禁用樣式 */
+    button.copy-disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    button.copy-disabled:hover {
+      background-color: #cccccc;
+    }
     .button-group {
       display: flex;
       align-items: center;
@@ -924,7 +932,7 @@
                 <button id="copyTotpBtn">Copy</button>
               </div>
               <!-- 進度條與倒數字 -->
-              <div class="flex-container progress-Box">
+              <div id="totpProgressContainer" class="flex-container progress-Box">
                 <div id="totpProgressBar">
                   <div id="totpProgress" style="width: 0%;"></div>
                 </div>
@@ -1181,13 +1189,25 @@
         progressElem.style.width = '0%';
         countdownElem.textContent = "-- Sec";
         clearInterval(progressInterval);
+        // 恢復複製按鈕
+        const copyBtn = document.getElementById('copyTotpBtn');
+        copyBtn.classList.remove('copy-disabled');
+        copyBtn.disabled = false;
         return;
       }
       try {
         const code = await generateTOTP(totpKey);
         totpCodeElem.textContent = code;
+        // 當 TOTP 碼更新時，恢復複製按鈕
+        const copyBtn = document.getElementById('copyTotpBtn');
+        copyBtn.classList.remove('copy-disabled');
+        copyBtn.disabled = false;
       } catch (err) {
         totpCodeElem.textContent = `Invalid`;
+        // 如果無效，也恢復複製按鈕
+        const copyBtn = document.getElementById('copyTotpBtn');
+        copyBtn.classList.remove('copy-disabled');
+        copyBtn.disabled = false;
       }
     }
 
@@ -1227,6 +1247,9 @@
       }
       navigator.clipboard.writeText(totpCode)
         .then(() => {
+          const copyBtn = document.getElementById('copyTotpBtn');
+          copyBtn.classList.add('copy-disabled');
+          copyBtn.disabled = true;
           log("Copied TOTP code");
         })
         .catch(err => {
@@ -1298,7 +1321,7 @@
         }
 
         if (isOptional) {
-          logElem.textContent += "\nPorts knocking completed.\nYou can now access the server.";
+          logElem.textContent += "\nPorts knocking completed.\nYou can now access the server.\n";
           if (protocol && ip && publicport) {
             const link = `${protocol}://${ip}:${publicport}`;
             document.getElementById('statusLink').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
