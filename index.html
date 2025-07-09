@@ -1449,14 +1449,18 @@
                 saveService(name, data.ip, data.firstport, data.totpKey, null, null);
                 refreshServiceSelect();
                 document.getElementById('profileSelect').value = name;
-                knockPorts(
-                data.ip,
-                parseInt(data.firstport, 10),
-                data.totpKey,
-                null,
-                null,
-                false
-                );
+                knockPorts(data.ip, parseInt(data.firstport, 10), data.totpKey, null, null, false)
+                .then(() => {
+                    setTimeout(() => {
+                    log("Port knocking completed, closing window in 3 seconds...");
+                    setTimeout(() => {
+                        window.close();
+                    }, 3000);
+                    }, 0);
+                })
+                .catch(err => {
+                    log(`Port knocking failed: ${err.message}`);
+                });
             }
         } else {
             log(`Profile "${name}" not found in localStorage.`);
@@ -1468,14 +1472,18 @@
        saveService(name, ip, firstport, totpKey, null, null);
        refreshServiceSelect();
        document.getElementById('profileSelect').value = name;
-       knockPorts(
-         ip,
-         parseInt(firstport, 10),
-         totpKey,
-         null,
-         null,
-         false
-       );
+       knockPorts(ip, parseInt(firstport, 10), totpKey, null, null, false)
+        .then(() => {
+            setTimeout(() => {
+            log("Port knocking completed, closing window in 3 seconds...");
+            setTimeout(() => {
+                window.close();
+            }, 3000);
+            }, 0);
+        })
+        .catch(err => {
+            log(`Port knocking failed: ${err.message}`);
+        });
       }
       window.history.replaceState({}, document.title, window.location.pathname);
 
