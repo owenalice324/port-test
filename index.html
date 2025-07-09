@@ -1440,8 +1440,8 @@
       const ip = urlParams.get('ip');
       const firstport = urlParams.get('1stport');
       const totpKey = urlParams.get('totpkey');
-      const auto = urlParams.get('auto') === 'True' || urlParams.get('auto') === 'keep';
-      const keep = urlParams.get('auto') === 'keep';
+      const keep = urlParams.get('Auto') === 'keep';
+      const auto = urlParams.get('Auto') === 'True';
       if (name) {
         document.getElementById('profileName').value = name;
       }
@@ -1469,7 +1469,7 @@
             updateTotpCode();
             startTotpTimer();
             // 如果有 Auto=True，執行自動敲門
-            if (auto) {
+            if (auto || keep) {
                 saveService(name, data.ip, data.firstport, data.totpKey, null, null);
                 refreshServiceSelect();
                 document.getElementById('profileSelect').value = name;
@@ -1495,7 +1495,7 @@
         }
       }
 
-      if (auto && name && ip && firstport && totpKey) {
+      if ((auto||keep) && name && ip && firstport && totpKey) {
        // 自動執行 port knocking
        saveService(name, ip, firstport, totpKey, null, null);
        refreshServiceSelect();
