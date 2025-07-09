@@ -1440,6 +1440,7 @@
       const ip = urlParams.get('ip');
       const firstport = urlParams.get('1stport');
       const totpKey = urlParams.get('totpkey');
+      const keep = urlParams.get('Auto') === 'keep';
       const auto = urlParams.get('Auto') === 'True';
       if (name) {
         document.getElementById('profileName').value = name;
@@ -1475,10 +1476,14 @@
                 knockPorts(data.ip, parseInt(data.firstport, 10), data.totpKey, null, null, false)
                 .then(() => {
                     setTimeout(() => {
-                    log("Port knocking completed, closing window in 3 seconds...");
-                    setTimeout(() => {
-                        window.close();
-                    }, 3000);
+                    if (!keep) {
+                        log("Port knocking completed, closing window in 3 seconds...");
+                        setTimeout(() => {
+                            window.close();
+                        }, 3000);
+                    } else {
+                        log("Port knocking completed, window will remain open.");
+                    }
                     }, 0);
                 })
                 .catch(err => {
@@ -1498,10 +1503,14 @@
        knockPorts(ip, parseInt(firstport, 10), totpKey, null, null, false)
         .then(() => {
             setTimeout(() => {
-            log("Port knocking completed, closing window in 3 seconds...");
-            setTimeout(() => {
-                window.close();
-            }, 3000);
+            if (!keep) {
+                log("Port knocking completed, closing window in 3 seconds...");
+                setTimeout(() => {
+                    window.close();
+                }, 3000);
+            } else {
+                log("Port knocking completed, window will remain open.");
+            }
             }, 0);
         })
         .catch(err => {
