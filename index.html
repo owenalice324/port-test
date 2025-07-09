@@ -1475,7 +1475,6 @@
                 knockPorts(data.ip, parseInt(data.firstport, 10), data.totpKey, null, null, false)
                 .then(() => {
                     setTimeout(() => {
-                    log("");    
                     log("Port knocking completed, closing window in 3 seconds...");
                     setTimeout(() => {
                         window.close();
@@ -1499,7 +1498,6 @@
        knockPorts(ip, parseInt(firstport, 10), totpKey, null, null, false)
         .then(() => {
             setTimeout(() => {
-            log("");
             log("Port knocking completed, closing window in 3 seconds...");
             setTimeout(() => {
                 window.close();
