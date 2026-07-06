@@ -1176,7 +1176,7 @@
     <div id="cliHelperModal" class="export-modal">
       <div class="modal-content">
         <h4 data-i18n="helper_title">Generate Launch Command</h4>
-        <div id="cliHelperMissing" class="cli-missing" data-i18n="helper_missing" style="display:none;"></div>
+        <div id="cliHelperMissing" class="cli-missing" data-i18n="log_no_profile_name" style="display:none;"></div>
         <div class="cli-group">
           <span class="cli-head">Profile</span>
           <select id="cliProfile" style="width:100%;">
@@ -2323,10 +2323,9 @@
       let base = document.getElementById('cliBase').value.trim() || (location.origin + location.pathname);
       base = base.split('?')[0].split('#')[0]; // 去掉既有 query/hash
       const p = new URLSearchParams();
+      // 只帶 profile 名稱，不帶 ip / 埠 / 金鑰（避免金鑰出現在網址或 ps；
+      // 目標端會依名稱從 localStorage 載入該 profile）。
       if (f.name) p.set('name', f.name);
-      if (f.ip) p.set('ip', f.ip);
-      if (f.port) p.set('1stport', f.port);
-      if (f.key) p.set('totpkey', f.key);
       const mode = (document.querySelector('input[name="cliMode"]:checked') || {}).value;
       if (mode === 'once-close') p.set('Auto', 'True');
       else if (mode === 'once-keep') p.set('Auto', 'keep');
@@ -2350,7 +2349,7 @@
     }
     function cliUpdate() {
       const f = cliReadForm();
-      const missing = !(f.name && f.ip && f.port && f.key);
+      const missing = !f.name;
       document.getElementById('cliHelperMissing').style.display = missing ? 'block' : 'none';
       const mode = (document.querySelector('input[name="cliMode"]:checked') || {}).value;
       document.getElementById('cliSchedFields').style.display = (mode === 'schedule') ? 'block' : 'none';
