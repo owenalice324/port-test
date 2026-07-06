@@ -143,6 +143,16 @@
       text-align: center;
       margin-top: 20px;
     }
+    /* CLI 指令產生器 */
+    #cliHelperModal .modal-content { max-width: 540px; max-height: 90vh; overflow-y: auto; }
+    .cli-group { margin: 12px 0; }
+    .cli-head { display: block; font-weight: bold; margin-bottom: 6px; font-size: 14px; }
+    .cli-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0; font-size: 14px; }
+    .cli-row input[type="number"], .cli-row input[type="text"] { width: 140px; }
+    .cli-copyrow { display: flex; gap: 6px; align-items: stretch; }
+    .cli-copyrow textarea { flex: 1; font-family: monospace; font-size: 12px; padding: 6px; border: 1px solid #d8d8d8; border-radius: 4px; resize: vertical; box-sizing: border-box; background: #f8f8f8; color: #222; }
+    .cli-copy { white-space: nowrap; padding: 6px 12px; font-size: 13px; }
+    .cli-missing { color: #c0392b; font-size: 13px; margin-bottom: 10px; }
     /* 新增：助記詞輸入模態視窗樣式 */
     .passphrase-modal {
       display: none;
@@ -946,6 +956,7 @@
                   <a href="#" id="importOption" data-i18n="import_option">Import Profile</a>
                   <a href="#" id="exportOption" data-i18n="export_option">Export Profile</a>
                   <a href="#" id="deleteOption" data-i18n="delete_option">Delete Profile</a>
+                  <a href="#" id="helperOption" data-i18n="helper_option">Generate CLI Command</a>
                 </div>
               </div>
             </div>
@@ -1161,6 +1172,54 @@
         </div>
       </div>
     </div>
+    <!-- 新增：CLI 指令產生器 -->
+    <div id="cliHelperModal" class="export-modal">
+      <div class="modal-content">
+        <h4 data-i18n="helper_title">Generate Launch Command</h4>
+        <div id="cliHelperMissing" class="cli-missing" data-i18n="helper_missing" style="display:none;"></div>
+        <div class="cli-group">
+          <span class="cli-head">Base URL</span>
+          <input type="text" id="cliBase" style="width:100%; box-sizing:border-box;">
+        </div>
+        <div class="cli-group">
+          <span class="cli-head">Mode</span>
+          <label><input type="radio" name="cliMode" value="schedule" checked><span data-i18n="helper_schedule">Scheduled (repeat)</span></label>
+          <label><input type="radio" name="cliMode" value="once-keep"><span data-i18n="helper_once_keep">Single knock, keep tab open</span></label>
+          <label><input type="radio" name="cliMode" value="once-close"><span data-i18n="helper_once_close">Single knock, then close tab</span></label>
+        </div>
+        <div class="cli-group" id="cliSchedFields">
+          <div class="cli-row"><span data-i18n="helper_interval">Interval (sec)</span><input type="number" id="cliInterval" value="300" min="1"></div>
+          <div class="cli-row"><span data-i18n="helper_count">Count (0 = unlimited)</span><input type="number" id="cliCount" value="0" min="0"></div>
+          <div class="cli-row"><span data-i18n="helper_until">Until (HH:MM, optional)</span><input type="text" id="cliUntil" placeholder="18:30"></div>
+        </div>
+        <div class="cli-group">
+          <span class="cli-head">OS</span>
+          <select id="cliOs" style="width:100%;">
+            <option value="linux">Linux — google-chrome</option>
+            <option value="win-cmd">Windows — cmd (start chrome)</option>
+            <option value="win-ps">Windows — PowerShell</option>
+            <option value="macos">macOS — open -a</option>
+          </select>
+        </div>
+        <div class="cli-group">
+          <span class="cli-head">URL</span>
+          <div class="cli-copyrow">
+            <textarea id="cliUrlOut" readonly rows="2"></textarea>
+            <button type="button" class="cli-copy" data-target="cliUrlOut" data-i18n="helper_copy">Copy</button>
+          </div>
+        </div>
+        <div class="cli-group">
+          <span class="cli-head">CLI</span>
+          <div class="cli-copyrow">
+            <textarea id="cliCmdOut" readonly rows="3"></textarea>
+            <button type="button" class="cli-copy" data-target="cliCmdOut" data-i18n="helper_copy">Copy</button>
+          </div>
+        </div>
+        <div class="modal-buttons">
+          <button id="cliHelperClose" class="del-color" data-i18n="cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
   <!-- 新增：掃描介面 -->
   <div id="scannerContainer">
     <div>
@@ -1224,6 +1283,7 @@
         log_import_error:"Error importing profile: {error}",log_file_read_error:"Error reading file.",
         save_btn:"Save Profile",log_saved_new:"Profile \"{name}\" saved.",log_saved_updated:"Profile \"{name}\" updated.",
         log_sched_start:"Scheduled knocking started: every {interval}s, count {count}.",log_sched_done:"Scheduled knocking stopped. Total {total} / success {success} / failed {failed}.",
+        helper_option:"Generate CLI Command",helper_title:"Generate Launch Command",helper_schedule:"Scheduled (repeat)",helper_once_keep:"Single knock, keep tab open",helper_once_close:"Single knock, then close tab",helper_interval:"Interval (sec)",helper_count:"Count (0 = unlimited)",helper_until:"Until (HH:MM, optional)",helper_missing:"Please fill in Profile Name / IP / 1st Port / TOTP Key above first.",helper_copy:"Copy",helper_copied:"Copied!",
         log_export_failed:"Export failed: {error}",log_import_invalid_file:"Imported file is missing 'portknocking' section.",
         log_import_empty:"Imported file has an empty 'portknocking' array.",
         log_import_missing_fields:"Imported file is missing required fields (profileName, ip, 1stport, totpKey) in 'portknocking' section.",
@@ -1280,6 +1340,7 @@
         passphrase_profile_title:"輸入設定檔「{name}」的通行密語",
         save_btn:"儲存設定檔",log_saved_new:"設定檔「{name}」已儲存。",log_saved_updated:"設定檔「{name}」已更新。",
         log_sched_start:"已開始定時敲門：每 {interval} 秒，次數 {count}。",log_sched_done:"定時敲門結束。總次數 {total} / 成功 {success} / 失敗 {failed}。",
+        helper_option:"產生 CLI 指令",helper_title:"產生啟動指令",helper_schedule:"定時敲門（重複）",helper_once_keep:"單次敲門並保持開啟",helper_once_close:"單次敲門後關閉分頁",helper_interval:"間隔（秒）",helper_count:"次數（0 = 無限）",helper_until:"停止時間（HH:MM，可留空）",helper_missing:"請先在上方填寫 Profile Name / IP / 第一埠 / TOTP 金鑰。",helper_copy:"複製",helper_copied:"已複製！",
         ordinals:["1","2","3"],countdown_default:"-- 秒"
       },
       "zh-CN": {
@@ -1331,6 +1392,7 @@
         passphrase_profile_title:"输入配置文件「{name}」的密码短语",
         save_btn:"保存配置文件",log_saved_new:"配置文件「{name}」已保存。",log_saved_updated:"配置文件「{name}」已更新。",
         log_sched_start:"已开始定时敲门：每 {interval} 秒，次数 {count}。",log_sched_done:"定时敲门结束。总次数 {total} / 成功 {success} / 失败 {failed}。",
+        helper_option:"生成 CLI 命令",helper_title:"生成启动命令",helper_schedule:"定时敲门（重复）",helper_once_keep:"单次敲门并保持打开",helper_once_close:"单次敲门后关闭标签页",helper_interval:"间隔（秒）",helper_count:"次数（0 = 无限）",helper_until:"停止时间（HH:MM，可留空）",helper_missing:"请先在上方填写 Profile Name / IP / 第一端口 / TOTP 密钥。",helper_copy:"复制",helper_copied:"已复制！",
         ordinals:["1","2","3"],countdown_default:"-- 秒"
       },
       de: {
@@ -1382,6 +1444,7 @@
         passphrase_profile_title:"Passphrase für Profil \"{name}\" eingeben",
         save_btn:"Profil speichern",log_saved_new:"Profil \"{name}\" gespeichert.",log_saved_updated:"Profil \"{name}\" aktualisiert.",
         log_sched_start:"Geplantes Klopfen gestartet: alle {interval}s, Anzahl {count}.",log_sched_done:"Geplantes Klopfen beendet. Gesamt {total} / Erfolg {success} / Fehler {failed}.",
+        helper_option:"CLI-Befehl generieren",helper_title:"Startbefehl generieren",helper_schedule:"Geplant (wiederholen)",helper_once_keep:"Einmal anklopfen, Tab offen lassen",helper_once_close:"Einmal anklopfen, dann Tab schließen",helper_interval:"Intervall (Sek.)",helper_count:"Anzahl (0 = unbegrenzt)",helper_until:"Bis (HH:MM, optional)",helper_missing:"Bitte zuerst oben Profilname / IP / 1. Port / TOTP-Schlüssel ausfüllen.",helper_copy:"Kopieren",helper_copied:"Kopiert!",
         ordinals:["1","2","3"],countdown_default:"-- Sek"
       },
       fr: {
@@ -1433,6 +1496,7 @@
         passphrase_profile_title:"Phrase secrète pour le profil \"{name}\"",
         save_btn:"Enregistrer le profil",log_saved_new:"Profil \"{name}\" enregistré.",log_saved_updated:"Profil \"{name}\" mis à jour.",
         log_sched_start:"Frappe planifiée démarrée : toutes les {interval}s, nombre {count}.",log_sched_done:"Frappe planifiée arrêtée. Total {total} / réussis {success} / échoués {failed}.",
+        helper_option:"Générer la commande CLI",helper_title:"Générer la commande de lancement",helper_schedule:"Planifié (répéter)",helper_once_keep:"Frappe unique, garder l'onglet ouvert",helper_once_close:"Frappe unique, puis fermer l'onglet",helper_interval:"Intervalle (s)",helper_count:"Nombre (0 = illimité)",helper_until:"Jusqu'à (HH:MM, facultatif)",helper_missing:"Veuillez d'abord remplir Nom du profil / IP / 1er port / Clé TOTP ci-dessus.",helper_copy:"Copier",helper_copied:"Copié !",
         ordinals:["1er","2ème","3ème"],countdown_default:"-- s"
       },
       it: {
@@ -1484,6 +1548,7 @@
         passphrase_profile_title:"Inserisci passphrase per il profilo \"{name}\"",
         save_btn:"Salva profilo",log_saved_new:"Profilo \"{name}\" salvato.",log_saved_updated:"Profilo \"{name}\" aggiornato.",
         log_sched_start:"Knocking pianificato avviato: ogni {interval}s, numero {count}.",log_sched_done:"Knocking pianificato interrotto. Totale {total} / riusciti {success} / falliti {failed}.",
+        helper_option:"Genera comando CLI",helper_title:"Genera comando di avvio",helper_schedule:"Pianificato (ripeti)",helper_once_keep:"Bussata singola, mantieni scheda aperta",helper_once_close:"Bussata singola, poi chiudi scheda",helper_interval:"Intervallo (sec)",helper_count:"Numero (0 = illimitato)",helper_until:"Fino a (HH:MM, opzionale)",helper_missing:"Compilare prima Nome profilo / IP / 1ª porta / Chiave TOTP sopra.",helper_copy:"Copia",helper_copied:"Copiato!",
         ordinals:["1","2","3"],countdown_default:"-- sec"
       },
       pl: {
@@ -1535,6 +1600,7 @@
         passphrase_profile_title:"Wpisz hasło dla profilu \"{name}\"",
         save_btn:"Zapisz profil",log_saved_new:"Profil \"{name}\" zapisany.",log_saved_updated:"Profil \"{name}\" zaktualizowany.",
         log_sched_start:"Rozpoczęto zaplanowane pukanie: co {interval}s, liczba {count}.",log_sched_done:"Zaplanowane pukanie zatrzymane. Łącznie {total} / udane {success} / nieudane {failed}.",
+        helper_option:"Generuj polecenie CLI",helper_title:"Generuj polecenie uruchamiające",helper_schedule:"Zaplanowane (powtarzaj)",helper_once_keep:"Pojedyncze pukanie, pozostaw kartę otwartą",helper_once_close:"Pojedyncze pukanie, potem zamknij kartę",helper_interval:"Odstęp (sek.)",helper_count:"Liczba (0 = bez limitu)",helper_until:"Do (HH:MM, opcjonalnie)",helper_missing:"Najpierw wypełnij powyżej Nazwę profilu / IP / 1. port / Klucz TOTP.",helper_copy:"Kopiuj",helper_copied:"Skopiowano!",
         ordinals:["1","2","3"],countdown_default:"-- sek"
       },
       pt: {
@@ -1586,6 +1652,7 @@
         passphrase_profile_title:"Inserir senha para o perfil \"{name}\"",
         save_btn:"Salvar perfil",log_saved_new:"Perfil \"{name}\" salvo.",log_saved_updated:"Perfil \"{name}\" atualizado.",
         log_sched_start:"Knocking agendado iniciado: a cada {interval}s, contagem {count}.",log_sched_done:"Knocking agendado parado. Total {total} / sucesso {success} / falhas {failed}.",
+        helper_option:"Gerar comando CLI",helper_title:"Gerar comando de inicialização",helper_schedule:"Agendado (repetir)",helper_once_keep:"Batida única, manter aba aberta",helper_once_close:"Batida única, depois fechar aba",helper_interval:"Intervalo (s)",helper_count:"Contagem (0 = ilimitado)",helper_until:"Até (HH:MM, opcional)",helper_missing:"Preencha primeiro Nome do perfil / IP / 1ª porta / Chave TOTP acima.",helper_copy:"Copiar",helper_copied:"Copiado!",
         ordinals:["1","2","3"],countdown_default:"-- seg"
       },
       nl: {
@@ -1637,6 +1704,7 @@
         passphrase_profile_title:"Wachtwoord invoeren voor profiel \"{name}\"",
         save_btn:"Profiel opslaan",log_saved_new:"Profiel \"{name}\" opgeslagen.",log_saved_updated:"Profiel \"{name}\" bijgewerkt.",
         log_sched_start:"Geplande knock gestart: elke {interval}s, aantal {count}.",log_sched_done:"Geplande knock gestopt. Totaal {total} / gelukt {success} / mislukt {failed}.",
+        helper_option:"CLI-commando genereren",helper_title:"Startcommando genereren",helper_schedule:"Gepland (herhalen)",helper_once_keep:"Eenmalig kloppen, tabblad open houden",helper_once_close:"Eenmalig kloppen, daarna tabblad sluiten",helper_interval:"Interval (sec)",helper_count:"Aantal (0 = onbeperkt)",helper_until:"Tot (HH:MM, optioneel)",helper_missing:"Vul eerst hierboven Profielnaam / IP / 1e poort / TOTP-sleutel in.",helper_copy:"Kopiëren",helper_copied:"Gekopieerd!",
         ordinals:["1","2","3"],countdown_default:"-- sec"
       },
       vi: {
@@ -1688,6 +1756,7 @@
         passphrase_profile_title:"Nhập mật khẩu cho cấu hình \"{name}\"",
         save_btn:"Lưu cấu hình",log_saved_new:"Đã lưu cấu hình \"{name}\".",log_saved_updated:"Đã cập nhật cấu hình \"{name}\".",
         log_sched_start:"Đã bắt đầu gõ cửa định kỳ: mỗi {interval}s, số lần {count}.",log_sched_done:"Đã dừng gõ cửa định kỳ. Tổng {total} / thành công {success} / thất bại {failed}.",
+        helper_option:"Tạo lệnh CLI",helper_title:"Tạo lệnh khởi chạy",helper_schedule:"Định kỳ (lặp lại)",helper_once_keep:"Gõ một lần, giữ tab mở",helper_once_close:"Gõ một lần, rồi đóng tab",helper_interval:"Khoảng (giây)",helper_count:"Số lần (0 = không giới hạn)",helper_until:"Đến (HH:MM, tùy chọn)",helper_missing:"Vui lòng điền Tên cấu hình / IP / Cổng đầu tiên / Khóa TOTP ở trên trước.",helper_copy:"Sao chép",helper_copied:"Đã sao chép!",
         ordinals:["1","2","3"],countdown_default:"-- giây"
       }
     };
@@ -2199,6 +2268,77 @@
 
     }
 
+    /* --- CLI 指令產生器 --- */
+    function cliReadForm() {
+      return {
+        name: document.getElementById('profileName').value.trim(),
+        ip: document.getElementById('ip').value.trim(),
+        port: document.getElementById('1stport').value.trim(),
+        key: document.getElementById('totpKey').value.trim(),
+      };
+    }
+    function cliBuildUrl() {
+      const f = cliReadForm();
+      let base = document.getElementById('cliBase').value.trim() || (location.origin + location.pathname);
+      base = base.split('?')[0].split('#')[0]; // 去掉既有 query/hash
+      const p = new URLSearchParams();
+      if (f.name) p.set('name', f.name);
+      if (f.ip) p.set('ip', f.ip);
+      if (f.port) p.set('1stport', f.port);
+      if (f.key) p.set('totpkey', f.key);
+      const mode = (document.querySelector('input[name="cliMode"]:checked') || {}).value;
+      if (mode === 'once-close') p.set('Auto', 'True');
+      else if (mode === 'once-keep') p.set('Auto', 'keep');
+      else {
+        const iv = parseInt(document.getElementById('cliInterval').value, 10);
+        p.set('interval', (Number.isInteger(iv) && iv > 0) ? iv : 300);
+        const c = parseInt(document.getElementById('cliCount').value, 10);
+        if (Number.isInteger(c) && c > 0) p.set('count', c);
+        const u = document.getElementById('cliUntil').value.trim();
+        if (u) p.set('until', u);
+      }
+      return base + '?' + p.toString();
+    }
+    function cliBuildCmd(url) {
+      const os = document.getElementById('cliOs').value;
+      const q = '"' + url + '"';
+      if (os === 'win-cmd') return 'start chrome ' + q;
+      if (os === 'win-ps') return 'Start-Process chrome ' + q;
+      if (os === 'macos') return 'open -a "Google Chrome" ' + q;
+      return 'google-chrome ' + q; // linux 預設
+    }
+    function cliUpdate() {
+      const f = cliReadForm();
+      const missing = !(f.name && f.ip && f.port && f.key);
+      document.getElementById('cliHelperMissing').style.display = missing ? 'block' : 'none';
+      const mode = (document.querySelector('input[name="cliMode"]:checked') || {}).value;
+      document.getElementById('cliSchedFields').style.display = (mode === 'schedule') ? 'block' : 'none';
+      const url = cliBuildUrl();
+      document.getElementById('cliUrlOut').value = url;
+      document.getElementById('cliCmdOut').value = cliBuildCmd(url);
+    }
+    function openCliHelper() {
+      const b = document.getElementById('cliBase');
+      if (!b.value) b.value = location.origin + location.pathname;
+      cliUpdate();
+      document.getElementById('cliHelperModal').style.display = 'flex';
+    }
+    function cliCopyFallback(text, done) {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+    function cliCopy(text, btn) {
+      const done = () => { btn.textContent = t('helper_copied'); setTimeout(() => { btn.textContent = t('helper_copy'); }, 1200); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => cliCopyFallback(text, done));
+      } else {
+        cliCopyFallback(text, done);
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         // Init language selector
         const langSel = document.getElementById('langSelect');
@@ -2249,6 +2389,23 @@
         e.preventDefault();
         deleteProfile();
         settingsMenu.style.display = 'none';
+      });
+      // --- 綁定 CLI 指令產生器 ---
+      document.getElementById('helperOption').addEventListener('click', (e) => {
+        e.preventDefault();
+        openCliHelper();
+        settingsMenu.style.display = 'none';
+      });
+      document.getElementById('cliHelperClose').addEventListener('click', () => {
+        document.getElementById('cliHelperModal').style.display = 'none';
+      });
+      const cliModal = document.getElementById('cliHelperModal');
+      cliModal.addEventListener('input', cliUpdate);
+      cliModal.addEventListener('change', cliUpdate);
+      cliModal.addEventListener('click', (e) => {
+        if (e.target === cliModal) cliModal.style.display = 'none'; // 點背景關閉
+        const btn = e.target.closest('.cli-copy');
+        if (btn) cliCopy(document.getElementById(btn.getAttribute('data-target')).value, btn);
       });
       document.getElementById('selectAllCheckbox').addEventListener('change', toggleSelectAll);
       document.getElementById('selectAllImportCheckbox').addEventListener('change', toggleSelectAll);
