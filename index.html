@@ -1,1 +1,3398 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DrayTek Port Knocking Tool V1.5</title>
+  <!-- 防止頁面緩存 -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <!-- 引入 Google Fonts (Noto Sans TC) 讓整體字型更美觀 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+  <!-- 引入 jsQR 庫（改用您提供的 CDN 連結） -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
 
+  <style>
+    /* 全局設定 */
+    * {
+      box-sizing: border-box;
+    }
+        html, body {
+      height: 100%;
+      overflow-x: hidden; /* 防止水平滾動 */
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans TC', sans-serif;
+      background: linear-gradient(120deg, #E9EFF1, #E9EFF1);
+      min-height: 100vh; /* 至少填滿視口 */
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 置中容器，加入陰影與白底卡片風格 */
+    #container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px 30px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      
+    }
+
+    /* 標題 */
+    h3, h4 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      text-align: center;
+      color: #333;
+      font-weight: 700;
+    }
+
+    /* 可選設定容器 */
+    .optional-container {
+      padding: 20px;
+      border-radius: 8px;
+      background-color: #fffbf0; 
+    }
+
+    /* Notice section */
+    .notice {
+      margin: 15px;
+      padding: 15px;
+      background-color: #fffbf0;
+      border: 1px solid #ffe082;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      font-size: 14px;
+      color: #333;
+    }
+    .notice p {
+      margin: 5px 0;
+    }
+    .notice-container {
+      margin-top: 20px;
+      margin-bottom: 20px;
+      max-width: 800px;
+    }
+
+    /* Export Modal */
+    .export-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: #fff;
+      max-width: 400px;
+      width: 90%;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .modal-scrollable {
+      max-height: 250px; /* 固定高度以觸發滾動 */
+      overflow-y: auto; /* 啟用垂直滾動 */
+      margin: 15px 0; /* 上下間距 */
+      padding: 0 10px; /* 內邊距，避免內容緊貼邊緣 */
+    }
+    /* 自訂滾動條樣式 */
+    .modal-scrollable::-webkit-scrollbar {
+      width: 8px; /* 滾動條寬度 */
+    }
+    .modal-scrollable::-webkit-scrollbar-thumb {
+      background-color: #00ca9d; /* 滾動條顏色，與主題一致 */
+      border-radius: 4px;
+    }
+    .modal-scrollable::-webkit-scrollbar-track {
+      background-color: #f1f1f1; /* 滾動條背景 */
+      border-radius: 4px;
+    }
+    /* 確保 checkbox 標籤整齊 */
+    .modal-scrollable label { 
+      display: block; /* 每個 checkbox 獨佔一行 */
+      padding: 2px 0; /* 垂直間距 */
+    }
+    .modal-content h4 {
+      margin: 0 0 15px;
+      text-align: center;
+    }
+    .modal-content label {
+      display: flex;
+      align-items: center;
+      margin: 8px 0;
+      font-size: 14px;
+    }
+    .modal-buttons {
+      display: flex;
+      justify-content: space-between;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-top: 20px;
+    }
+    /* CLI 指令產生器 */
+    #cliHelperModal .modal-content { max-width: 540px; max-height: 90vh; overflow-y: auto; }
+    .cli-group { margin: 12px 0; }
+    .cli-head { display: block; font-weight: bold; margin-bottom: 6px; font-size: 14px; }
+    .cli-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0; font-size: 14px; }
+    .cli-row input[type="number"], .cli-row input[type="text"] { width: 140px; }
+    .cli-copyrow { display: flex; gap: 6px; align-items: stretch; }
+    .cli-copyrow textarea { flex: 1; font-family: monospace; font-size: 12px; padding: 6px; border: 1px solid #d8d8d8; border-radius: 4px; resize: vertical; box-sizing: border-box; background: #f8f8f8; color: #222; }
+    .cli-copy { white-space: nowrap; padding: 6px 12px; font-size: 13px; }
+    .cli-missing { color: #c0392b; font-size: 13px; margin-bottom: 10px; }
+    /* 新增：助記詞輸入模態視窗樣式 */
+    .passphrase-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .passphrase-modal .modal-content {
+      background-color: #fff;
+      max-width: 400px;
+      width: 90%;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .passphrase-modal input[type="password"] {
+      width: calc(100% - 20px);
+      margin: 10px 0;
+    }
+    .select-all-label {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      margin-right: 10px;
+      margin-bottom: 10px; /* 勾選框間距 */
+      width: 100%; /* 確保勾選框佔滿寬度 */
+      justify-content: flex-start; /* 左對齊 */
+    }
+    .modal-buttons button {
+      margin-top: 10px; /* 按鈕與勾選框間距 */
+    }
+    .select-all-label input {
+      margin-right: 5px;
+    }
+    /* 表單表格 */
+    .form-table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 100%;
+      text-align: left;
+      border-radius: 8px;
+      overflow: hidden; /* 讓邊角看起來更平滑 */
+    }
+    .form-table td {
+      padding: 5px 0;
+      vertical-align: middle;
+      position: relative; /* 使容器內的元素能夠定位 */
+    }
+    .form-table tr:last-child td {
+      border-bottom: none;
+    }
+    .form-table label {
+      font-size: 14px;
+      width: 150px;
+      display: inline-block;
+    }
+    .label-none {
+      display: none !important;
+    }
+
+    /* 輸入框、下拉式選單 */
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    select {
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #d8d8d8;
+      border-radius: 4px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"],
+    input[type="number"] {
+      width: calc(100% - 160px);
+    }
+    input:focus,
+    select:focus {
+      border-color: #999;
+    }
+    input::placeholder {
+      font-weight: 100;
+      opacity: 0.5;
+      color: gray;
+    }
+    .input--sm {
+      width: 70px !important;
+    }
+    .input--md {
+      width: 180px !important;
+    }
+    .input--lg {
+      width: 400px !important;
+    }
+    /* 按鈕們 */
+    .button-bar {
+      margin-top: 25px;
+      display: flex;
+      justify-content: center; /* 水平置中 Knock Ports 按鈕，不受翻譯長短影響 */
+      align-items: center;
+      gap: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      cursor: pointer;
+      background-color: #00ca9d;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      transition: background-color 0.2s, transform 0.2s;
+      position: relative; /* 為搜尋框提供定位上下文 */
+    }
+    /* 搜尋框樣式 */
+    .search-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin: 10px 0;
+      position: relative;
+    }
+    .search-container input {
+      padding: 8px 30px 8px 10px;
+      font-size: 14px;
+      border: 1px solid #d8d8d8;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 輕微陰影 */
+      border-radius: 4px;
+      width: 90%; /* 適應容器寬度 */
+      max-width: 300px; /* 限制最大寬度 */
+    }
+    .search-container .search-icon {
+      position: absolute;
+      right: calc(10%); /* 適應輸入框的 90% 寬度 */
+      top: 50%; /* 垂直居中 */
+      transform: translateY(-50%); /* 精確垂直居中 */
+      width: 16px;
+      height: 16px;
+      fill: #555;
+      pointer-events: none; /* 防止圖標干擾輸入 */
+    }
+    /* 複製按鈕禁用樣式 */
+    button.copy-disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    button.copy-disabled:hover {
+      background-color: #cccccc;
+    }
+    .button-group {
+      display: flex;
+      align-items: center;
+      /* 由 .button-bar 的 justify-content:center 置中，
+         不用固定 margin-left，避免按鈕因翻譯長短改變寬度而中心偏移 */
+      margin-left: 0;
+    }
+    #knockBtn {
+      margin-left: 0; /* 移除獨立偏移，由 button-group 控制 */
+      text-align: center; /* 確保文字居中 */
+    }
+    button:hover {
+      background-color: #00b38b;
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button.del-color {
+      color: #353535;
+      background-color: #f5f5f5;
+      border: 1px solid #dcdcdc;
+    }
+    button.del-color:hover {
+      background-color: #e5e5e5;
+    }
+
+    /* Table flex */
+    .flex-container {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    .flex-item {
+      flex: 1;
+    }
+    .flex-2 {
+      flex: 2;
+    }
+    .flex-3 {
+      flex: 3;
+    }
+    .flex-4 {
+      flex: 4;
+    }
+    .flex-5 {
+      flex: 5;
+    }
+    /* 讓 Profile Name 欄靠齊該列底部，縮小與下方 IP 欄的間距。
+       （該列右側含下拉選單與 Save 按鈕較高，整列置中會在 Profile Name 下方留白） */
+    .form-table tr.flex-container td.flex-4 {
+      align-self: flex-end;
+    }
+
+    /* The container */
+    .container {
+      display: block;
+      position: relative;
+      padding-left: 35px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      font-size: 22px;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    /* Hide the browser's default checkbox */
+    .container input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    /* Create a custom checkbox */
+    .checkmark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 25px;
+      width: 25px;
+      background-color: #eee;
+    }
+
+    /* On mouse-over, add a grey background color */
+    .container:hover input ~ .checkmark {
+      background-color: #ccc;
+    }
+
+    /* When the checkbox is checked, add a blue background */
+    .container input:checked ~ .checkmark {
+      background-color: #2196F3;
+    }
+
+    /* Create the checkmark/indicator (hidden when not checked) */
+    .checkmark:after {
+      content: "";
+      position: absolute;
+      display: none;
+    }
+
+    /* Show the checkmark when checked */
+    .container input:checked ~ .checkmark:after {
+      display: block;
+    }
+
+    /* Style the checkmark/indicator */
+    .container .checkmark:after {
+      left: 9px;
+      top: 5px;
+      width: 5px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 3px 3px 0;
+      -webkit-transform: rotate(45deg);
+      -ms-transform: rotate(45deg);
+      transform: rotate(45deg);
+    }
+    .moreSetting {
+      color: #21adf3;
+    }
+
+    /* 顯示日誌(進度欄) */
+    #log {
+      margin-top: 25px;
+      width: 100%;
+      height: 200px;
+      overflow-y: auto;
+      background-color: #f9f9f9;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 10px;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      color: #333;
+    }
+
+    .status {
+      margin-left: 10px;
+      font-weight: bold;
+    }
+    .status.failed {
+      color: red;
+    }
+    .status.successful {
+      color: green;
+    }
+    .status.na {
+      color: gray;
+    }
+
+    /* 狀態欄超連結 */
+    #statusLink a {
+      color: #1a0dab;
+      text-decoration: none;
+    }
+    #statusLink a:hover {
+      text-decoration: underline;
+    }
+
+    /* 新增：TOTP 功能相關樣式 */
+    .totp-key-container {
+      align-items: center;
+    }
+
+    .verify-code-container {
+      display: flex;
+      align-items: center;
+      margin-left: 150px;
+      margin-top: 5px;
+    }
+   /* 新增：TOTP輸入框的眼睛圖標樣式 */
+    .totp-key-container {
+      position: relative;
+    }
+    .toggle-password {
+      position: absolute;
+      left: 525px;
+      /* 固定對齊輸入框垂直中心（約 18px），避免其他語言較長的標籤換行
+         使容器變高、百分比定位讓眼球圖示往下偏移 */
+      top: 18px;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .toggle-password svg {
+      width: 20px;
+      height: 20px;
+      fill: #555;
+    }
+    .toggle-password:hover svg {
+      fill: #000;
+    }
+    .toggle-password:focus {
+      outline: none;
+    }
+
+    /* 結束：眼睛圖標樣式 */
+    #qrSection {
+      margin-top: 20px;
+    }
+
+    #currentTotpContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    #currentTotpCode {
+      font-size: 36px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+      user-select: all;
+      text-align: center;
+    }
+
+    #totpProgressContainer {
+    }
+    .progress-Box {
+      margin: auto;
+      justify-content: center;
+    }
+    #totpProgressBar {
+      width: 30%;
+      height: 8px;
+      background-color: #e0e0e0;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    #totpProgress {
+      height: 100%;
+      width: 100%;
+      background-color: #09c199;
+      transition: width 1s linear;
+    }
+    #totpCountdown {
+      top: -25px;
+      right: 0;
+      font-size: 14px;
+      color: #333;
+    }
+
+    /* 掃描介面 */
+    #scannerContainer {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 20px;
+      text-align: center;
+    }
+    /* 修改 video 標籤：加入 muted playsinline 與 webkit-playsinline 屬性 */
+    #scannerVideo {
+      width: 500px;
+      height: 400px;
+      max-width: 90%;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    #scannerOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 4px dashed #00ca9d;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    #scannerInstructions {
+      color: #fff;
+      font-size: 18px;
+      text-align: center;
+    }
+    #closeScannerBtn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      cursor: pointer;
+      background-color: #9a9a9a;
+      color: #e8e8e8;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+    #closeScannerBtn:hover {
+      background-color: #7f7f7f;
+    }
+    #closeScannerBtn:active {
+      transform: translateY(0);
+    }
+    #confirmExportBtn,
+    #confirmImportBtn,
+    #confirmDeleteBtn {
+      width: 100px; /* 固定按鈕寬度 */
+      margin-left: 0; /* 移除原有的左邊距 */
+      margin-right: 10px; /* 按鈕間距 */
+      margin-left: 70px; /* 增加左邊距，將按鈕向右推 (可調整此數值) */
+    }
+    @media (max-width: 600px) {
+  #container {
+    margin: 10px;
+    padding: 15px;
+    min-height: auto;
+  }
+  #confirmExportBtn,
+  #confirmImportBtn,
+  #confirmDeleteBtn {
+    margin-left: 20px; /* 增加左邊距，將按鈕向右推 (可調整此數值) */
+  }
+  .modal-buttons {
+    align-items: flex-start; /* 左對齊 */
+  }
+  .modal-buttons button {
+    margin-left: 30px; /* 增加左邊距，將按鈕向右推 */
+  }
+  .passphrase-modal .modal-buttons button {
+    margin-left: 35px; /* 針對 passphraseModal 的按鈕，進一步向右推 */
+    width: 100%; /* 按鈕在行動裝置上佔滿寬度 */
+    margin-top: 10px;
+    margin-right: 0; /* 移除右邊距 */
+  }
+  .form-table {
+    width: 100%;
+    margin: 10px auto;
+  }
+
+  /* 確保第一行保持水平排列 */
+  .form-table tr.flex-container {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .form-table tr.flex-container td {
+    display: flex;
+    flex-direction: column;
+    width: auto; /* 允許根據內容調整 */
+    padding: 5px;
+  }
+
+  /* Profile Name 輸入框 */
+  #profileName {
+    width: 90% !important; /* 縮短寬度，約佔60% */
+    height: 36px; /* 固定高度 */
+    padding: 8px;
+    box-sizing: border-box;
+  }
+
+  #scanTotpBtn {
+    margin-top: 10px; /* 往下移動 10px (可調整此數值) */
+  }
+
+  /* Select Profile 下拉選單 */
+  #profileSelect {
+    flex-grow: 1; /* 允許下拉選單佔據可用空間 */
+    width: auto; /* 移除固定或計算寬度 */
+    box-sizing: border-box;
+    margin-top: 20px;
+  }
+
+  /* 調整 flex-item 的寬度比例 */
+  .form-table tr.flex-container td.flex-4 {
+    flex: 2; /* Profile Name 佔較多空間 (可調整) */
+  }
+
+  .form-table tr.flex-container td.flex-1 {
+    flex: 3; /* 將 Select/Gear 欄位比例調高 */
+  }
+
+  .form-table tr:not(.flex-container) td { /* 讓通用 td 規則不影響第一行 */
+    display: block;
+    width: 100%;
+    padding: 5px 0;
+  }
+  
+  .form-table label {
+    display: block;
+    margin-bottom: 5px;
+    width: 100%;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="password"],
+  select {
+    width: 100% !important;
+  }
+
+  .button-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-left: 0;
+  }
+
+  .button-group {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  #log {
+    max-height: 150px;
+    min-height: 100px;
+    margin-top: 15px;
+  }
+
+  .notice {
+    margin: 10px 0;
+    padding: 10px;
+  }
+
+  .totp-key-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .verify-code-container {
+    margin-left: 0;
+    margin-top: 10px;
+    justify-content: flex-start;
+  }
+
+  #totpProgressBar {
+    width: 80%;
+  }
+
+  #scannerVideo {
+    width: 90%;
+    max-height: 70vh;
+  }
+}
+    /* select checked checkbox */
+    .custom-checkbox {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1px solid #848484;
+      border-radius: 3px;
+      background-color: white;
+      cursor: pointer;
+      outline: none;
+      position: relative;
+      vertical-align: bottom;
+    }
+    .custom-checkbox:checked {
+      background-color: #09C199;
+      border-color: #09C199;
+    }
+    .custom-checkbox:checked::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 4px;
+      height: 7px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(40deg);
+    }
+    .custom-checkbox:hover {}
+    /* 標籤的樣式 */
+    label {
+      font-size: 16px;
+      cursor: pointer;
+    }
+    /* --- 新增：設定按鈕與下拉選單樣式 --- */
+    .settings-container {
+      position: relative; /* 讓下拉選單可以相對定位 */
+      display: inline-block; /* 讓容器只佔據按鈕寬度 */
+    }
+
+    #settingsBtn {
+      background: none;
+      border: none;
+      padding: 5px;
+      cursor: pointer;
+      font-size: 20px; /* 調整圖示大小 */
+      line-height: 1;
+      vertical-align: middle; /* 與其他按鈕對齊 */
+      margin-right: 10px; /* 與其他按鈕間距 */
+      color: #555; /* 圖示顏色 */
+    }
+    #settingsBtn:focus {
+      outline: none; /* 移除點擊時的預設外框 */
+    }
+    #settingsBtn:hover {
+      color: #000;
+    }
+
+    #settingsMenu {
+      display: none; /* 預設隱藏 */
+      position: absolute;
+      top: 100%; /* 出現在按鈕下方 */
+      left: -120px; /* 向左偏移，使選單與下拉選單對齊 */
+      background-color: white;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+      z-index: 100; /* 確保在其他元素之上 */
+      border-radius: 4px;
+      min-width: 150px; /* 最小寬度 */
+    }
+
+    #settingsMenu a {
+      display: block;
+      padding: 10px 15px;
+      text-decoration: none;
+      color: #333;
+      font-size: 14px;
+      white-space: nowrap; /* 防止文字換行 */
+    }
+    /* Profile 選擇區域的容器 */
+    .profile-select-container {
+      display: flex;
+      align-items: center; /* 垂直居中 */
+      gap: 5px; /* 按鈕與下拉選單的間距 */
+    }
+    /* 讓下拉選單填滿容器（扣掉右側齒輪），使桌機與手機寬度一致，
+       下方 Save 按鈕才能對齊同寬 */
+    #profileSelect {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    /* 行動裝置調整 */
+    @media (max-width: 600px) {
+      .profile-select-container {
+         display: flex; /* 確保是 flex */
+         align-items: center; /* 垂直居中 */
+         flex-direction: row; /* 保持水平排列 */
+         flex-wrap: nowrap; /* 防止換行 */
+      }
+      .settings-container {
+         flex-shrink: 0; /* 防止齒輪被壓縮 */
+         position: relative; /* 微調定位 */
+         margin-left: auto; /* 保持靠右 */
+         margin-top: 20px; /* --- 修改：與 Select 的 margin-top 對齊 --- */
+         /* right: 5px; 移除這個微調 */
+      }
+      .toggle-password {
+      position: absolute;
+      left: 70px;
+      /* 同桌機：改用固定值對齊輸入框（此版型 label 在輸入框上方，中心約 40px），
+         避免其他語言標籤較長時百分比定位讓眼球下移 */
+      top: 40px;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    }
+
+    #settingsMenu a:hover {
+      background-color: #f5f5f5;
+    }
+    /* --- 結束：設定按鈕與下拉選單樣式 --- */
+
+    /* RTL language support (Arabic, Hebrew, etc.) */
+    [dir="rtl"] #container { direction: rtl; }
+    [dir="rtl"] .button-bar { flex-direction: row-reverse; }
+    [dir="rtl"] .form-table label { text-align: right; }
+    [dir="rtl"] .lang-bar { justify-content: flex-start; }
+    [dir="rtl"] .settings-container { margin-left: 0; margin-right: auto; }
+    [dir="rtl"] #settingsMenu { left: auto; right: -120px; }
+
+    /* Language Selector */
+    .lang-bar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .lang-bar select {
+      padding: 4px 8px;
+      font-size: 13px;
+      border: 1px solid #d8d8d8;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      width: auto !important;
+      color: #555;
+    }
+    .lang-bar select:focus { border-color: #999; }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div class="lang-bar">
+      <select id="langSelect" title="Language">
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+        <option value="fr">Français</option>
+        <option value="it">Italiano</option>
+        <option value="pl">Polski</option>
+        <option value="pt">Português</option>
+        <option value="zh-CN">简体中文</option>
+        <option value="zh-TW">繁體中文</option>
+        <option value="nl">Nederlands</option>
+        <option value="vi">Tiếng Việt</option>
+      </select>
+    </div>
+    <img alt="" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTIiIGhlaWdodD0iNDQiIGZpbGw9Im5vbmUiIHhtbG5zOnY9Imh0dHBzOi8vdmVjdGEuaW8vbmFubyI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgMGgxNTJ2NDRIMHoiLz48cGF0aCBkPSJNODMuNCAxNC4xbC01LjUgOC43Yy0uMi0uMS0uMy0uMS0uNC0uMWwtMy04LjctNyAuMSA1LjYgMTUtNy4zIDEwLjZjLS4xLjEtLjEuMSA2LjguMmwxNy43LTI1LjhoLTYuOXptNjIuMSAxOGMtMS42LS4xLTMuMiAwLTQuOCAwbC01LjQtOC4xLS40LS4xLTEuNyA4LjNIMTI4bDQuOC0yMy41LTIuNy0uMS4yLTEuMSA4LjMtLjgtMyAxNC4zLjcuMSA0LjMtNGMyLjktMi45IDIuMS0yLjYgNi4yLTIuN2wtLjQgMS41Yy0yLjYgMS4xLTYuNCAzLjItNy45IDUuNmw2LjkgOS42Yy4xLjUuMy41LjEgMXpNMzguNCAxNi45bC42LTIuN2MtLjMgMC0xIC4xLTEuMi4xaC00LjdsLTMuNCAxNy41YzAgLjIgNi40LjIgNi40IDAgLjctNC40LjctMTUuMiA4LjItMTEuNGwuOS02LjNjLTIuNC4yLTUuNi4zLTYuOCAyLjh6bTIxLjQtMi44bC0uMyAxLjdjLS40LS4zLS43LS42LTEtLjktMTQuNi01LjYtMTkuMiAyMC40LTMuOCAxN2wyLjQtMS4yYy0uMS40LS4yLjctLjIgMS4xaC4yYzAgLjIgNi41LjIgNi41IDBsMi43LTE3LjZoLTYuNXYtLjF6bS01IDEzLjFjLTIuMiAwLTQuMS0xLjgtNC4xLTMuOSAwLTIuMiAxLjgtMy45IDQuMS0zLjkgMi4yIDAgNC4xIDEuOCA0LjEgMy45cy0xLjkgMy45LTQuMSAzLjl6TTE0LjkgNi4zTDguOCA2IDUgMzEuOGMwIC4yIDEwLjUuMiAxMC41IDAgNi4zLTEuNCAxMC44LTQuNiAxMi42LTEwLjEgMy4zLTkuOC0zLjktMTUuMS0xMy4yLTE1LjR6bS0yLjIgMTkuNWwyLTEzLjVjMTIgLjYgOC40IDE0LjYtMiAxMy41em0xMDMuNy05LjFjNi41LTYgMTMuNi4xIDcuOSA0LjctMi42IDIuMS00LjUgMS43LTcuNiAxLjktMS4xIDYuOSAyLjYgNy4yIDcuOCA0LjIuNC42LjQuNi41IDEtMTEuOCA5LTE4LjUtMi41LTguNi0xMS44em0uOCA1LjNjMS45LS4yIDMuMSAwIDQuNC0xLjUgMi4xLTIuNCAxLjktNi41LTEuMi00LjEtMS4zIDEtMS45IDItMi41IDMuNS0uMy42LS42IDEuMy0uNyAyLjF6TTk2LjkgOS44Yy0xLjggMS4xLTIuMSAxLjgtMi45IDMuNmgtMS4ybDEtNS40IDIyLjEtLjEtLjggNS42Yy0uNS0uMS0xLS4xLTEuNi0uMS0uMi0xLjktLjMtMi41LTEuNy0zLjZoLTQuOWMtLjMuNy0yLjcgMTMuOC0zLjUgMTcuOS0uMyAxLjMtLjggMi43IDEuMiAyLjdoMS4zbC0uMSAxLjZIOTQuMWwuMi0xLjUgMS4zLS4xYzItLjEgMi4xLTEuNSAyLjUtMy4xbDMuNy0xNy42Yy0xLjcuMS0zLjMuMS00LjkuMXoiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZmlsbD0iI2ZmNDU1YyIvPjwvc3ZnPg==" />
+    <h3 data-i18n="title">Port Knocking Tool V1.5</h3>
+    
+    <table class="form-table">
+      <tbody data-np-autofill-form-type="login" data-np-checked="1" data-np-watching="1">
+        <tr class="flex-container">
+          <td class="flex-item flex-4">
+            <label for="profileName" data-i18n="profile_name">Profile Name</label>
+            <input type="text" id="profileName" class="input--lg" placeholder="MyTestProfile" data-i18n-ph="profile_placeholder">
+          </td>
+          <td class="flex-item flex-1">
+            <label for="profileSelect" class="label-none">Profile Select</label>
+            <div class="profile-select-container">
+             <select id="profileSelect" class="custom-select"><option value="" data-i18n="select_placeholder">-- Select --</option></select>
+             <div class="settings-container">
+               <button id="settingsBtn" title="Settings">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+                    <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.858 2.929 2.929 0 0 1 0 5.858z"/>
+                  </svg>
+                </button>
+                <div id="settingsMenu">
+                  <a href="#" id="importOption" data-i18n="import_option">Import Profile</a>
+                  <a href="#" id="exportOption" data-i18n="export_option">Export Profile</a>
+                  <a href="#" id="deleteOption" data-i18n="delete_option">Delete Profile</a>
+                  <a href="#" id="helperOption" data-i18n="helper_option">Generate CLI Command</a>
+                </div>
+              </div>
+            </div>
+            <button id="saveBtn" data-i18n="save_btn"
+              style="margin-top:6px; width:calc(100% - 45px); box-sizing:border-box; display:block; font-size:12px; padding:8px 8px;">
+              Save Profile
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <label data-i18n="ip_label">IP or Domain Name</label>
+            <input type="text" id="ip" class="input--lg" placeholder="10.3.14.20" autocomplete="off" data-i18n-ph="ip_placeholder">
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <label data-i18n="first_port_label">1st Port</label>
+            <input type="number" id="1stport" class="input--sm" placeholder="1222" autocomplete="off" data-i18n-ph="first_port_placeholder">
+          </td>
+        </tr>
+        <!-- TOTP Key 與相關功能 -->
+        <tr>
+          <td>
+            <div class="totp-key-container">
+              <label data-i18n="totp_key_label">TOTP Key</label>
+              <!-- 將 type 改為 password 以隱藏輸入 -->
+              <input type="password" id="totpKey" class="input--lg" placeholder="JBSWY3DPEHPK3PXP" autocomplete="off" data-i18n-ph="totp_key_placeholder">
+              <button type="button" class="toggle-password" id="togglePassword" title="Toggle visibility">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                </svg>
+              </button>
+              <button id="scanTotpBtn" data-i18n="scan_qr">Scan QR</button>
+              <!-- 新增 Verify Code 勾選框 -->
+              <div class="verify-code-container">
+                <input type="checkbox" id="verifyCodeCheckbox" class="custom-checkbox" checked>
+                <label for="verifyCodeCheckbox" data-i18n="show_verify_code">Show Verify Code</label>
+              </div>
+            </div>
+            <!-- TOTP 驗證碼及進度條 -->
+            <div id="qrSection">
+              <!-- 當前 TOTP 驗證碼及複製按鈕 -->
+              <div id="currentTotpContainer" style="display: flex;">
+                <div id="currentTotpCode">--</div>
+                <button id="copyTotpBtn" data-i18n="copy">Copy</button>
+              </div>
+              <!-- 進度條與倒數字 -->
+              <div class="flex-container progress-Box">
+                <div id="totpProgressBar">
+                  <div id="totpProgress" style="width: 0%;"></div>
+                </div>
+                <div id="totpCountdown">-- Sec</div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <!-- 可選設定切換按鈕 -->
+        <tr class="flex-container">
+          <td>
+            <input type="checkbox" id="toggleOptional" class="custom-checkbox">
+            <label for="toggleOptional" class="moreSetting" data-i18n="more_settings">More Settings</label>
+          </td>
+        </tr>
+        <!-- 可選設定區塊 -->
+        <tr id="optionalSettingsRow" style="display: none;">
+          <td colspan="2">
+            <div class="optional-container">
+              <h4 data-i18n="optional_title">Checking port knocking status</h4>
+              <div id="optionalSettings">
+                <table class="form-table">
+                  <tbody>
+                    <tr>
+                      <td>
+                        <label for="publicport" data-i18n="public_port_label">Public Port</label>
+                        <input type="number" id="publicport" class="input--sm" placeholder="443" data-i18n-ph="public_port_placeholder">
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <label for="protocol" data-i18n="protocol_label">Protocol</label>
+                        <select id="protocol">
+                          <option value="http">HTTP</option>
+                          <option value="https">HTTPS</option>
+                          <option value="ftp">FTP</option>
+                          <option value="telnet">Telnet</option>
+                          <option value="ssh">SSH</option>
+                          <option value="snmp">SNMP</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <!-- Status Link 行 -->
+                    <tr>
+                      <td colspan="2">
+                        <label data-i18n="status_link_label">Status Link</label>
+                        <span id="statusLink"></span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="button-bar">
+      <div class="button-group">
+      <button id="knockBtn" data-i18n="knock_btn">Knock Ports</button>
+      </div>
+      <input type="file" id="importFile" accept=".conf" style="display: none;">
+    </div>
+
+    <pre id="log"></pre>
+    <div class="notice">
+      <p><strong data-i18n="notice_title">Notice:</strong> <span data-i18n="notice_text">Profiles are stored in your browser's local storage. They will be lost if you clear browsing data or use incognito mode. Please export profiles to save them.</span></p>
+      <p><strong data-i18n="tip_title">Tip:</strong> <span data-i18n-html="tip_text">To save a new profile, click <strong>Knock Ports</strong> — the profile will be saved automatically when knocking is triggered.</span></p>
+    </div>
+    <!-- Export Modal -->
+    <div id="exportModal" class="export-modal">
+      <div class="modal-content">
+        <h4 data-i18n="export_title">Export Profiles</h4>
+        <div class="search-container">
+          <input type="text" id="exportSearch" placeholder="Search profiles..." data-i18n-ph="search_placeholder">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+        </div>
+        <div class="modal-scrollable">
+          <div id="exportProfileList">
+          <!-- Profile checkboxes will be dynamically inserted here -->
+          </div>
+        </div>
+        <div class="modal-buttons" style="align-items: flex-start;">
+          <label class="select-all-label">
+            <input type="checkbox" id="selectAllCheckbox" class="custom-checkbox"> <span data-i18n="select_all">Select All</span>
+          </label>
+          <label class="select-all-label">
+            <input type="checkbox" id="encryptTotpCheckbox" class="custom-checkbox"> <span data-i18n="encrypt_totp">Encrypt TOTP Key</span>
+          </label>
+          <div style="display: flex; gap: 10px;">
+            <button id="confirmExportBtn" data-i18n="confirm">Confirm</button>
+            <button id="cancelExportBtn" class="del-color" data-i18n="cancel">Cancel</button>  
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Modal -->
+  <div id="importModal" class="export-modal">
+    <div class="modal-content">
+      <h4 data-i18n="import_title">Import Profiles</h4>
+        <div class="search-container">
+          <input type="text" id="importSearch" placeholder="Search profiles..." data-i18n-ph="search_placeholder">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+        </div>
+      <div class="modal-scrollable">
+        <div id="importProfileList">
+        <!-- Profile checkboxes will be dynamically inserted here -->
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <label class="select-all-label">
+            <input type="checkbox" id="selectAllImportCheckbox" class="custom-checkbox"> <span data-i18n="select_all">Select All</span>
+        </label>
+        <div style="display: flex; gap: 10px;">
+            <button id="confirmImportBtn" data-i18n="confirm">Confirm</button>
+            <button id="cancelImportBtn" class="del-color" data-i18n="cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="export-modal">
+      <div class="modal-content">
+        <h4 data-i18n="delete_title">Delete Profiles</h4>
+        <div class="search-container">
+          <input type="text" id="deleteSearch" placeholder="Search profiles..." data-i18n-ph="search_placeholder">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+        </div>
+        <div class="modal-scrollable">
+          <div id="deleteProfileList">
+          <!-- Profile checkboxes will be dynamically inserted here -->
+          </div>
+        </div>
+        <div class="modal-buttons">
+          <label class="select-all-label">
+            <input type="checkbox" id="selectAllDeleteCheckbox" class="custom-checkbox"> <span data-i18n="select_all">Select All</span>
+          </label>
+          <div style="display: flex; gap: 10px;">
+            <button id="confirmDeleteBtn" data-i18n="confirm">Confirm</button>
+            <button id="cancelDeleteBtn" class="del-color" data-i18n="cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 新增：助記詞輸入模態視窗 -->
+    <div id="passphraseModal" class="passphrase-modal">
+      <div class="modal-content">
+        <h4 data-i18n="passphrase_title">Enter Passphrase</h4>
+        <input type="password" id="passphraseInput" placeholder="Enter your passphrase" data-i18n-ph="passphrase_placeholder">
+        <div class="modal-buttons">
+          <div style="display: flex; gap: 10px;">
+            <button id="confirmPassphraseBtn" data-i18n="confirm">Confirm</button>
+            <button id="cancelPassphraseBtn" class="del-color" data-i18n="cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 新增：CLI 指令產生器 -->
+    <div id="cliHelperModal" class="export-modal">
+      <div class="modal-content">
+        <h4 data-i18n="helper_title">Generate Launch Command</h4>
+        <div id="cliHelperMissing" class="cli-missing" data-i18n="helper_missing" style="display:none;"></div>
+        <div class="cli-group">
+          <span class="cli-head">Base URL</span>
+          <input type="text" id="cliBase" style="width:100%; box-sizing:border-box;">
+        </div>
+        <div class="cli-group">
+          <span class="cli-head">Mode</span>
+          <label><input type="radio" name="cliMode" value="schedule" checked><span data-i18n="helper_schedule">Scheduled (repeat)</span></label>
+          <label><input type="radio" name="cliMode" value="once-keep"><span data-i18n="helper_once_keep">Single knock, keep tab open</span></label>
+          <label><input type="radio" name="cliMode" value="once-close"><span data-i18n="helper_once_close">Single knock, then close tab</span></label>
+        </div>
+        <div class="cli-group" id="cliSchedFields">
+          <div class="cli-row"><span data-i18n="helper_interval">Interval (sec)</span><input type="number" id="cliInterval" value="300" min="1"></div>
+          <div class="cli-row"><span data-i18n="helper_count">Count (0 = unlimited)</span><input type="number" id="cliCount" value="0" min="0"></div>
+          <div class="cli-row"><span data-i18n="helper_until">Until (HH:MM, optional)</span><input type="text" id="cliUntil" placeholder="18:30"></div>
+        </div>
+        <div class="cli-group">
+          <span class="cli-head">OS</span>
+          <select id="cliOs" style="width:100%;">
+            <option value="linux">Linux — google-chrome</option>
+            <option value="win-cmd">Windows — cmd (start chrome)</option>
+            <option value="win-ps">Windows — PowerShell</option>
+            <option value="macos">macOS — open -a</option>
+          </select>
+        </div>
+        <div class="cli-group">
+          <span class="cli-head">URL</span>
+          <div class="cli-copyrow">
+            <textarea id="cliUrlOut" readonly rows="2"></textarea>
+            <button type="button" class="cli-copy" data-target="cliUrlOut" data-i18n="helper_copy">Copy</button>
+          </div>
+        </div>
+        <div class="cli-group">
+          <span class="cli-head">CLI</span>
+          <div class="cli-copyrow">
+            <textarea id="cliCmdOut" readonly rows="3"></textarea>
+            <button type="button" class="cli-copy" data-target="cliCmdOut" data-i18n="helper_copy">Copy</button>
+          </div>
+        </div>
+        <div class="modal-buttons">
+          <button id="cliHelperClose" class="del-color" data-i18n="cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+  <!-- 新增：掃描介面 -->
+  <div id="scannerContainer">
+    <div>
+      <!-- 修改 video 標籤，加入 muted playsinline 與 webkit-playsinline -->
+      <video id="scannerVideo" autoplay muted playsinline webkit-playsinline></video>
+      <canvas id="scannerCanvas" style="display:none;"></canvas>
+      <div id="scannerOverlay"></div>
+      <div id="scannerInstructions" data-i18n="scanner_instructions">Please input the QRCode in to the frame</div>
+      <button id="closeScannerBtn" data-i18n="close_scanner">Close Scanner</button>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * -------------------------------------------------------------
+     * i18n: Translations + Engine
+     * -------------------------------------------------------------
+     */
+    const translations = {
+      en: {
+        title:"Port Knocking Tool V1.5",profile_name:"Profile Name",profile_placeholder:"MyTestProfile",
+        select_placeholder:"-- Select --",ip_label:"IP or Domain Name",ip_placeholder:"10.3.14.20",
+        first_port_label:"1st Port",first_port_placeholder:"1222",totp_key_label:"TOTP Key",
+        totp_key_placeholder:"JBSWY3DPEHPK3PXP",scan_qr:"Scan QR",show_verify_code:"Show Verify Code",
+        copy:"Copy",sec:"Sec",more_settings:"More Settings",optional_title:"Checking port knocking status",
+        public_port_label:"Public Port",public_port_placeholder:"443",protocol_label:"Protocol",
+        status_link_label:"Status Link",knock_btn:"Knock Ports",
+        notice_title:"Notice:",notice_text:"Profiles are stored in your browser’s local storage. They will be lost if you clear browsing data or use incognito mode. Please export profiles to save them.",
+        tip_title:"Tip:",tip_text:"To save a new profile, click <strong>Knock Ports</strong> — the profile will be saved automatically when knocking is triggered.",
+        export_title:"Export Profiles",search_placeholder:"Search profiles...",select_all:"Select All",
+        encrypt_totp:"Encrypt TOTP Key",confirm:"Confirm",cancel:"Cancel",import_title:"Import Profiles",
+        delete_title:"Delete Profiles",passphrase_title:"Enter Passphrase",passphrase_placeholder:"Enter your passphrase",
+        scanner_instructions:"Please input the QRCode in to the frame",close_scanner:"Close Scanner",
+        import_option:"Import Profile",export_option:"Export Profile",delete_option:"Delete Profile",
+        log_no_profile_name:"Please enter the Profile Name!",
+        log_missing_fields:"Please ensure IP / 1st Port / TOTP Key are correctly filled!",
+        log_missing_optional:"Please ensure Public Port and Protocol are correctly filled!",
+        log_profile_limit:"Save aborted: Profile limit ({limit}) reached when trying to save new profile \"{name}\".",
+        log_knocking_start:"Starting Port Knocking Sequence:",log_knocking_port:"Knocking on {ordinal} port: {port}",
+        log_knocking_done:"Ports knocking completed.\nYou can now access the server.",
+        log_totp_generated:"TOTP generated: {code}",log_totp_failed:"TOTP calculation failed: {error}",
+        log_copy_no_code:"Cannot copy: No valid TOTP code available.",log_copied:"Copied TOTP code",
+        log_copy_failed:"Failed to copy TOTP code: {error}",log_no_export:"No profiles available to export.",
+        log_select_export:"Please select at least one profile to export.",
+        log_exported:"Exported {count} profile(s) to {filename}",
+        log_exported_plain:"Exported {count} profile(s) to {filename} (unencrypted)",
+        log_export_cancelled:"Export cancelled.",log_passphrase_required_enc:"Passphrase is required for encryption.",
+        log_passphrase_required_imp:"Passphrase is required for import.",log_import_cancelled:"Import cancelled.",
+        log_no_delete:"No profiles available to delete.",log_select_delete:"Please select at least one profile to delete.",
+        log_deleted:"Deleted {count} profile(s)",log_totp_scanned:"TOTP Key has been successfully scanned and loaded!",
+        log_camera_error:"Unable to access the camera, please check your permissions.",
+        log_import_limit:"Import failed: Profile limit ({limit}) reached.",
+        log_import_limit_exceeded:"Importing {count} profile(s) would exceed the limit of {limit} (current: {current}). Please select fewer or delete some profiles first.",
+        log_imported:"Profile '{name}' imported and saved successfully from {file}",
+        log_no_imported:"No profiles were imported from {file}",
+        log_imported_multiple:"Successfully imported {count} profile(s) from {file}",
+        log_closing:"Port knocking completed, closing window in 3 seconds...",
+        log_staying:"Port knocking completed, window will remain open.",
+        log_knock_failed:"Port knocking failed: {error}",
+        log_profile_not_found:"Profile \"{name}\" not found in localStorage.",
+        log_import_error:"Error importing profile: {error}",log_file_read_error:"Error reading file.",
+        save_btn:"Save Profile",log_saved_new:"Profile \"{name}\" saved.",log_saved_updated:"Profile \"{name}\" updated.",
+        log_sched_start:"Scheduled knocking started: every {interval}s, count {count}.",log_sched_done:"Scheduled knocking stopped. Total {total} / success {success} / failed {failed}.",
+        helper_option:"Generate CLI Command",helper_title:"Generate Launch Command",helper_schedule:"Scheduled (repeat)",helper_once_keep:"Single knock, keep tab open",helper_once_close:"Single knock, then close tab",helper_interval:"Interval (sec)",helper_count:"Count (0 = unlimited)",helper_until:"Until (HH:MM, optional)",helper_missing:"Please fill in Profile Name / IP / 1st Port / TOTP Key above first.",helper_copy:"Copy",helper_copied:"Copied!",
+        log_export_failed:"Export failed: {error}",log_import_invalid_file:"Imported file is missing 'portknocking' section.",
+        log_import_empty:"Imported file has an empty 'portknocking' array.",
+        log_import_missing_fields:"Imported file is missing required fields (profileName, ip, 1stport, totpKey) in 'portknocking' section.",
+        passphrase_export_title:"Enter Passphrase for Export",passphrase_import_title:"Enter Passphrase for Import",
+        passphrase_profile_title:"Enter Passphrase for Profile \"{name}\"",
+        ordinals:["1st","2nd","3rd"],countdown_default:"-- Sec"
+      },
+      "zh-TW": {
+        title:"連接埠敲門工具 V1.5",profile_name:"設定檔名稱",profile_placeholder:"我的測試設定檔",
+        select_placeholder:"-- 選擇 --",ip_label:"IP 或網域名稱",ip_placeholder:"10.3.14.20",
+        first_port_label:"第一埠號",first_port_placeholder:"1222",totp_key_label:"TOTP 金鑰",
+        totp_key_placeholder:"JBSWY3DPEHPK3PXP",scan_qr:"掃描 QR",show_verify_code:"顯示驗證碼",
+        copy:"複製",sec:"秒",more_settings:"更多設定",optional_title:"連接埠敲門狀態確認",
+        public_port_label:"公開埠號",public_port_placeholder:"443",protocol_label:"通訊協定",
+        status_link_label:"狀態連結",knock_btn:"開始敲門",
+        notice_title:"注意：",notice_text:"設定檔儲存於瀏覽器的本機儲存空間。清除瀏覽資料或使用無痕模式時將會丟失。請匯出設定檔以保存。",
+        tip_title:"提示：",tip_text:"若要儲存新設定檔，請點選<strong>開始敲門</strong>——觸發敲門時將自動儲存設定檔。",
+        export_title:"匯出設定檔",search_placeholder:"搜尋設定檔...",select_all:"全選",
+        encrypt_totp:"加密 TOTP 金鑰",confirm:"確認",cancel:"取消",import_title:"匯入設定檔",
+        delete_title:"刪除設定檔",passphrase_title:"輸入通行密語",passphrase_placeholder:"請輸入您的通行密語",
+        scanner_instructions:"請將 QR 碼對準框架",close_scanner:"關閉掃描器",
+        import_option:"匯入設定檔",export_option:"匯出設定檔",delete_option:"刪除設定檔",
+        log_no_profile_name:"請輸入設定檔名稱！",
+        log_missing_fields:"請確認 IP / 第一埠號 / TOTP 金鑰已正確填寫！",
+        log_missing_optional:"請確認公開埠號與通訊協定已正確填寫！",
+        log_profile_limit:"儲存中止：設定檔數量（{limit}）已達上限，無法儲存新設定檔「{name}」。",
+        log_knocking_start:"開始連接埠敲門序列：",log_knocking_port:"正在敲門第 {ordinal} 個埠：{port}",
+        log_knocking_done:"連接埠敲門完成。\n您現在可以存取伺服器。",
+        log_totp_generated:"已產生 TOTP：{code}",log_totp_failed:"TOTP 計算失敗：{error}",
+        log_copy_no_code:"無法複製：沒有有效的 TOTP 驗證碼。",log_copied:"已複製 TOTP 驗證碼",
+        log_copy_failed:"複製 TOTP 驗證碼失敗：{error}",log_no_export:"沒有可匯出的設定檔。",
+        log_select_export:"請至少選擇一個設定檔進行匯出。",
+        log_exported:"已將 {count} 個設定檔匯出至 {filename}",
+        log_exported_plain:"已將 {count} 個設定檔匯出至 {filename}（未加密）",
+        log_export_cancelled:"匯出已取消。",log_passphrase_required_enc:"加密需要通行密語。",
+        log_passphrase_required_imp:"匯入需要通行密語。",log_import_cancelled:"匯入已取消。",
+        log_no_delete:"沒有可刪除的設定檔。",log_select_delete:"請至少選擇一個設定檔進行刪除。",
+        log_deleted:"已刪除 {count} 個設定檔",log_totp_scanned:"TOTP 金鑰已成功掃描並載入！",
+        log_camera_error:"無法存取相機，請檢查您的權限設定。",
+        log_import_limit:"匯入失敗：設定檔數量（{limit}）已達上限。",
+        log_import_limit_exceeded:"匯入 {count} 個設定檔將超過上限 {limit}（目前：{current}）。請選擇較少的設定檔或先刪除一些。",
+        log_imported:"設定檔「{name}」已成功從 {file} 匯入並儲存",
+        log_no_imported:"未從 {file} 匯入任何設定檔",
+        log_imported_multiple:"已成功從 {file} 匯入 {count} 個設定檔",
+        log_closing:"連接埠敲門完成，3 秒後關閉視窗...",
+        log_staying:"連接埠敲門完成，視窗將保持開啟。",
+        log_knock_failed:"連接埠敲門失敗：{error}",
+        log_profile_not_found:"在本機儲存空間中找不到設定檔「{name}」。",
+        log_import_error:"匯入設定檔錯誤：{error}",log_file_read_error:"讀取檔案時發生錯誤。",
+        log_export_failed:"匯出失敗：{error}",log_import_invalid_file:"匯入的檔案缺少 'portknocking' 區段。",
+        log_import_empty:"匯入的檔案 'portknocking' 陣列為空。",
+        log_import_missing_fields:"匯入的檔案缺少必要欄位。",
+        passphrase_export_title:"輸入匯出通行密語",passphrase_import_title:"輸入匯入通行密語",
+        passphrase_profile_title:"輸入設定檔「{name}」的通行密語",
+        save_btn:"儲存設定檔",log_saved_new:"設定檔「{name}」已儲存。",log_saved_updated:"設定檔「{name}」已更新。",
+        log_sched_start:"已開始定時敲門：每 {interval} 秒，次數 {count}。",log_sched_done:"定時敲門結束。總次數 {total} / 成功 {success} / 失敗 {failed}。",
+        helper_option:"產生 CLI 指令",helper_title:"產生啟動指令",helper_schedule:"定時敲門（重複）",helper_once_keep:"單次敲門並保持開啟",helper_once_close:"單次敲門後關閉分頁",helper_interval:"間隔（秒）",helper_count:"次數（0 = 無限）",helper_until:"停止時間（HH:MM，可留空）",helper_missing:"請先在上方填寫 Profile Name / IP / 第一埠 / TOTP 金鑰。",helper_copy:"複製",helper_copied:"已複製！",
+        ordinals:["1","2","3"],countdown_default:"-- 秒"
+      },
+      "zh-CN": {
+        title:"端口敲门工具 V1.5",profile_name:"配置文件名称",profile_placeholder:"我的测试配置",
+        select_placeholder:"-- 选择 --",ip_label:"IP 或域名",ip_placeholder:"10.3.14.20",
+        first_port_label:"第一端口",first_port_placeholder:"1222",totp_key_label:"TOTP 密钥",
+        totp_key_placeholder:"JBSWY3DPEHPK3PXP",scan_qr:"扫描 QR",show_verify_code:"显示验证码",
+        copy:"复制",sec:"秒",more_settings:"更多设置",optional_title:"端口敲门状态确认",
+        public_port_label:"公开端口",public_port_placeholder:"443",protocol_label:"协议",
+        status_link_label:"状态链接",knock_btn:"开始敲门",
+        notice_title:"注意：",notice_text:"配置文件存储在浏览器的本地存储中。清除浏览数据或使用隐身模式时将丢失。请导出配置文件以保存。",
+        tip_title:"提示：",tip_text:"要保存新配置文件，请点击<strong>开始敲门</strong>——触发敲门时将自动保存配置文件。",
+        export_title:"导出配置文件",search_placeholder:"搜索配置文件...",select_all:"全选",
+        encrypt_totp:"加密 TOTP 密钥",confirm:"确认",cancel:"取消",import_title:"导入配置文件",
+        delete_title:"删除配置文件",passphrase_title:"输入密码短语",passphrase_placeholder:"请输入您的密码短语",
+        scanner_instructions:"请将 QR 码对准框架",close_scanner:"关闭扫描仪",
+        import_option:"导入配置文件",export_option:"导出配置文件",delete_option:"删除配置文件",
+        log_no_profile_name:"请输入配置文件名称！",
+        log_missing_fields:"请确认 IP / 第一端口 / TOTP 密钥已正确填写！",
+        log_missing_optional:"请确认公开端口与协议已正确填写！",
+        log_profile_limit:"保存中止：配置文件数量（{limit}）已达上限，无法保存新配置文件「{name}」。",
+        log_knocking_start:"开始端口敲门序列：",log_knocking_port:"正在敲打第 {ordinal} 个端口：{port}",
+        log_knocking_done:"端口敲门完成。\n您现在可以访问服务器。",
+        log_totp_generated:"已生成 TOTP：{code}",log_totp_failed:"TOTP 计算失败：{error}",
+        log_copy_no_code:"无法复制：没有有效的 TOTP 验证码。",log_copied:"已复制 TOTP 验证码",
+        log_copy_failed:"复制 TOTP 验证码失败：{error}",log_no_export:"没有可导出的配置文件。",
+        log_select_export:"请至少选择一个配置文件进行导出。",
+        log_exported:"已将 {count} 个配置文件导出至 {filename}",
+        log_exported_plain:"已将 {count} 个配置文件导出至 {filename}（未加密）",
+        log_export_cancelled:"导出已取消。",log_passphrase_required_enc:"加密需要密码短语。",
+        log_passphrase_required_imp:"导入需要密码短语。",log_import_cancelled:"导入已取消。",
+        log_no_delete:"没有可删除的配置文件。",log_select_delete:"请至少选择一个配置文件进行删除。",
+        log_deleted:"已删除 {count} 个配置文件",log_totp_scanned:"TOTP 密钥已成功扫描并加载！",
+        log_camera_error:"无法访问摄像头，请检查您的权限设置。",
+        log_import_limit:"导入失败：配置文件数量（{limit}）已达上限。",
+        log_import_limit_exceeded:"导入 {count} 个配置文件将超过上限 {limit}（当前：{current}）。请选择较少或先删除一些。",
+        log_imported:"配置文件「{name}」已成功从 {file} 导入并保存",
+        log_no_imported:"未从 {file} 导入任何配置文件",
+        log_imported_multiple:"已成功从 {file} 导入 {count} 个配置文件",
+        log_closing:"端口敲门完成，3 秒后关闭窗口...",
+        log_staying:"端口敲门完成，窗口将保持开启。",
+        log_knock_failed:"端口敲门失败：{error}",
+        log_profile_not_found:"在本地存储中找不到配置文件「{name}」。",
+        log_import_error:"导入配置文件错误：{error}",log_file_read_error:"读取文件时发生错误。",
+        log_export_failed:"导出失败：{error}",log_import_invalid_file:"导入的文件缺少 'portknocking' 部分。",
+        log_import_empty:"导入的文件 'portknocking' 数组为空。",
+        log_import_missing_fields:"导入的文件缺少必要字段。",
+        passphrase_export_title:"输入导出密码短语",passphrase_import_title:"输入导入密码短语",
+        passphrase_profile_title:"输入配置文件「{name}」的密码短语",
+        save_btn:"保存配置文件",log_saved_new:"配置文件「{name}」已保存。",log_saved_updated:"配置文件「{name}」已更新。",
+        log_sched_start:"已开始定时敲门：每 {interval} 秒，次数 {count}。",log_sched_done:"定时敲门结束。总次数 {total} / 成功 {success} / 失败 {failed}。",
+        helper_option:"生成 CLI 命令",helper_title:"生成启动命令",helper_schedule:"定时敲门（重复）",helper_once_keep:"单次敲门并保持打开",helper_once_close:"单次敲门后关闭标签页",helper_interval:"间隔（秒）",helper_count:"次数（0 = 无限）",helper_until:"停止时间（HH:MM，可留空）",helper_missing:"请先在上方填写 Profile Name / IP / 第一端口 / TOTP 密钥。",helper_copy:"复制",helper_copied:"已复制！",
+        ordinals:["1","2","3"],countdown_default:"-- 秒"
+      },
+      de: {
+        title:"Port-Knocking-Tool V1.5",profile_name:"Profilname",profile_placeholder:"MeinTestProfil",
+        select_placeholder:"-- Auswählen --",ip_label:"IP oder Domainname",ip_placeholder:"10.3.14.20",
+        first_port_label:"1. Port",first_port_placeholder:"1222",totp_key_label:"TOTP-Schlüssel",
+        totp_key_placeholder:"JBSWY3DPEHPK3PXP",scan_qr:"QR scannen",show_verify_code:"Bestätigungscode anzeigen",
+        copy:"Kopieren",sec:"Sek",more_settings:"Weitere Einstellungen",optional_title:"Port-Knocking-Status prüfen",
+        public_port_label:"Öffentlicher Port",public_port_placeholder:"443",protocol_label:"Protokoll",
+        status_link_label:"Status-Link",knock_btn:"Ports anklopfen",
+        notice_title:"Hinweis:",notice_text:"Profile werden im lokalen Speicher Ihres Browsers gespeichert. Sie gehen verloren, wenn Sie Browserdaten löschen oder den Inkognito-Modus verwenden. Bitte exportieren Sie Profile zur Sicherung.",
+        tip_title:"Tipp:",tip_text:"Um ein neues Profil zu speichern, klicken Sie auf <strong>Ports anklopfen</strong> — das Profil wird automatisch gespeichert, wenn das Anklopfen ausgelöst wird.",
+        export_title:"Profile exportieren",search_placeholder:"Profile suchen...",select_all:"Alle auswählen",
+        encrypt_totp:"TOTP-Schlüssel verschlüsseln",confirm:"Bestätigen",cancel:"Abbrechen",
+        import_title:"Profile importieren",delete_title:"Profile löschen",passphrase_title:"Passphrase eingeben",
+        passphrase_placeholder:"Ihre Passphrase eingeben",scanner_instructions:"Bitte QR-Code in den Rahmen halten",
+        close_scanner:"Scanner schließen",import_option:"Profil importieren",export_option:"Profil exportieren",delete_option:"Profil löschen",
+        log_no_profile_name:"Bitte Profilnamen eingeben!",
+        log_missing_fields:"Bitte sicherstellen, dass IP / 1. Port / TOTP-Schlüssel korrekt ausgefüllt sind!",
+        log_missing_optional:"Bitte sicherstellen, dass Öffentlicher Port und Protokoll korrekt ausgefüllt sind!",
+        log_profile_limit:"Speichern abgebrochen: Profillimit ({limit}) erreicht beim Speichern von \"{name}\".",
+        log_knocking_start:"Port-Knocking-Sequenz wird gestartet:",log_knocking_port:"Anklopfen an {ordinal}. Port: {port}",
+        log_knocking_done:"Port-Knocking abgeschlossen.\nSie können jetzt auf den Server zugreifen.",
+        log_totp_generated:"TOTP generiert: {code}",log_totp_failed:"TOTP-Berechnung fehlgeschlagen: {error}",
+        log_copy_no_code:"Kopieren nicht möglich: Kein gültiger TOTP-Code verfügbar.",log_copied:"TOTP-Code kopiert",
+        log_copy_failed:"TOTP-Code kopieren fehlgeschlagen: {error}",log_no_export:"Keine Profile zum Exportieren vorhanden.",
+        log_select_export:"Bitte mindestens ein Profil zum Exportieren auswählen.",
+        log_exported:"{count} Profil(e) nach {filename} exportiert",
+        log_exported_plain:"{count} Profil(e) nach {filename} exportiert (unverschlüsselt)",
+        log_export_cancelled:"Export abgebrochen.",log_passphrase_required_enc:"Für die Verschlüsselung ist eine Passphrase erforderlich.",
+        log_passphrase_required_imp:"Für den Import ist eine Passphrase erforderlich.",log_import_cancelled:"Import abgebrochen.",
+        log_no_delete:"Keine Profile zum Löschen vorhanden.",log_select_delete:"Bitte mindestens ein Profil zum Löschen auswählen.",
+        log_deleted:"{count} Profil(e) gelöscht",log_totp_scanned:"TOTP-Schlüssel wurde erfolgreich gescannt und geladen!",
+        log_camera_error:"Kamerazugriff nicht möglich. Bitte Berechtigungen prüfen.",
+        log_import_limit:"Import fehlgeschlagen: Profillimit ({limit}) erreicht.",
+        log_import_limit_exceeded:"Das Importieren von {count} Profil(en) würde das Limit von {limit} überschreiten (aktuell: {current}). Bitte weniger auswählen oder einige Profile löschen.",
+        log_imported:"Profil '{name}' wurde erfolgreich aus {file} importiert und gespeichert",
+        log_no_imported:"Keine Profile aus {file} importiert",
+        log_imported_multiple:"{count} Profil(e) erfolgreich aus {file} importiert",
+        log_closing:"Port-Knocking abgeschlossen, Fenster wird in 3 Sekunden geschlossen...",
+        log_staying:"Port-Knocking abgeschlossen, Fenster bleibt geöffnet.",
+        log_knock_failed:"Port-Knocking fehlgeschlagen: {error}",
+        log_profile_not_found:"Profil \"{name}\" nicht im lokalen Speicher gefunden.",
+        log_import_error:"Fehler beim Importieren des Profils: {error}",log_file_read_error:"Fehler beim Lesen der Datei.",
+        log_export_failed:"Export fehlgeschlagen: {error}",log_import_invalid_file:"Importierte Datei enthält keinen 'portknocking'-Abschnitt.",
+        log_import_empty:"Importierte Datei hat ein leeres 'portknocking'-Array.",
+        log_import_missing_fields:"Importierte Datei enthält keine Pflichtfelder.",
+        passphrase_export_title:"Passphrase für Export eingeben",passphrase_import_title:"Passphrase für Import eingeben",
+        passphrase_profile_title:"Passphrase für Profil \"{name}\" eingeben",
+        save_btn:"Profil speichern",log_saved_new:"Profil \"{name}\" gespeichert.",log_saved_updated:"Profil \"{name}\" aktualisiert.",
+        log_sched_start:"Geplantes Klopfen gestartet: alle {interval}s, Anzahl {count}.",log_sched_done:"Geplantes Klopfen beendet. Gesamt {total} / Erfolg {success} / Fehler {failed}.",
+        helper_option:"CLI-Befehl generieren",helper_title:"Startbefehl generieren",helper_schedule:"Geplant (wiederholen)",helper_once_keep:"Einmal anklopfen, Tab offen lassen",helper_once_close:"Einmal anklopfen, dann Tab schließen",helper_interval:"Intervall (Sek.)",helper_count:"Anzahl (0 = unbegrenzt)",helper_until:"Bis (HH:MM, optional)",helper_missing:"Bitte zuerst oben Profilname / IP / 1. Port / TOTP-Schlüssel ausfüllen.",helper_copy:"Kopieren",helper_copied:"Kopiert!",
+        ordinals:["1","2","3"],countdown_default:"-- Sek"
+      },
+      fr: {
+        title:"Outil Port Knocking V1.5",profile_name:"Nom du profil",profile_placeholder:"MonProfilTest",
+        select_placeholder:"-- Sélectionner --",ip_label:"IP ou nom de domaine",ip_placeholder:"10.3.14.20",
+        first_port_label:"1er port",first_port_placeholder:"1222",totp_key_label:"Clé TOTP",
+        totp_key_placeholder:"JBSWY3DPEHPK3PXP",scan_qr:"Scanner QR",show_verify_code:"Afficher le code de vérification",
+        copy:"Copier",sec:"s",more_settings:"Plus de paramètres",optional_title:"Vérification du statut de port knocking",
+        public_port_label:"Port public",public_port_placeholder:"443",protocol_label:"Protocole",
+        status_link_label:"Lien de statut",knock_btn:"Frapper les ports",
+        notice_title:"Remarque :",notice_text:"Les profils sont stockés dans le stockage local de votre navigateur. Ils seront perdus si vous effacez les données de navigation ou utilisez le mode incognito. Veuillez exporter les profils pour les sauvegarder.",
+        tip_title:"Astuce :",tip_text:"Pour enregistrer un nouveau profil, cliquez sur <strong>Frapper les ports</strong> — le profil sera automatiquement sauvegardé lors du déclenchement.",
+        export_title:"Exporter les profils",search_placeholder:"Rechercher des profils...",select_all:"Tout sélectionner",
+        encrypt_totp:"Chiffrer la clé TOTP",confirm:"Confirmer",cancel:"Annuler",
+        import_title:"Importer les profils",delete_title:"Supprimer les profils",passphrase_title:"Saisir la phrase secrète",
+        passphrase_placeholder:"Entrez votre phrase secrète",scanner_instructions:"Veuillez placer le QR code dans le cadre",
+        close_scanner:"Fermer le scanner",import_option:"Importer un profil",export_option:"Exporter un profil",delete_option:"Supprimer un profil",
+        log_no_profile_name:"Veuillez saisir le nom du profil !",
+        log_missing_fields:"Veuillez vérifier que IP / 1er port / Clé TOTP sont correctement remplis !",
+        log_missing_optional:"Veuillez vérifier que Port public et Protocole sont correctement remplis !",
+        log_profile_limit:"Sauvegarde annulée : limite de profils ({limit}) atteinte pour \"{name}\".",
+        log_knocking_start:"Démarrage de la séquence de port knocking :",log_knocking_port:"Frappe sur le {ordinal} port : {port}",
+        log_knocking_done:"Port knocking terminé.\nVous pouvez maintenant accéder au serveur.",
+        log_totp_generated:"TOTP généré : {code}",log_totp_failed:"Échec du calcul TOTP : {error}",
+        log_copy_no_code:"Impossible de copier : aucun code TOTP valide disponible.",log_copied:"Code TOTP copié",
+        log_copy_failed:"Échec de la copie du code TOTP : {error}",log_no_export:"Aucun profil disponible à exporter.",
+        log_select_export:"Veuillez sélectionner au moins un profil à exporter.",
+        log_exported:"{count} profil(s) exporté(s) vers {filename}",
+        log_exported_plain:"{count} profil(s) exporté(s) vers {filename} (non chiffré)",
+        log_export_cancelled:"Export annulé.",log_passphrase_required_enc:"Une phrase secrète est requise pour le chiffrement.",
+        log_passphrase_required_imp:"Une phrase secrète est requise pour l'import.",log_import_cancelled:"Import annulé.",
+        log_no_delete:"Aucun profil disponible à supprimer.",log_select_delete:"Veuillez sélectionner au moins un profil à supprimer.",
+        log_deleted:"{count} profil(s) supprimé(s)",log_totp_scanned:"La clé TOTP a été scannée et chargée avec succès !",
+        log_camera_error:"Impossible d'accéder à la caméra, vérifiez vos autorisations.",
+        log_import_limit:"Échec de l'import : limite de profils ({limit}) atteinte.",
+        log_import_limit_exceeded:"L'import de {count} profil(s) dépasserait la limite de {limit} (actuel : {current}). Veuillez en sélectionner moins ou supprimer des profils.",
+        log_imported:"Profil '{name}' importé et sauvegardé avec succès depuis {file}",
+        log_no_imported:"Aucun profil importé depuis {file}",
+        log_imported_multiple:"{count} profil(s) importé(s) avec succès depuis {file}",
+        log_closing:"Port knocking terminé, fermeture de la fenêtre dans 3 secondes...",
+        log_staying:"Port knocking terminé, la fenêtre restera ouverte.",
+        log_knock_failed:"Échec du port knocking : {error}",
+        log_profile_not_found:"Profil \"{name}\" introuvable dans le stockage local.",
+        log_import_error:"Erreur lors de l'import du profil : {error}",log_file_read_error:"Erreur lors de la lecture du fichier.",
+        log_export_failed:"Échec de l'export : {error}",log_import_invalid_file:"Le fichier importé ne contient pas de section 'portknocking'.",
+        log_import_empty:"Le fichier importé contient un tableau 'portknocking' vide.",
+        log_import_missing_fields:"Le fichier importé manque des champs obligatoires.",
+        passphrase_export_title:"Phrase secrète pour l'export",passphrase_import_title:"Phrase secrète pour l'import",
+        passphrase_profile_title:"Phrase secrète pour le profil \"{name}\"",
+        save_btn:"Enregistrer le profil",log_saved_new:"Profil \"{name}\" enregistré.",log_saved_updated:"Profil \"{name}\" mis à jour.",
+        log_sched_start:"Frappe planifiée démarrée : toutes les {interval}s, nombre {count}.",log_sched_done:"Frappe planifiée arrêtée. Total {total} / réussis {success} / échoués {failed}.",
+        helper_option:"Générer la commande CLI",helper_title:"Générer la commande de lancement",helper_schedule:"Planifié (répéter)",helper_once_keep:"Frappe unique, garder l'onglet ouvert",helper_once_close:"Frappe unique, puis fermer l'onglet",helper_interval:"Intervalle (s)",helper_count:"Nombre (0 = illimité)",helper_until:"Jusqu'à (HH:MM, facultatif)",helper_missing:"Veuillez d'abord remplir Nom du profil / IP / 1er port / Clé TOTP ci-dessus.",helper_copy:"Copier",helper_copied:"Copié !",
+        ordinals:["1er","2ème","3ème"],countdown_default:"-- s"
+      },
+      it: {
+        title:"Strumento Port Knocking V1.5",profile_name:"Nome profilo",profile_placeholder:"MioProfiloTest",
+        select_placeholder:"-- Seleziona --",ip_label:"IP o nome dominio",ip_placeholder:"10.3.14.20",
+        first_port_label:"1° porta",first_port_placeholder:"1222",totp_key_label:"Chiave TOTP",
+        totp_key_placeholder:"JBSWY3DPEHPK3PXP",scan_qr:"Scansiona QR",show_verify_code:"Mostra codice di verifica",
+        copy:"Copia",sec:"sec",more_settings:"Altre impostazioni",optional_title:"Verifica stato port knocking",
+        public_port_label:"Porta pubblica",public_port_placeholder:"443",protocol_label:"Protocollo",
+        status_link_label:"Link di stato",knock_btn:"Bussa alle porte",
+        notice_title:"Avviso:",notice_text:"I profili sono salvati nella memoria locale del browser. Andranno persi se si cancellano i dati di navigazione o si usa la modalità incognito. Si prega di esportare i profili per salvarli.",
+        tip_title:"Suggerimento:",tip_text:"Per salvare un nuovo profilo, fare clic su <strong>Bussa alle porte</strong> — il profilo verrà salvato automaticamente quando viene attivata la sequenza.",
+        export_title:"Esporta profili",search_placeholder:"Cerca profili...",select_all:"Seleziona tutto",
+        encrypt_totp:"Cifra chiave TOTP",confirm:"Conferma",cancel:"Annulla",
+        import_title:"Importa profili",delete_title:"Elimina profili",passphrase_title:"Inserisci passphrase",
+        passphrase_placeholder:"Inserisci la tua passphrase",scanner_instructions:"Posizionare il QR code nel riquadro",
+        close_scanner:"Chiudi scanner",import_option:"Importa profilo",export_option:"Esporta profilo",delete_option:"Elimina profilo",
+        log_no_profile_name:"Inserire il nome del profilo!",
+        log_missing_fields:"Assicurarsi che IP / 1° porta / Chiave TOTP siano compilati correttamente!",
+        log_missing_optional:"Assicurarsi che Porta pubblica e Protocollo siano compilati correttamente!",
+        log_profile_limit:"Salvataggio annullato: limite profili ({limit}) raggiunto per \"{name}\".",
+        log_knocking_start:"Avvio sequenza port knocking:",log_knocking_port:"Bussando alla {ordinal}ª porta: {port}",
+        log_knocking_done:"Port knocking completato.\nÈ ora possibile accedere al server.",
+        log_totp_generated:"TOTP generato: {code}",log_totp_failed:"Calcolo TOTP fallito: {error}",
+        log_copy_no_code:"Impossibile copiare: nessun codice TOTP valido disponibile.",log_copied:"Codice TOTP copiato",
+        log_copy_failed:"Copia codice TOTP fallita: {error}",log_no_export:"Nessun profilo disponibile per l'esportazione.",
+        log_select_export:"Selezionare almeno un profilo da esportare.",
+        log_exported:"{count} profilo/i esportato/i in {filename}",
+        log_exported_plain:"{count} profilo/i esportato/i in {filename} (non cifrato)",
+        log_export_cancelled:"Esportazione annullata.",log_passphrase_required_enc:"La passphrase è richiesta per la cifratura.",
+        log_passphrase_required_imp:"La passphrase è richiesta per l'importazione.",log_import_cancelled:"Importazione annullata.",
+        log_no_delete:"Nessun profilo disponibile per l'eliminazione.",log_select_delete:"Selezionare almeno un profilo da eliminare.",
+        log_deleted:"{count} profilo/i eliminato/i",log_totp_scanned:"Chiave TOTP scansionata e caricata con successo!",
+        log_camera_error:"Impossibile accedere alla fotocamera. Verificare le autorizzazioni.",
+        log_import_limit:"Importazione fallita: limite profili ({limit}) raggiunto.",
+        log_import_limit_exceeded:"L'importazione di {count} profilo/i supererebbe il limite di {limit} (attuale: {current}). Selezionarne meno o eliminare alcuni profili.",
+        log_imported:"Profilo '{name}' importato e salvato con successo da {file}",
+        log_no_imported:"Nessun profilo importato da {file}",
+        log_imported_multiple:"{count} profilo/i importato/i con successo da {file}",
+        log_closing:"Port knocking completato, chiusura finestra tra 3 secondi...",
+        log_staying:"Port knocking completato, la finestra rimarrà aperta.",
+        log_knock_failed:"Port knocking fallito: {error}",
+        log_profile_not_found:"Profilo \"{name}\" non trovato nello storage locale.",
+        log_import_error:"Errore durante l'importazione del profilo: {error}",log_file_read_error:"Errore durante la lettura del file.",
+        log_export_failed:"Esportazione fallita: {error}",log_import_invalid_file:"Il file importato non contiene la sezione 'portknocking'.",
+        log_import_empty:"Il file importato contiene un array 'portknocking' vuoto.",
+        log_import_missing_fields:"Il file importato manca di campi obbligatori.",
+        passphrase_export_title:"Inserisci passphrase per esportazione",passphrase_import_title:"Inserisci passphrase per importazione",
+        passphrase_profile_title:"Inserisci passphrase per il profilo \"{name}\"",
+        save_btn:"Salva profilo",log_saved_new:"Profilo \"{name}\" salvato.",log_saved_updated:"Profilo \"{name}\" aggiornato.",
+        log_sched_start:"Knocking pianificato avviato: ogni {interval}s, numero {count}.",log_sched_done:"Knocking pianificato interrotto. Totale {total} / riusciti {success} / falliti {failed}.",
+        helper_option:"Genera comando CLI",helper_title:"Genera comando di avvio",helper_schedule:"Pianificato (ripeti)",helper_once_keep:"Bussata singola, mantieni scheda aperta",helper_once_close:"Bussata singola, poi chiudi scheda",helper_interval:"Intervallo (sec)",helper_count:"Numero (0 = illimitato)",helper_until:"Fino a (HH:MM, opzionale)",helper_missing:"Compilare prima Nome profilo / IP / 1ª porta / Chiave TOTP sopra.",helper_copy:"Copia",helper_copied:"Copiato!",
+        ordinals:["1","2","3"],countdown_default:"-- sec"
+      },
+      pl: {
+        title:"Narzędzie Port Knocking V1.5",profile_name:"Nazwa profilu",profile_placeholder:"MójProfilTestowy",
+        select_placeholder:"-- Wybierz --",ip_label:"IP lub nazwa domeny",ip_placeholder:"10.3.14.20",
+        first_port_label:"1. port",first_port_placeholder:"1222",totp_key_label:"Klucz TOTP",
+        totp_key_placeholder:"JBSWY3DPEHPK3PXP",scan_qr:"Skanuj QR",show_verify_code:"Pokaż kod weryfikacyjny",
+        copy:"Kopiuj",sec:"sek",more_settings:"Więcej ustawień",optional_title:"Sprawdzenie statusu port knocking",
+        public_port_label:"Port publiczny",public_port_placeholder:"443",protocol_label:"Protokół",
+        status_link_label:"Link statusu",knock_btn:"Pukaj do portów",
+        notice_title:"Uwaga:",notice_text:"Profile są przechowywane w lokalnej pamięci przeglądarki. Zostaną utracone po wyczyszczeniu danych przeglądania lub użyciu trybu incognito. Proszę eksportować profile, aby je zapisać.",
+        tip_title:"Wskazówka:",tip_text:"Aby zapisać nowy profil, kliknij <strong>Pukaj do portów</strong> — profil zostanie automatycznie zapisany po uruchomieniu sekwencji.",
+        export_title:"Eksportuj profile",search_placeholder:"Szukaj profili...",select_all:"Zaznacz wszystkie",
+        encrypt_totp:"Szyfruj klucz TOTP",confirm:"Potwierdź",cancel:"Anuluj",
+        import_title:"Importuj profile",delete_title:"Usuń profile",passphrase_title:"Wpisz hasło",
+        passphrase_placeholder:"Wpisz swoje hasło",scanner_instructions:"Umieść kod QR w ramce",
+        close_scanner:"Zamknij skaner",import_option:"Importuj profil",export_option:"Eksportuj profil",delete_option:"Usuń profil",
+        log_no_profile_name:"Proszę wpisać nazwę profilu!",
+        log_missing_fields:"Upewnij się, że IP / 1. port / Klucz TOTP są poprawnie wypełnione!",
+        log_missing_optional:"Upewnij się, że Port publiczny i Protokół są poprawnie wypełnione!",
+        log_profile_limit:"Zapis anulowany: osiągnięto limit profili ({limit}) przy zapisywaniu \"{name}\".",
+        log_knocking_start:"Uruchamianie sekwencji port knocking:",log_knocking_port:"Pukanie do {ordinal}. portu: {port}",
+        log_knocking_done:"Port knocking zakończony.\nMożesz teraz uzyskać dostęp do serwera.",
+        log_totp_generated:"Wygenerowano TOTP: {code}",log_totp_failed:"Obliczanie TOTP nie powiodło się: {error}",
+        log_copy_no_code:"Nie można skopiować: brak ważnego kodu TOTP.",log_copied:"Skopiowano kod TOTP",
+        log_copy_failed:"Kopiowanie kodu TOTP nie powiodło się: {error}",log_no_export:"Brak profili do eksportu.",
+        log_select_export:"Proszę wybrać co najmniej jeden profil do eksportu.",
+        log_exported:"Wyeksportowano {count} profil(i) do {filename}",
+        log_exported_plain:"Wyeksportowano {count} profil(i) do {filename} (niezaszyfrowane)",
+        log_export_cancelled:"Eksport anulowany.",log_passphrase_required_enc:"Hasło jest wymagane do szyfrowania.",
+        log_passphrase_required_imp:"Hasło jest wymagane do importu.",log_import_cancelled:"Import anulowany.",
+        log_no_delete:"Brak profili do usunięcia.",log_select_delete:"Proszę wybrać co najmniej jeden profil do usunięcia.",
+        log_deleted:"Usunięto {count} profil(i)",log_totp_scanned:"Klucz TOTP został pomyślnie zeskanowany i załadowany!",
+        log_camera_error:"Nie można uzyskać dostępu do kamery. Sprawdź uprawnienia.",
+        log_import_limit:"Import nie powiódł się: osiągnięto limit profili ({limit}).",
+        log_import_limit_exceeded:"Import {count} profil(i) przekroczyłby limit {limit} (aktualnie: {current}). Wybierz mniej lub usuń kilka profili.",
+        log_imported:"Profil '{name}' zaimportowany i zapisany pomyślnie z {file}",
+        log_no_imported:"Nie zaimportowano żadnych profili z {file}",
+        log_imported_multiple:"Pomyślnie zaimportowano {count} profil(i) z {file}",
+        log_closing:"Port knocking zakończony, zamykanie okna za 3 sekundy...",
+        log_staying:"Port knocking zakończony, okno pozostanie otwarte.",
+        log_knock_failed:"Port knocking nie powiódł się: {error}",
+        log_profile_not_found:"Profil \"{name}\" nie znaleziony w lokalnej pamięci.",
+        log_import_error:"Błąd podczas importowania profilu: {error}",log_file_read_error:"Błąd podczas czytania pliku.",
+        log_export_failed:"Eksport nie powiódł się: {error}",log_import_invalid_file:"Importowany plik nie zawiera sekcji 'portknocking'.",
+        log_import_empty:"Importowany plik zawiera pustą tablicę 'portknocking'.",
+        log_import_missing_fields:"Importowany plik nie zawiera wymaganych pól.",
+        passphrase_export_title:"Wpisz hasło dla eksportu",passphrase_import_title:"Wpisz hasło dla importu",
+        passphrase_profile_title:"Wpisz hasło dla profilu \"{name}\"",
+        save_btn:"Zapisz profil",log_saved_new:"Profil \"{name}\" zapisany.",log_saved_updated:"Profil \"{name}\" zaktualizowany.",
+        log_sched_start:"Rozpoczęto zaplanowane pukanie: co {interval}s, liczba {count}.",log_sched_done:"Zaplanowane pukanie zatrzymane. Łącznie {total} / udane {success} / nieudane {failed}.",
+        helper_option:"Generuj polecenie CLI",helper_title:"Generuj polecenie uruchamiające",helper_schedule:"Zaplanowane (powtarzaj)",helper_once_keep:"Pojedyncze pukanie, pozostaw kartę otwartą",helper_once_close:"Pojedyncze pukanie, potem zamknij kartę",helper_interval:"Odstęp (sek.)",helper_count:"Liczba (0 = bez limitu)",helper_until:"Do (HH:MM, opcjonalnie)",helper_missing:"Najpierw wypełnij powyżej Nazwę profilu / IP / 1. port / Klucz TOTP.",helper_copy:"Kopiuj",helper_copied:"Skopiowano!",
+        ordinals:["1","2","3"],countdown_default:"-- sek"
+      },
+      pt: {
+        title:"Ferramenta Port Knocking V1.5",profile_name:"Nome do perfil",profile_placeholder:"MeuPerfilTeste",
+        select_placeholder:"-- Selecionar --",ip_label:"IP ou nome de domínio",ip_placeholder:"10.3.14.20",
+        first_port_label:"1ª porta",first_port_placeholder:"1222",totp_key_label:"Chave TOTP",
+        totp_key_placeholder:"JBSWY3DPEHPK3PXP",scan_qr:"Escanear QR",show_verify_code:"Mostrar código de verificação",
+        copy:"Copiar",sec:"seg",more_settings:"Mais configurações",optional_title:"Verificar status do port knocking",
+        public_port_label:"Porta pública",public_port_placeholder:"443",protocol_label:"Protocolo",
+        status_link_label:"Link de status",knock_btn:"Bater nas portas",
+        notice_title:"Aviso:",notice_text:"Os perfis são armazenados no armazenamento local do seu navegador. Serão perdidos se você limpar os dados de navegação ou usar o modo incógnito. Por favor, exporte os perfis para salvá-los.",
+        tip_title:"Dica:",tip_text:"Para salvar um novo perfil, clique em <strong>Bater nas portas</strong> — o perfil será salvo automaticamente quando o knocking for acionado.",
+        export_title:"Exportar perfis",search_placeholder:"Pesquisar perfis...",select_all:"Selecionar todos",
+        encrypt_totp:"Criptografar chave TOTP",confirm:"Confirmar",cancel:"Cancelar",
+        import_title:"Importar perfis",delete_title:"Excluir perfis",passphrase_title:"Inserir senha",
+        passphrase_placeholder:"Digite sua senha",scanner_instructions:"Por favor, posicione o QR code no quadro",
+        close_scanner:"Fechar scanner",import_option:"Importar perfil",export_option:"Exportar perfil",delete_option:"Excluir perfil",
+        log_no_profile_name:"Por favor, insira o nome do perfil!",
+        log_missing_fields:"Verifique se IP / 1ª porta / Chave TOTP estão preenchidos corretamente!",
+        log_missing_optional:"Verifique se Porta pública e Protocolo estão preenchidos corretamente!",
+        log_profile_limit:"Salvamento cancelado: limite de perfis ({limit}) atingido ao salvar \"{name}\".",
+        log_knocking_start:"Iniciando sequência de port knocking:",log_knocking_port:"Batendo na {ordinal}ª porta: {port}",
+        log_knocking_done:"Port knocking concluído.\nVocê agora pode acessar o servidor.",
+        log_totp_generated:"TOTP gerado: {code}",log_totp_failed:"Cálculo TOTP falhou: {error}",
+        log_copy_no_code:"Não é possível copiar: nenhum código TOTP válido disponível.",log_copied:"Código TOTP copiado",
+        log_copy_failed:"Falha ao copiar código TOTP: {error}",log_no_export:"Nenhum perfil disponível para exportar.",
+        log_select_export:"Selecione pelo menos um perfil para exportar.",
+        log_exported:"{count} perfil(is) exportado(s) para {filename}",
+        log_exported_plain:"{count} perfil(is) exportado(s) para {filename} (não criptografado)",
+        log_export_cancelled:"Exportação cancelada.",log_passphrase_required_enc:"Senha é necessária para criptografia.",
+        log_passphrase_required_imp:"Senha é necessária para importação.",log_import_cancelled:"Importação cancelada.",
+        log_no_delete:"Nenhum perfil disponível para excluir.",log_select_delete:"Selecione pelo menos um perfil para excluir.",
+        log_deleted:"{count} perfil(is) excluído(s)",log_totp_scanned:"Chave TOTP digitalizada e carregada com sucesso!",
+        log_camera_error:"Não foi possível acessar a câmera. Verifique as permissões.",
+        log_import_limit:"Importação falhou: limite de perfis ({limit}) atingido.",
+        log_import_limit_exceeded:"Importar {count} perfil(is) excederia o limite de {limit} (atual: {current}). Selecione menos ou exclua alguns perfis.",
+        log_imported:"Perfil '{name}' importado e salvo com sucesso de {file}",
+        log_no_imported:"Nenhum perfil importado de {file}",
+        log_imported_multiple:"{count} perfil(is) importado(s) com sucesso de {file}",
+        log_closing:"Port knocking concluído, fechando janela em 3 segundos...",
+        log_staying:"Port knocking concluído, a janela permanecerá aberta.",
+        log_knock_failed:"Port knocking falhou: {error}",
+        log_profile_not_found:"Perfil \"{name}\" não encontrado no armazenamento local.",
+        log_import_error:"Erro ao importar perfil: {error}",log_file_read_error:"Erro ao ler arquivo.",
+        log_export_failed:"Exportação falhou: {error}",log_import_invalid_file:"O arquivo importado não contém a seção 'portknocking'.",
+        log_import_empty:"O arquivo importado contém um array 'portknocking' vazio.",
+        log_import_missing_fields:"O arquivo importado falta campos obrigatórios.",
+        passphrase_export_title:"Inserir senha para exportação",passphrase_import_title:"Inserir senha para importação",
+        passphrase_profile_title:"Inserir senha para o perfil \"{name}\"",
+        save_btn:"Salvar perfil",log_saved_new:"Perfil \"{name}\" salvo.",log_saved_updated:"Perfil \"{name}\" atualizado.",
+        log_sched_start:"Knocking agendado iniciado: a cada {interval}s, contagem {count}.",log_sched_done:"Knocking agendado parado. Total {total} / sucesso {success} / falhas {failed}.",
+        helper_option:"Gerar comando CLI",helper_title:"Gerar comando de inicialização",helper_schedule:"Agendado (repetir)",helper_once_keep:"Batida única, manter aba aberta",helper_once_close:"Batida única, depois fechar aba",helper_interval:"Intervalo (s)",helper_count:"Contagem (0 = ilimitado)",helper_until:"Até (HH:MM, opcional)",helper_missing:"Preencha primeiro Nome do perfil / IP / 1ª porta / Chave TOTP acima.",helper_copy:"Copiar",helper_copied:"Copiado!",
+        ordinals:["1","2","3"],countdown_default:"-- seg"
+      },
+      nl: {
+        title:"Port Knocking Tool V1.5",profile_name:"Profielnaam",profile_placeholder:"MijnTestProfiel",
+        select_placeholder:"-- Selecteer --",ip_label:"IP of domeinnaam",ip_placeholder:"10.3.14.20",
+        first_port_label:"1e poort",first_port_placeholder:"1222",totp_key_label:"TOTP-sleutel",
+        totp_key_placeholder:"JBSWY3DPEHPK3PXP",scan_qr:"QR scannen",show_verify_code:"Verificatiecode tonen",
+        copy:"Kopiëren",sec:"sec",more_settings:"Meer instellingen",optional_title:"Port knocking status controleren",
+        public_port_label:"Publieke poort",public_port_placeholder:"443",protocol_label:"Protocol",
+        status_link_label:"Statuslink",knock_btn:"Poorten kloppen",
+        notice_title:"Let op:",notice_text:"Profielen worden opgeslagen in de lokale opslag van uw browser. Ze gaan verloren als u browsegegevens wist of de incognitomodus gebruikt. Exporteer profielen om ze op te slaan.",
+        tip_title:"Tip:",tip_text:"Om een nieuw profiel op te slaan, klikt u op <strong>Poorten kloppen</strong> — het profiel wordt automatisch opgeslagen wanneer het kloppen wordt geactiveerd.",
+        export_title:"Profielen exporteren",search_placeholder:"Profielen zoeken...",select_all:"Alles selecteren",
+        encrypt_totp:"TOTP-sleutel versleutelen",confirm:"Bevestigen",cancel:"Annuleren",
+        import_title:"Profielen importeren",delete_title:"Profielen verwijderen",passphrase_title:"Wachtwoord invoeren",
+        passphrase_placeholder:"Voer uw wachtwoord in",scanner_instructions:"Houd de QR-code in het kader",
+        close_scanner:"Scanner sluiten",import_option:"Profiel importeren",export_option:"Profiel exporteren",delete_option:"Profiel verwijderen",
+        log_no_profile_name:"Voer een profielnaam in!",
+        log_missing_fields:"Controleer of IP / 1e poort / TOTP-sleutel correct zijn ingevuld!",
+        log_missing_optional:"Controleer of Publieke poort en Protocol correct zijn ingevuld!",
+        log_profile_limit:"Opslaan afgebroken: profieflimiet ({limit}) bereikt bij opslaan van \"{name}\".",
+        log_knocking_start:"Port knocking-reeks starten:",log_knocking_port:"Kloppen op {ordinal}e poort: {port}",
+        log_knocking_done:"Port knocking voltooid.\nU heeft nu toegang tot de server.",
+        log_totp_generated:"TOTP gegenereerd: {code}",log_totp_failed:"TOTP-berekening mislukt: {error}",
+        log_copy_no_code:"Kan niet kopiëren: geen geldige TOTP-code beschikbaar.",log_copied:"TOTP-code gekopieerd",
+        log_copy_failed:"TOTP-code kopiëren mislukt: {error}",log_no_export:"Geen profielen beschikbaar om te exporteren.",
+        log_select_export:"Selecteer minimaal één profiel om te exporteren.",
+        log_exported:"{count} profiel(en) geëxporteerd naar {filename}",
+        log_exported_plain:"{count} profiel(en) geëxporteerd naar {filename} (niet versleuteld)",
+        log_export_cancelled:"Exporteren geannuleerd.",log_passphrase_required_enc:"Een wachtwoord is vereist voor versleuteling.",
+        log_passphrase_required_imp:"Een wachtwoord is vereist voor importeren.",log_import_cancelled:"Importeren geannuleerd.",
+        log_no_delete:"Geen profielen beschikbaar om te verwijderen.",log_select_delete:"Selecteer minimaal één profiel om te verwijderen.",
+        log_deleted:"{count} profiel(en) verwijderd",log_totp_scanned:"TOTP-sleutel succesvol gescand en geladen!",
+        log_camera_error:"Kan geen toegang krijgen tot de camera. Controleer uw rechten.",
+        log_import_limit:"Importeren mislukt: profieflimiet ({limit}) bereikt.",
+        log_import_limit_exceeded:"Het importeren van {count} profiel(en) zou de limiet van {limit} overschrijden (huidig: {current}). Selecteer minder of verwijder eerst profielen.",
+        log_imported:"Profiel '{name}' succesvol geïmporteerd en opgeslagen uit {file}",
+        log_no_imported:"Geen profielen geïmporteerd uit {file}",
+        log_imported_multiple:"{count} profiel(en) succesvol geïmporteerd uit {file}",
+        log_closing:"Port knocking voltooid, venster wordt over 3 seconden gesloten...",
+        log_staying:"Port knocking voltooid, venster blijft open.",
+        log_knock_failed:"Port knocking mislukt: {error}",
+        log_profile_not_found:"Profiel \"{name}\" niet gevonden in lokale opslag.",
+        log_import_error:"Fout bij importeren van profiel: {error}",log_file_read_error:"Fout bij lezen van bestand.",
+        log_export_failed:"Exporteren mislukt: {error}",log_import_invalid_file:"Geïmporteerd bestand bevat geen 'portknocking'-sectie.",
+        log_import_empty:"Geïmporteerd bestand heeft een leeg 'portknocking'-array.",
+        log_import_missing_fields:"Geïmporteerd bestand mist verplichte velden.",
+        passphrase_export_title:"Wachtwoord invoeren voor exporteren",passphrase_import_title:"Wachtwoord invoeren voor importeren",
+        passphrase_profile_title:"Wachtwoord invoeren voor profiel \"{name}\"",
+        save_btn:"Profiel opslaan",log_saved_new:"Profiel \"{name}\" opgeslagen.",log_saved_updated:"Profiel \"{name}\" bijgewerkt.",
+        log_sched_start:"Geplande knock gestart: elke {interval}s, aantal {count}.",log_sched_done:"Geplande knock gestopt. Totaal {total} / gelukt {success} / mislukt {failed}.",
+        helper_option:"CLI-commando genereren",helper_title:"Startcommando genereren",helper_schedule:"Gepland (herhalen)",helper_once_keep:"Eenmalig kloppen, tabblad open houden",helper_once_close:"Eenmalig kloppen, daarna tabblad sluiten",helper_interval:"Interval (sec)",helper_count:"Aantal (0 = onbeperkt)",helper_until:"Tot (HH:MM, optioneel)",helper_missing:"Vul eerst hierboven Profielnaam / IP / 1e poort / TOTP-sleutel in.",helper_copy:"Kopiëren",helper_copied:"Gekopieerd!",
+        ordinals:["1","2","3"],countdown_default:"-- sec"
+      },
+      vi: {
+        title:"Công cụ Port Knocking V1.5",profile_name:"Tên cấu hình",profile_placeholder:"CấuHìnhThửNghiệm",
+        select_placeholder:"-- Chọn --",ip_label:"IP hoặc tên miền",ip_placeholder:"10.3.14.20",
+        first_port_label:"Cổng đầu tiên",first_port_placeholder:"1222",totp_key_label:"Khóa TOTP",
+        totp_key_placeholder:"JBSWY3DPEHPK3PXP",scan_qr:"Quét QR",show_verify_code:"Hiển thị mã xác minh",
+        copy:"Sao chép",sec:"giây",more_settings:"Cài đặt thêm",optional_title:"Kiểm tra trạng thái port knocking",
+        public_port_label:"Cổng công khai",public_port_placeholder:"443",protocol_label:"Giao thức",
+        status_link_label:"Liên kết trạng thái",knock_btn:"Gõ cổng",
+        notice_title:"Lưu ý:",notice_text:"Cấu hình được lưu trong bộ nhớ cục bộ của trình duyệt. Chúng sẽ bị mất nếu bạn xóa dữ liệu duyệt web hoặc sử dụng chế độ ẩn danh. Vui lòng xuất cấu hình để lưu.",
+        tip_title:"Mẹo:",tip_text:"Để lưu cấu hình mới, nhấp vào <strong>Gõ cổng</strong> — cấu hình sẽ được lưu tự động khi gõ cổng được kích hoạt.",
+        export_title:"Xuất cấu hình",search_placeholder:"Tìm kiếm cấu hình...",select_all:"Chọn tất cả",
+        encrypt_totp:"Mã hóa khóa TOTP",confirm:"Xác nhận",cancel:"Hủy",
+        import_title:"Nhập cấu hình",delete_title:"Xóa cấu hình",passphrase_title:"Nhập mật khẩu",
+        passphrase_placeholder:"Nhập mật khẩu của bạn",scanner_instructions:"Vui lòng đặt mã QR vào khung",
+        close_scanner:"Đóng máy quét",import_option:"Nhập cấu hình",export_option:"Xuất cấu hình",delete_option:"Xóa cấu hình",
+        log_no_profile_name:"Vui lòng nhập tên cấu hình!",
+        log_missing_fields:"Vui lòng đảm bảo IP / Cổng đầu tiên / Khóa TOTP được điền đúng!",
+        log_missing_optional:"Vui lòng đảm bảo Cổng công khai và Giao thức được điền đúng!",
+        log_profile_limit:"Lưu bị hủy: đã đạt giới hạn cấu hình ({limit}) khi lưu \"{name}\".",
+        log_knocking_start:"Bắt đầu chuỗi gõ cổng:",log_knocking_port:"Gõ cổng thứ {ordinal}: {port}",
+        log_knocking_done:"Gõ cổng hoàn tất.\nBạn có thể truy cập máy chủ.",
+        log_totp_generated:"Đã tạo TOTP: {code}",log_totp_failed:"Tính toán TOTP thất bại: {error}",
+        log_copy_no_code:"Không thể sao chép: không có mã TOTP hợp lệ.",log_copied:"Đã sao chép mã TOTP",
+        log_copy_failed:"Sao chép mã TOTP thất bại: {error}",log_no_export:"Không có cấu hình để xuất.",
+        log_select_export:"Vui lòng chọn ít nhất một cấu hình để xuất.",
+        log_exported:"Đã xuất {count} cấu hình sang {filename}",
+        log_exported_plain:"Đã xuất {count} cấu hình sang {filename} (không mã hóa)",
+        log_export_cancelled:"Đã hủy xuất.",log_passphrase_required_enc:"Cần mật khẩu để mã hóa.",
+        log_passphrase_required_imp:"Cần mật khẩu để nhập.",log_import_cancelled:"Đã hủy nhập.",
+        log_no_delete:"Không có cấu hình để xóa.",log_select_delete:"Vui lòng chọn ít nhất một cấu hình để xóa.",
+        log_deleted:"Đã xóa {count} cấu hình",log_totp_scanned:"Đã quét và tải khóa TOTP thành công!",
+        log_camera_error:"Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.",
+        log_import_limit:"Nhập thất bại: đã đạt giới hạn cấu hình ({limit}).",
+        log_import_limit_exceeded:"Nhập {count} cấu hình sẽ vượt quá giới hạn {limit} (hiện tại: {current}). Vui lòng chọn ít hơn hoặc xóa bớt cấu hình.",
+        log_imported:"Cấu hình '{name}' đã được nhập và lưu thành công từ {file}",
+        log_no_imported:"Không có cấu hình nào được nhập từ {file}",
+        log_imported_multiple:"Đã nhập thành công {count} cấu hình từ {file}",
+        log_closing:"Gõ cổng hoàn tất, đóng cửa sổ sau 3 giây...",
+        log_staying:"Gõ cổng hoàn tất, cửa sổ sẽ vẫn mở.",
+        log_knock_failed:"Gõ cổng thất bại: {error}",
+        log_profile_not_found:"Không tìm thấy cấu hình \"{name}\" trong bộ nhớ cục bộ.",
+        log_import_error:"Lỗi khi nhập cấu hình: {error}",log_file_read_error:"Lỗi khi đọc tệp.",
+        log_export_failed:"Xuất thất bại: {error}",log_import_invalid_file:"Tệp nhập không có phần 'portknocking'.",
+        log_import_empty:"Tệp nhập có mảng 'portknocking' rỗng.",
+        log_import_missing_fields:"Tệp nhập thiếu các trường bắt buộc.",
+        passphrase_export_title:"Nhập mật khẩu để xuất",passphrase_import_title:"Nhập mật khẩu để nhập",
+        passphrase_profile_title:"Nhập mật khẩu cho cấu hình \"{name}\"",
+        save_btn:"Lưu cấu hình",log_saved_new:"Đã lưu cấu hình \"{name}\".",log_saved_updated:"Đã cập nhật cấu hình \"{name}\".",
+        log_sched_start:"Đã bắt đầu gõ cửa định kỳ: mỗi {interval}s, số lần {count}.",log_sched_done:"Đã dừng gõ cửa định kỳ. Tổng {total} / thành công {success} / thất bại {failed}.",
+        helper_option:"Tạo lệnh CLI",helper_title:"Tạo lệnh khởi chạy",helper_schedule:"Định kỳ (lặp lại)",helper_once_keep:"Gõ một lần, giữ tab mở",helper_once_close:"Gõ một lần, rồi đóng tab",helper_interval:"Khoảng (giây)",helper_count:"Số lần (0 = không giới hạn)",helper_until:"Đến (HH:MM, tùy chọn)",helper_missing:"Vui lòng điền Tên cấu hình / IP / Cổng đầu tiên / Khóa TOTP ở trên trước.",helper_copy:"Sao chép",helper_copied:"Đã sao chép!",
+        ordinals:["1","2","3"],countdown_default:"-- giây"
+      }
+    };
+
+    function detectLang() {
+      const saved = localStorage.getItem('portKnockLang');
+      if (saved && translations[saved]) return saved;
+      const browser = (navigator.language || '').toLowerCase();
+      // exact match first (e.g. "vi", "nl")
+      for (const code of Object.keys(translations)) {
+        if (browser === code.toLowerCase()) return code;
+      }
+      // prefix match (e.g. "zh-tw" → "zh-TW", "pt-br" → "pt")
+      for (const code of Object.keys(translations)) {
+        if (browser.startsWith(code.toLowerCase().split('-')[0])) return code;
+      }
+      return 'en';
+    }
+
+    let currentLang = detectLang();
+
+    function t(key, vars) {
+      const lang = translations[currentLang] || translations['en'];
+      const val = (key in lang) ? lang[key] : translations['en'][key];
+      if (val === undefined) {
+        console.warn(`[i18n] Missing key "${key}" in "${currentLang}"`);
+        return key;
+      }
+      if (typeof val !== 'string') return val;
+      if (!vars) return val;
+      return val.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? vars[k] : '{' + k + '}'));
+    }
+
+    function applyTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+      });
+      document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+        el.placeholder = t(el.dataset.i18nPh);
+      });
+      document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        el.innerHTML = t(el.dataset.i18nHtml);
+      });
+      document.title = 'DrayTek ' + t('title');
+    }
+
+    /**
+     * -------------------------------------------------------------
+     * Part A: TOTP 計算 (Base32 + HMAC-SHA1) 在前端完成
+     * -------------------------------------------------------------
+     */
+    function base32ToBytes(base32Str) {
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+      let bits = '';
+      // 去除 '=' padding 和空白後轉大寫
+      base32Str = base32Str.replace(/=+$/, '').replace(/\s+/g, '').toUpperCase();
+      for (let char of base32Str) {
+        const val = alphabet.indexOf(char);
+        if (val === -1) throw new Error(`Invalid Base32 character: ${char}`);
+        bits += val.toString(2).padStart(5, '0');
+      }
+      const bytes = [];
+      for (let i = 0; i + 7 < bits.length; i += 8) {
+        bytes.push(parseInt(bits.substring(i, i + 8), 2));
+      }
+      return new Uint8Array(bytes);
+    }
+
+    async function hmacSha1(key, data) {
+      // 使用 Web Crypto API
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        key,
+        { name: 'HMAC', hash: { name: 'SHA-1' } },
+        false,
+        ['sign']
+      );
+      const signature = await crypto.subtle.sign('HMAC', cryptoKey, data);
+      return new Uint8Array(signature);
+    }
+
+    async function generateTOTP(base32Key, intervalSec = 30) {
+      // 1. Base32 解碼
+      const keyBytes = base32ToBytes(base32Key);
+      // 2. 取得當前時間戳 / 30秒
+      let counter = Math.floor(Date.now() / 1000 / intervalSec);
+      const counterBytes = new Uint8Array(8);
+      for (let i = 7; i >= 0; i--) {
+        counterBytes[i] = counter & 0xff;
+        counter >>= 8;
+      }
+      // 3. HMAC-SHA1 計算
+      const hmacResult = await hmacSha1(keyBytes, counterBytes);
+      // 4. 動態截取
+      const offset = hmacResult[hmacResult.length - 1] & 0x0f;
+      const binary =
+          ((hmacResult[offset] & 0x7f) << 24) |
+          ((hmacResult[offset + 1] & 0xff) << 16) |
+          ((hmacResult[offset + 2] & 0xff) << 8)  |
+          (hmacResult[offset + 3] & 0xff);
+      // 5. 取後 6 碼
+      const otp = binary % 1_000_000;
+      return otp.toString().padStart(6, '0');
+    }
+
+    /**
+     * -------------------------------------------------------------
+     * Part B: 實時顯示 TOTP 驗證碼並添加進度條與複製按鈕
+     * -------------------------------------------------------------
+     */
+    let progressInterval = null;
+
+    async function updateTotpCode() {
+      const totpKey = document.getElementById('totpKey').value.trim();
+      const serviceName = document.getElementById('profileName').value.trim();
+      const totpCodeElem = document.getElementById('currentTotpCode');
+      const progressElem = document.getElementById('totpProgress');
+      const countdownElem = document.getElementById('totpCountdown');
+
+      if (!totpKey || !serviceName) {
+        totpCodeElem.textContent = "--";
+        progressElem.style.width = '0%';
+        countdownElem.textContent = t('countdown_default');
+        clearInterval(progressInterval);
+        // 恢復複製按鈕
+        const copyBtn = document.getElementById('copyTotpBtn');
+        copyBtn.classList.remove('copy-disabled');
+        copyBtn.disabled = false;
+        return;
+      }
+      try {
+        const code = await generateTOTP(totpKey);
+        totpCodeElem.textContent = code;
+        // 當 TOTP 碼更新時，恢復複製按鈕
+        const copyBtn = document.getElementById('copyTotpBtn');
+        copyBtn.classList.remove('copy-disabled');
+        copyBtn.disabled = false;
+      } catch (err) {
+        totpCodeElem.textContent = `Invalid`;
+        // 如果無效，也恢復複製按鈕
+        const copyBtn = document.getElementById('copyTotpBtn');
+        copyBtn.classList.remove('copy-disabled');
+        copyBtn.disabled = false;
+      }
+    }
+
+    function startTotpTimer(intervalSec = 30) {
+      const progressElem = document.getElementById('totpProgress');
+      const countdownElem = document.getElementById('totpCountdown');
+
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+
+      function updateTimer() {
+        const currentTime = Math.floor(Date.now() / 1000);
+        const remaining = intervalSec - (currentTime % intervalSec);
+        const percentage = (remaining / intervalSec) * 100;
+        progressElem.style.width = `${percentage}%`;
+        countdownElem.textContent = `${remaining} ${t('sec')}`;
+
+        if (remaining === intervalSec) {
+          updateTotpCode();
+        }
+      }
+      updateTimer(); 
+      progressInterval = setInterval(updateTimer, 1000);
+    }
+
+    /**
+     * -------------------------------------------------------------
+     * Part C: 複製 TOTP 驗證碼功能
+     * -------------------------------------------------------------
+     */
+    function copyTotpCode() {
+      const totpCode = document.getElementById('currentTotpCode').textContent;
+      if (totpCode === "--" || totpCode === "Invalid") {
+        log(t('log_copy_no_code'));
+        return;
+      }
+      navigator.clipboard.writeText(totpCode)
+        .then(() => {
+          const copyBtn = document.getElementById('copyTotpBtn');
+          copyBtn.classList.add('copy-disabled');
+          copyBtn.disabled = true;
+          log(t('log_copied'));
+        })
+        .catch(err => {
+          console.error('Clipboard copy failed:', err);
+          log(t('log_copy_failed', {error: err.message}));
+        });
+    }
+
+    /**
+     * -------------------------------------------------------------
+     * Part D: 已移除 QR Code 生成與顯示相關功能
+     * -------------------------------------------------------------
+     */
+    /**
+     * -------------------------------------------------------------
+     * Part E: fetch + no-cors + 人工 Timeout + 敲門流程
+     * -------------------------------------------------------------
+     */
+    function timedFetch(url, options = {}, timeoutMs = 3000) {
+      const controller = new AbortController();
+      const signal = controller.signal;
+      const fetchPromise = fetch(url, { ...options, signal });
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.log(`Fetch to ${url} timed out after ${timeoutMs}ms`);
+      }, timeoutMs);
+      return fetchPromise
+        .then(response => {
+          console.log(`Fetch to ${url} succeeded`);
+          return response;
+        })
+        .catch(error => {
+          if (error.name === 'AbortError') {
+            console.log(`Fetch to ${url} aborted due to timeout`);
+          } else {
+            console.log(`Fetch to ${url} failed: ${error}`);
+          }
+          throw error;
+        })
+        .finally(() => clearTimeout(timeoutId));
+    }
+
+    async function knockPorts(ip, firstPort, totpKey, publicport, protocol, isOptional) {
+      const logElem = document.getElementById('log');
+      logElem.textContent = "";
+
+      try {
+        const tokenStr = await generateTOTP(totpKey);
+        const token = parseInt(tokenStr, 10);
+        logElem.textContent += t('log_totp_generated', {code: tokenStr}) + '\n';
+
+        const knock2 = 1000 + Math.floor(token / 1000);
+        const knock3 = 2000 + (token % 1000);
+        const ports = [firstPort, knock2, knock3];
+
+        logElem.textContent += t('log_knocking_start') + '\n';
+        const defaultProtocol = 'https';
+        const ordinals = t('ordinals');
+        let i = 0;
+        for (let p of ports) {
+          const ordinal = ordinals[i] || `${i + 1}`;
+          logElem.textContent += t('log_knocking_port', {ordinal, port: p}) + '\n';
+          try {
+            await timedFetch(`${defaultProtocol}://${ip}:${p}`, { method: 'GET', mode: 'no-cors' }, 1000);
+          } catch (error) {
+            //
+          }
+          i++;
+        }
+
+        if (isOptional) {
+          logElem.textContent += '\n' + t('log_knocking_done') + '\n';
+          if (protocol && ip && publicport) {
+            const link = `${protocol}://${ip}:${publicport}`;
+            document.getElementById('statusLink').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+          } else {
+            document.getElementById('statusLink').innerHTML = "";
+          }
+
+        } else {
+          logElem.textContent += '\n' + t('log_knocking_done') + '\n';
+          document.getElementById('statusLink').innerHTML = "";
+        }
+
+      } catch (err) {
+        logElem.textContent += t('log_totp_failed', {error: err}) + '\n';
+      }
+    }
+
+    /**
+     * -------------------------------------------------------------
+     * Part F: 儲存與載入 Service 資料 (localStorage)
+     * -------------------------------------------------------------
+     */
+    function getAllServices() {
+      const raw = localStorage.getItem('portKnockingServices');
+      if (!raw) {
+        return {};
+      }
+      return JSON.parse(raw);
+    }
+
+    function saveService(serviceName, ip, firstport, totpKey, publicport, protocol) {
+      const services = getAllServices();
+      services[serviceName] = {
+        ip,
+        firstport,
+        totpKey,
+        publicport,
+        protocol
+      };
+      localStorage.setItem('portKnockingServices', JSON.stringify(services));
+    }
+
+    function deleteService(serviceName) {
+      const services = getAllServices();
+      if (services[serviceName]) {
+        delete services[serviceName];
+        localStorage.setItem('portKnockingServices', JSON.stringify(services));
+      }
+    }
+
+    function getServiceData(serviceName) {
+      const services = getAllServices();
+      return services[serviceName] || null;
+    }
+
+    function refreshServiceSelect() {
+      const serviceSelect = document.getElementById('profileSelect');
+      const services = getAllServices();
+      const keys = Object.keys(services);
+
+      serviceSelect.innerHTML = "";
+      const placeholder = document.createElement('option');
+      placeholder.value = "";
+      placeholder.text = "-- Select --";
+      serviceSelect.appendChild(placeholder);
+
+      keys.forEach(sName => {
+        const opt = document.createElement('option');
+        opt.value = sName;
+        opt.text = sName;
+        serviceSelect.appendChild(opt);
+      });
+    }
+
+    // 依 profileName 是否有值，同步 Save 按鈕的 disabled 狀態。
+    // 需在所有可能改動 profileName 的路徑呼叫（含以 JS 直接設定 value 而不觸發 input 事件的情況）。
+    function updateSaveBtnState() {
+      const saveBtn = document.getElementById('saveBtn');
+      if (!saveBtn) return;
+      saveBtn.disabled = !document.getElementById('profileName').value.trim();
+    }
+
+    function onServiceSelectChanged() {
+      const serviceSelect = document.getElementById('profileSelect');
+      const selected = serviceSelect.value;
+      if (!selected) return;
+
+      const data = getServiceData(selected);
+      if (data) {
+        document.getElementById('profileName').value = selected;
+        document.getElementById('ip').value = data.ip || "";
+        document.getElementById('1stport').value = data.firstport || "";
+        document.getElementById('totpKey').value = data.totpKey || "";
+
+        if (data.publicport && data.protocol) {
+          document.getElementById('toggleOptional').checked = true;
+          document.getElementById('optionalSettingsRow').style.display = 'table-row';
+          document.getElementById('publicport').value = data.publicport;
+          document.getElementById('protocol').value = data.protocol;
+
+          const link = `${data.protocol}://${data.ip}:${data.publicport}`;
+          document.getElementById('statusLink').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+
+          updateTotpCode();
+          startTotpTimer();
+        } else {
+          document.getElementById('toggleOptional').checked = false;
+          document.getElementById('optionalSettingsRow').style.display = 'none';
+          document.getElementById('statusLink').innerHTML = "";
+        }
+        updateTotpCode();
+        startTotpTimer();
+      }
+      updateSaveBtnState();
+    }
+
+    /**
+     * -------------------------------------------------------------
+     * Part G: 新增 QR Code 掃描功能
+     * -------------------------------------------------------------
+     */
+    // --- 定時敲門（由 URL 參數 interval/count/until 觸發，於瀏覽器分頁內重複敲門）---
+    let scheduledKnockTimer = null;
+
+    // 解析 until=HH:MM，回傳今日該時刻的 epoch ms；若已過則視為隔日。格式錯誤回傳 null。
+    function parseScheduledUntil(str) {
+      if (!str) return null;
+      const m = /^(\d{1,2}):(\d{2})$/.exec(String(str).trim());
+      if (!m) return null;
+      const hh = parseInt(m[1], 10), mm = parseInt(m[2], 10);
+      if (hh > 23 || mm > 59) return null;
+      const now = new Date();
+      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0, 0);
+      if (target.getTime() <= now.getTime()) target.setDate(target.getDate() + 1);
+      return target.getTime();
+    }
+
+    // 重複敲門：每次都重新計算 TOTP（knockPorts 內部即時算），達到 count 或 until 後停止。
+    function runScheduledKnock(doKnockFn, sched) {
+      const stats = { total: 0, success: 0, failed: 0 };
+      log(t('log_sched_start', { interval: sched.interval, count: sched.count > 0 ? sched.count : '∞' }));
+      const finish = () => {
+        log(t('log_sched_done', { total: stats.total, success: stats.success, failed: stats.failed }));
+      };
+      const cycle = () => {
+        if (sched.until && Date.now() >= sched.until) { finish(); return; }
+        Promise.resolve(doKnockFn())
+          .then(() => { stats.success++; })
+          .catch(() => { stats.failed++; })
+          .then(() => {
+            stats.total++;
+            const hitCount = sched.count > 0 && stats.total >= sched.count;
+            const hitUntil = sched.until && Date.now() >= sched.until;
+            if (hitCount || hitUntil) { finish(); return; }
+            scheduledKnockTimer = setTimeout(cycle, sched.interval * 1000);
+          });
+      };
+      cycle();
+    }
+
+    // 自動敲門：sched 存在時為定時重複（強制保持開啟）；否則為單次（依 keep 決定是否關閉視窗）。
+    function handleAutoKnock(doKnockFn, keep, sched) {
+      if (sched) {
+        runScheduledKnock(doKnockFn, sched);
+        return;
+      }
+      Promise.resolve(doKnockFn())
+        .then(() => {
+          setTimeout(() => {
+            if (!keep) {
+              log(t('log_closing'));
+              setTimeout(() => { window.close(); }, 3000);
+            } else {
+              log(t('log_staying'));
+            }
+          }, 0);
+        })
+        .catch(err => { log(t('log_knock_failed', { error: err.message })); });
+    }
+
+    function loadUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const name = urlParams.get('name');
+      const ip = urlParams.get('ip');
+      const firstport = urlParams.get('1stport');
+      const totpKey = urlParams.get('totpkey');
+      const keep = urlParams.get('Auto') === 'keep';
+      const auto = urlParams.get('Auto') === 'True';
+      // 定時敲門：URL 帶 interval（秒）即啟用，重複敲門並保持頁面開啟。
+      const intervalRaw = parseInt(urlParams.get('interval'), 10);
+      const countRaw = parseInt(urlParams.get('count'), 10);
+      const sched = (Number.isInteger(intervalRaw) && intervalRaw > 0)
+        ? {
+            interval: intervalRaw,
+            count: (Number.isInteger(countRaw) && countRaw > 0) ? countRaw : 0,
+            until: parseScheduledUntil(urlParams.get('until')),
+          }
+        : null;
+      if (name) {
+        document.getElementById('profileName').value = name;
+      }
+      if (ip) {
+        document.getElementById('ip').value = ip;
+      }
+      if (firstport) {
+        document.getElementById('1stport').value = firstport;
+      }
+      if (totpKey) {
+        document.getElementById('totpKey').value = totpKey;
+      }
+      updateSaveBtnState();
+      if (name && ip && firstport && totpKey) {
+        updateTotpCode();
+        startTotpTimer();
+      }
+
+
+      if (name && !ip && !firstport && !totpKey) {
+        const data = getServiceData(name);
+        if (data) {
+            document.getElementById('ip').value = data.ip || '';
+            document.getElementById('1stport').value = data.firstport || '';
+            document.getElementById('totpKey').value = data.totpKey || '';
+            updateTotpCode();
+            startTotpTimer();
+            // 有 Auto 或 interval（定時）時自動敲門
+            if (auto || keep || sched) {
+                saveService(name, data.ip, data.firstport, data.totpKey, null, null);
+                refreshServiceSelect();
+                document.getElementById('profileSelect').value = name;
+                handleAutoKnock(
+                    () => knockPorts(data.ip, parseInt(data.firstport, 10), data.totpKey, null, null, false),
+                    keep, sched
+                );
+            }
+        } else {
+            log(t('log_profile_not_found', {name}));
+        }
+      }
+
+      if ((auto || keep || sched) && name && ip && firstport && totpKey) {
+       // 自動執行 port knocking（sched 存在時為定時重複）
+       saveService(name, ip, firstport, totpKey, null, null);
+       refreshServiceSelect();
+       document.getElementById('profileSelect').value = name;
+       handleAutoKnock(
+         () => knockPorts(ip, parseInt(firstport, 10), totpKey, null, null, false),
+         keep, sched
+       );
+      }
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+    }
+
+    /* --- CLI 指令產生器 --- */
+    function cliReadForm() {
+      return {
+        name: document.getElementById('profileName').value.trim(),
+        ip: document.getElementById('ip').value.trim(),
+        port: document.getElementById('1stport').value.trim(),
+        key: document.getElementById('totpKey').value.trim(),
+      };
+    }
+    function cliBuildUrl() {
+      const f = cliReadForm();
+      let base = document.getElementById('cliBase').value.trim() || (location.origin + location.pathname);
+      base = base.split('?')[0].split('#')[0]; // 去掉既有 query/hash
+      const p = new URLSearchParams();
+      if (f.name) p.set('name', f.name);
+      if (f.ip) p.set('ip', f.ip);
+      if (f.port) p.set('1stport', f.port);
+      if (f.key) p.set('totpkey', f.key);
+      const mode = (document.querySelector('input[name="cliMode"]:checked') || {}).value;
+      if (mode === 'once-close') p.set('Auto', 'True');
+      else if (mode === 'once-keep') p.set('Auto', 'keep');
+      else {
+        const iv = parseInt(document.getElementById('cliInterval').value, 10);
+        p.set('interval', (Number.isInteger(iv) && iv > 0) ? iv : 300);
+        const c = parseInt(document.getElementById('cliCount').value, 10);
+        if (Number.isInteger(c) && c > 0) p.set('count', c);
+        const u = document.getElementById('cliUntil').value.trim();
+        if (u) p.set('until', u);
+      }
+      return base + '?' + p.toString();
+    }
+    function cliBuildCmd(url) {
+      const os = document.getElementById('cliOs').value;
+      const q = '"' + url + '"';
+      if (os === 'win-cmd') return 'start chrome ' + q;
+      if (os === 'win-ps') return 'Start-Process chrome ' + q;
+      if (os === 'macos') return 'open -a "Google Chrome" ' + q;
+      return 'google-chrome ' + q; // linux 預設
+    }
+    function cliUpdate() {
+      const f = cliReadForm();
+      const missing = !(f.name && f.ip && f.port && f.key);
+      document.getElementById('cliHelperMissing').style.display = missing ? 'block' : 'none';
+      const mode = (document.querySelector('input[name="cliMode"]:checked') || {}).value;
+      document.getElementById('cliSchedFields').style.display = (mode === 'schedule') ? 'block' : 'none';
+      const url = cliBuildUrl();
+      document.getElementById('cliUrlOut').value = url;
+      document.getElementById('cliCmdOut').value = cliBuildCmd(url);
+    }
+    function openCliHelper() {
+      const b = document.getElementById('cliBase');
+      if (!b.value) b.value = location.origin + location.pathname;
+      cliUpdate();
+      document.getElementById('cliHelperModal').style.display = 'flex';
+    }
+    function cliCopyFallback(text, done) {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+    function cliCopy(text, btn) {
+      const done = () => { btn.textContent = t('helper_copied'); setTimeout(() => { btn.textContent = t('helper_copy'); }, 1200); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => cliCopyFallback(text, done));
+      } else {
+        cliCopyFallback(text, done);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Init language selector
+        const langSel = document.getElementById('langSelect');
+        langSel.value = currentLang;
+        applyTranslations();
+        langSel.addEventListener('change', e => {
+          currentLang = e.target.value;
+          localStorage.setItem('portKnockLang', currentLang);
+          applyTranslations();
+          updateTotpCode(); // refresh countdown_default without resetting progressInterval
+        });
+
+        loadUrlParams(); // Load URL parameters first
+      // --- 綁定新的設定按鈕事件 ---
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsMenu = document.getElementById('settingsMenu');
+  
+        settingsBtn.addEventListener('click', (event) => {
+          event.stopPropagation(); // 防止觸發 window 的點擊事件
+          settingsMenu.style.display = settingsMenu.style.display === 'block' ? 'none' : 'block';
+        });
+  
+        // --- 點擊選單外的區域關閉選單 ---
+        window.addEventListener('click', () => {
+          if (settingsMenu.style.display === 'block') {
+            settingsMenu.style.display = 'none';
+          }
+        });
+  
+        // --- 綁定匯出選項事件 ---
+        document.getElementById('exportOption').addEventListener('click', (e) => {
+          e.preventDefault(); // 防止連結跳轉
+          exportProfile();
+          settingsMenu.style.display = 'none'; // 關閉選單
+        });
+        // --- 綁定匯入選項事件 (觸發隱藏的檔案輸入框) ---
+        document.getElementById('importOption').addEventListener('click', (e) => {
+          e.preventDefault(); // 防止連結跳轉
+        document.getElementById('importFile').click();
+        settingsMenu.style.display = 'none'; // 關閉選單
+      });
+
+      // --- 綁定檔案輸入框的變更事件 ---
+      document.getElementById('importFile').addEventListener('change', handleImport);
+      document.getElementById('copyTotpBtn').addEventListener('click', copyTotpCode);
+      // --- 綁定刪除選項事件 ---
+      document.getElementById('deleteOption').addEventListener('click', (e) => {
+        e.preventDefault();
+        deleteProfile();
+        settingsMenu.style.display = 'none';
+      });
+      // --- 綁定 CLI 指令產生器 ---
+      document.getElementById('helperOption').addEventListener('click', (e) => {
+        e.preventDefault();
+        openCliHelper();
+        settingsMenu.style.display = 'none';
+      });
+      document.getElementById('cliHelperClose').addEventListener('click', () => {
+        document.getElementById('cliHelperModal').style.display = 'none';
+      });
+      const cliModal = document.getElementById('cliHelperModal');
+      cliModal.addEventListener('input', cliUpdate);
+      cliModal.addEventListener('change', cliUpdate);
+      cliModal.addEventListener('click', (e) => {
+        if (e.target === cliModal) cliModal.style.display = 'none'; // 點背景關閉
+        const btn = e.target.closest('.cli-copy');
+        if (btn) cliCopy(document.getElementById(btn.getAttribute('data-target')).value, btn);
+      });
+      document.getElementById('selectAllCheckbox').addEventListener('change', toggleSelectAll);
+      document.getElementById('selectAllImportCheckbox').addEventListener('change', toggleSelectAll);
+      document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
+      document.getElementById('cancelImportBtn').addEventListener('click', () => {
+        document.getElementById('importModal').style.display = 'none';
+        document.getElementById('importFile').value = null;
+      });
+      document.getElementById('selectAllDeleteCheckbox').addEventListener('change', toggleSelectAll);
+      document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
+      document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+        document.getElementById('deleteModal').style.display = 'none';
+      });
+      document.getElementById('confirmExportBtn').addEventListener('click', confirmExport);
+      document.getElementById('cancelExportBtn').addEventListener('click', () => {
+        document.getElementById('exportModal').style.display = 'none';
+      });
+      refreshServiceSelect();
+      document.getElementById('profileSelect').addEventListener('change', onServiceSelectChanged);
+
+      document.getElementById('toggleOptional').addEventListener('change', (e) => {
+        const optionalSettingsRow = document.getElementById('optionalSettingsRow');
+        if (e.target.checked) {
+          optionalSettingsRow.style.display = 'table-row';
+        } else {
+          optionalSettingsRow.style.display = 'none';
+          document.getElementById('statusLink').innerHTML = "";
+        }
+      });
+
+      document.getElementById('verifyCodeCheckbox').addEventListener('change', (e) => {
+        const currentTotpContainer = document.getElementById('currentTotpContainer');
+        const totpProgressContainer = document.getElementById('totpProgressContainer');
+        if (e.target.checked) {
+          currentTotpContainer.style.display = 'flex';
+          //totpProgressContainer.style.display = 'block';
+        } else {
+          currentTotpContainer.style.display = 'none';
+          totpProgressContainer.style.display = 'none';
+        }
+      });
+
+      document.getElementById('protocol').addEventListener('input', updateStatusLink);
+      document.getElementById('ip').addEventListener('input', updateStatusLink);
+      document.getElementById('publicport').addEventListener('input', updateStatusLink);
+
+      // 判斷是否為手機 & 是否使用 http/https
+      function isMobileDevice() {
+        return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      }
+      function isHttpProtocol() {
+        return window.location.protocol === 'http:' || window.location.protocol === 'https:';
+      }
+      if (!isMobileDevice() || !isHttpProtocol()) {
+        document.getElementById('scanTotpBtn').style.display = 'none';
+      }
+
+      document.getElementById('saveBtn').addEventListener('click', () => {
+        const MAX_PROFILES = 200;
+        const profileName = document.getElementById('profileName').value.trim();
+        const srvip       = document.getElementById('ip').value.trim();
+        const firstport   = parseInt(document.getElementById('1stport').value, 10);
+        const totpKey     = document.getElementById('totpKey').value.trim();
+        const isOptional  = document.getElementById('toggleOptional').checked;
+        const publicport  = parseInt(document.getElementById('publicport').value, 10);
+        const protocol    = document.getElementById('protocol').value.trim();
+
+        if (!profileName) { log(t('log_no_profile_name')); return; }
+        if (!srvip || isNaN(firstport) || !totpKey) { log(t('log_missing_fields')); return; }
+        if (isOptional && (isNaN(publicport) || !protocol)) { log(t('log_missing_optional')); return; }
+
+        const services = getAllServices();
+        const isExisting = services.hasOwnProperty(profileName);
+
+        if (!isExisting && Object.keys(services).length >= MAX_PROFILES) {
+          log(t('log_profile_limit', {limit: MAX_PROFILES, name: profileName}));
+          return;
+        }
+
+        saveService(profileName, srvip, firstport, totpKey,
+          isOptional ? publicport : null,
+          isOptional ? protocol    : null);
+        refreshServiceSelect();
+        document.getElementById('profileSelect').value = profileName;
+
+        log(isExisting
+          ? t('log_saved_updated', {name: profileName})
+          : t('log_saved_new',     {name: profileName}));
+      });
+
+      document.getElementById('knockBtn').addEventListener('click', () => {
+        const MAX_PROFILES = 200;
+        const profileName = document.getElementById('profileName').value.trim();
+        const srvip = document.getElementById('ip').value.trim();
+        const firstport = parseInt(document.getElementById('1stport').value, 10);
+        const publicport = parseInt(document.getElementById('publicport').value, 10);
+        const protocol = document.getElementById('protocol').value.trim();
+        const totpKey = document.getElementById('totpKey').value.trim();
+
+        if (!profileName) {
+          log(t('log_no_profile_name'));
+          return;
+        }
+        if (!srvip || isNaN(firstport) || !totpKey) {
+          log(t('log_missing_fields'));
+          return;
+        }
+
+        const isOptional = document.getElementById('toggleOptional').checked;
+
+        if (isOptional) {
+          if (isNaN(publicport) || !protocol) {
+            log(t('log_missing_optional'));
+            return;
+          }
+        }
+ 
+        // --- 新增：儲存前檢查 Profile 數量上限 ---
+        const services = getAllServices();
+        const currentProfileCount = Object.keys(services).length;
+        const isExistingProfile = services.hasOwnProperty(profileName);
+
+        // 只有當這是一個"新" Profile 且總數已達上限時才阻止
+        if (!isExistingProfile && currentProfileCount >= MAX_PROFILES) {
+          //alert(`Profile limit of ${MAX_PROFILES} has been reached. Cannot save new profile. Please delete some profiles before trying to save and knock again.`);
+          log(t('log_profile_limit', {limit: MAX_PROFILES, name: profileName}));
+            return; // 阻止儲存和 Knocking
+        }
+        // --- 檢查結束 ---
+        saveService(
+          profileName, 
+          srvip, 
+          firstport,
+          totpKey, 
+          isOptional ? publicport : null, 
+          isOptional ? protocol : null
+        );
+        refreshServiceSelect();
+        knockPorts(
+          srvip, 
+          firstport, 
+          totpKey, 
+          isOptional ? publicport : null, 
+          isOptional ? protocol : null, 
+          isOptional
+        );
+      });
+
+      document.getElementById('copyTotpBtn').addEventListener('click', copyTotpCode);
+
+      document.getElementById('totpKey').addEventListener('input', () => {
+        updateTotpCode();
+        startTotpTimer();
+      });
+      document.getElementById('profileName').addEventListener('input', () => {
+        updateTotpCode();
+        startTotpTimer();
+        updateSaveBtnState();
+      });
+
+      // 綁定「Scan QR」按鈕事件
+      document.getElementById('scanTotpBtn').addEventListener('click', () => {
+        document.getElementById('scannerContainer').style.display = 'flex';
+        startScanner();
+      });
+
+      document.getElementById('closeScannerBtn').addEventListener('click', () => {
+        stopScanner();
+        document.getElementById('scannerContainer').style.display = 'none';
+      });
+      
+      updateTotpCode();
+      startTotpTimer();
+      // 初始化 Save 按鈕 disabled 狀態
+      updateSaveBtnState();
+      // 新增：TOTP密碼顯示/隱藏切換
+      const togglePasswordBtn = document.getElementById('togglePassword');
+      const totpKeyInput = document.getElementById('totpKey');
+      togglePasswordBtn.addEventListener('click', () => {
+        const isPassword = totpKeyInput.type === 'password';
+        totpKeyInput.type = isPassword ? 'text' : 'password';
+        togglePasswordBtn.innerHTML = isPassword
+          ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>`
+          : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`;
+      });
+
+      // 確保初始狀態與輸入框一致
+      if (totpKeyInput.type === 'password') {
+        togglePasswordBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`;
+      }
+      const verifyCodeCheckbox = document.getElementById('verifyCodeCheckbox');
+      const currentTotpContainer = document.getElementById('currentTotpContainer');
+      const totpProgressContainer = document.getElementById('totpProgressContainer');
+      if (verifyCodeCheckbox.checked) {
+        currentTotpContainer.style.display = 'flex';
+        //totpProgressContainer.style.display = 'block';
+      } else {
+        currentTotpContainer.style.display = 'none';
+        totpProgressContainer.style.display = 'none';
+      }
+    });
+
+    /**
+     * -------------------------------------------------------------
+     * Part H: QR Code 掃描功能實現 (使用 jsQR)
+     * -------------------------------------------------------------
+     */
+    let videoStream = null;
+    let scanIntervalId = null;
+
+    function startScanner() {
+      const scannerContainer = document.getElementById('scannerContainer');
+      const video = document.getElementById('scannerVideo');
+      const canvas = document.getElementById('scannerCanvas');
+      const canvasContext = canvas.getContext('2d');
+
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => {
+          videoStream = stream;
+          video.srcObject = stream;
+          video.play();
+
+          video.addEventListener('loadedmetadata', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+          });
+
+          scanIntervalId = setInterval(() => {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+              canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+              const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+              if (code) {
+                const qrData = code.data;
+                let secretValue = null;
+                try {
+                  const url = new URL(qrData);
+                  secretValue = url.searchParams.get('secret');
+                } catch (error) {
+                  const secretMatch = qrData.match(/secret=([^&]+)/);
+                  if (secretMatch) {
+                    secretValue = secretMatch[1];
+                  }
+                }
+                if (secretValue) {
+                  document.getElementById('totpKey').value = secretValue;
+                  updateTotpCode();
+                  startTotpTimer();
+                  log(t('log_totp_scanned'));
+                  stopScanner();
+                  scannerContainer.style.display = 'none';
+                } else {
+                  console.log("Scanned QR Code does not contain the 'secret=' string.");
+                }
+              }
+            }
+          }, 500);
+        })
+        .catch(err => {
+          console.error('Unable to access the camera: ', err);
+          log(t('log_camera_error'));
+          document.getElementById('scannerContainer').style.display = 'none';
+        });
+    }
+
+    function stopScanner() {
+      const video = document.getElementById('scannerVideo');
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+      }
+      video.srcObject = null;
+      clearInterval(scanIntervalId);
+    }
+
+       /**
+     * -------------------------------------------------------------
+     * Part I: Profile Import/Export Functionality (.cfg format)
+     * -------------------------------------------------------------
+     */
+    // --- 新增：助記詞加密/解密功能 ---
+    async function sha256hex(str) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // 目前（V1.5）使用的 PBKDF2 迭代數；升級前為 100000。
+    const PBKDF2_ITERATIONS = 310000;
+    const PBKDF2_ITERATIONS_LEGACY = 100000;
+
+    async function deriveKeyFromPassphrase(passphrase, salt, iterations = PBKDF2_ITERATIONS) {
+      const enc = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        enc.encode(passphrase),
+        { name: "PBKDF2" },
+        false,
+        ["deriveBits", "deriveKey"]
+      );
+      return await crypto.subtle.deriveKey(
+        {
+          name: "PBKDF2",
+          salt: salt,
+          iterations: iterations,
+          hash: "SHA-256"
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+      );
+    }
+
+    async function encryptTOTPKey(totpKey, passphrase) {
+      const enc = new TextEncoder();
+      const salt = crypto.getRandomValues(new Uint8Array(32));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const key = await deriveKeyFromPassphrase(passphrase, salt, PBKDF2_ITERATIONS);
+      const encrypted = await crypto.subtle.encrypt(
+        {
+          name: "AES-GCM",
+          iv: iv
+        },
+        key,
+        enc.encode(totpKey)
+      );
+      return {
+        encryptedTotpKey: Array.from(new Uint8Array(encrypted)),
+        salt: Array.from(salt),
+        iv: Array.from(iv),
+        iterations: PBKDF2_ITERATIONS
+      };
+    }
+
+    async function decryptTOTPKey(encryptedData, passphrase) {
+      try {
+        // 舊版匯出/localStorage 資料未存 iterations，回退到升級前的 100000 以維持相容。
+        const iterations = encryptedData.iterations || PBKDF2_ITERATIONS_LEGACY;
+        const key = await deriveKeyFromPassphrase(passphrase, new Uint8Array(encryptedData.salt), iterations);
+        const decrypted = await crypto.subtle.decrypt(
+          {
+            name: "AES-GCM",
+            iv: new Uint8Array(encryptedData.iv)
+          },
+          key,
+          new Uint8Array(encryptedData.encryptedTotpKey)
+        );
+        const dec = new TextDecoder();
+        return dec.decode(decrypted);
+      } catch (err) {
+        throw new Error("Decryption failed: Invalid passphrase or corrupted data.");
+      }
+    }
+
+    function showPassphraseModal(callback, cancelCallback, title) {
+      if (title === undefined) title = t('passphrase_title');
+      const modal = document.getElementById('passphraseModal');
+      const input = document.getElementById('passphraseInput');
+      const confirmBtn = document.getElementById('confirmPassphraseBtn');
+      const cancelBtn = document.getElementById('cancelPassphraseBtn');
+      const modalTitle = modal.querySelector('h4');
+      modalTitle.textContent = title;
+      input.value = '';
+      modal.style.display = 'flex';
+
+      const onConfirm = () => {
+        callback(input.value);
+        modal.style.display = 'none';
+        confirmBtn.removeEventcolari
+      };
+
+      confirmBtn.addEventListener('click', onConfirm, { once: true });
+      cancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        if (cancelCallback) cancelCallback();
+      }, { once: true });
+    }
+    // --- 匯出功能 ---
+    function exportProfile() {
+      document.getElementById('log').textContent = '';
+      const profiles = getAllServices();
+      const profileNames = Object.keys(profiles);
+      if (profileNames.length === 0) {
+        log(t('log_no_export'));
+        return;
+      }
+      generateExportModalContent();
+      document.getElementById('exportModal').style.display = 'flex'; 
+    }
+
+    function generateExportModalContent() {
+      const profiles = getAllServices();
+      const profileNames = Object.keys(profiles);
+      document.getElementById('exportSearch').value = ''; // 清空搜尋框
+      const profileList = document.getElementById('exportProfileList');
+      profileList.innerHTML = '';
+      document.getElementById('selectAllCheckbox').checked = false; // 重置 Select All 勾選框
+      profileNames.forEach(name => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <label>
+            <input type="checkbox" class="custom-checkbox export-checkbox" data-profile="${name}">
+            ${name}
+          </label>
+        `;
+        profileList.appendChild(div);
+      });
+    }
+
+    function toggleSelectAll(event) {
+      const isChecked = event.target.checked;
+      const targetId = event.target.id;
+      let selector;
+      let modalType;
+      if (targetId === 'selectAllImportCheckbox') {
+        modalType = 'import';
+      } else if (targetId === 'selectAllDeleteCheckbox') {
+        modalType = 'delete';
+      } else {
+        modalType = 'export';
+      }
+      const profileList = document.getElementById(`${modalType}ProfileList`);
+      const checkboxes = profileList.querySelectorAll(`.${modalType}-checkbox`);
+      checkboxes.forEach(checkbox => {
+        const label = checkbox.parentElement;
+        if (label.style.display !== 'none') {
+          checkbox.checked = isChecked;
+        }
+      });
+    }
+
+    async function confirmExport() {
+
+      const checkboxes = document.querySelectorAll('.export-checkbox:checked');
+      const selectedProfiles = Array.from(checkboxes).map(cb => cb.dataset.profile);
+      
+      if (selectedProfiles.length === 0) {
+        log(t('log_select_export'));
+        return;
+      }
+      const filename = selectedProfiles.length === 1 ? `${selectedProfiles[0]}.conf` : 'PortKnocking_profiles.conf';
+      const profiles = getAllServices();
+      const encryptTotp = document.getElementById('encryptTotpCheckbox').checked;
+      // 自定義 replacer 函數，將特定陣列格式化為單行
+      function replacer(key, value) {
+        if (key === 'encryptedTotpKey' || key === 'salt' || key === 'iv') {
+          // 將陣列轉為單行字串，元素之間用逗號分隔
+          return `[${value.join(',')}]`;
+        }
+        return value;
+      }
+        if (encryptTotp) {
+          showPassphraseModal(
+            async (passphrase) => {
+              if (!passphrase) {
+                log(t('log_passphrase_required_enc'));
+                return;
+              }
+              const exportData = {
+                portknocking: selectedProfiles.map(name => {
+                  const data = profiles[name];
+                  const profileData = {
+                    profileName: name,
+                    ip: data.ip,
+                    firstport: data.firstport,
+                    encrypted: true
+                  };
+                  // 加密 TOTP Key
+                  return encryptTOTPKey(data.totpKey, passphrase).then(encrypted => {
+                    profileData.totpKey = encrypted;
+                    if (data.publicport && data.protocol) {
+                      profileData.publicport = data.publicport;
+                      profileData.protocol = data.protocol;
+                    }
+                    return profileData;
+                  });
+                })
+              };
+
+              Promise.all(exportData.portknocking).then(async resolvedPortknocking => {
+                const checksum = await sha256hex(JSON.stringify(resolvedPortknocking));
+                const finalData = {
+                  version: "1.5",
+                  createdAt: new Date().toISOString(),
+                  checksum,
+                  portknocking: resolvedPortknocking
+                };
+                const configContent = JSON.stringify(finalData, replacer, 2);
+                const blob = new Blob([configContent], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+
+                log(t('log_exported', {count: selectedProfiles.length, filename}));
+                document.getElementById('exportModal').style.display = 'none';
+              }).catch(err => {
+                log(t('log_export_failed', {error: err.message}));
+              });
+            },
+            () => {
+              log(t('log_export_cancelled'));
+              document.getElementById('exportModal').style.display = 'none';
+            },
+            t('passphrase_export_title')
+          );
+        } else {
+          const portknockingArr = selectedProfiles.map(name => {
+            const data = profiles[name];
+            const profileData = {
+              profileName: name,
+              ip: data.ip,
+              firstport: data.firstport,
+              totpKey: data.totpKey,
+              encrypted: false
+            };
+            if (data.publicport && data.protocol) {
+              profileData.publicport = data.publicport;
+              profileData.protocol = data.protocol;
+            }
+            return profileData;
+          });
+          const checksum = await sha256hex(JSON.stringify(portknockingArr));
+          const exportData = {
+            version: "1.5",
+            createdAt: new Date().toISOString(),
+            checksum,
+            portknocking: portknockingArr
+          };
+          const configContent = JSON.stringify(exportData, replacer, 2);
+          const blob = new Blob([configContent], { type: 'application/json' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+
+          log(t('log_exported_plain', {count: selectedProfiles.length, filename}));
+          document.getElementById('exportModal').style.display = 'none';
+        }  
+    }
+
+  
+    // --- 匯入功能 (修改後：匯入即儲存) ---
+    function handleImport(event) {
+      document.getElementById('log').textContent = '';
+      const file = event.target.files[0];
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+      let importedData = null;
+      reader.onload = function(e) {
+        const content = e.target.result;
+        try {
+          // Parse JSON content
+          importedData = JSON.parse(content);
+
+          // Checksum verification (v1.5+ files only)
+          if (importedData.checksum && Array.isArray(importedData.portknocking)) {
+            sha256hex(JSON.stringify(importedData.portknocking)).then(computed => {
+              if (computed !== importedData.checksum) {
+                log('[Warning] Checksum mismatch — file may be corrupted or tampered.');
+              }
+            });
+          }
+
+          // Validate portknocking section
+          if (!importedData.portknocking) {
+            throw new Error("Imported file is missing 'portknocking' section.");
+          }
+
+          let profilesToImport = [];
+          if (Array.isArray(importedData.portknocking)) {
+            profilesToImport = importedData.portknocking;
+            if (profilesToImport.length > 1) {
+              // Show modal for multiple profiles
+              document.getElementById('importFile').dataset.importedContent = JSON.stringify(importedData);
+              generateImportModalContent(profilesToImport, file.name);
+              document.getElementById('importModal').style.display = 'flex';
+              return;
+            } else if (profilesToImport.length === 1) {
+              // Single profile in array
+              portknockingData = profilesToImport[0];
+            } else {
+              throw new Error("Imported file has an empty 'portknocking' array.");
+            }
+          } else {
+            // Single profile as object (existing format)
+            portknockingData = importedData.portknocking;
+          }
+
+          // Validate required fields
+          if (!portknockingData.profileName || !portknockingData.ip || !portknockingData.firstport || !portknockingData.totpKey) {
+            throw new Error("Imported file is missing required fields (profileName, ip, 1stport, totpKey) in 'portknocking' section.");
+          }
+          // 檢查是否為加密的 TOTP Key
+          if (portknockingData.encrypted) {
+            // 轉換字串格式的陣列為數值陣列
+            const encryptedTotpKey = parseArrayString(portknockingData.totpKey.encryptedTotpKey);
+            const salt = parseArrayString(portknockingData.totpKey.salt);
+            const iv = parseArrayString(portknockingData.totpKey.iv);
+            const iterations = portknockingData.totpKey.iterations;
+            // 更新 totpKey 為數值陣列格式
+            portknockingData.totpKey = {
+              encryptedTotpKey,
+              salt,
+              iv,
+              iterations
+            };
+            showPassphraseModal(
+              async (passphrase) => {
+                if (!passphrase) {
+                  log(t('log_passphrase_required_imp'));
+                  document.getElementById('importFile').value = null;
+                  return;
+                }
+                try {
+                  portknockingData.totpKey = await decryptTOTPKey(portknockingData.totpKey, passphrase);
+                  processSingleProfileImport(portknockingData, file.name);
+                } catch (err) {
+                  log(`Import failed: ${err.message}`);
+                  document.getElementById('importFile').value = null;
+                }
+              },
+              () => log(t('log_import_cancelled')),
+              t('passphrase_import_title')
+            );
+          } else {
+            processSingleProfileImport(portknockingData, file.name);
+          }
+        } catch (error) {
+          //alert("Failed to import profile: " + error.message);
+          console.error("Error parsing config file:", error);
+          log(t('log_import_error', {error: error.message}));
+          event.target.value = null;
+        }
+      };
+
+      reader.onerror = function(e) {
+        //alert("Error reading file.");
+        console.error("Error reading file:", e);
+        document.getElementById('importFile').value = null;
+        log(t('log_file_read_error'));
+        event.target.value = null;
+      };
+
+      reader.readAsText(file);
+    }
+
+    function processSingleProfileImport(portknockingData, fileName) {
+      // --- 新增：定義數量上限 ---
+      const MAX_PROFILES = 200;
+      // --- 新增：檢查目前 Profile 數量是否已達上限 ---
+      const currentProfileCount = Object.keys(getAllServices()).length;
+      if (currentProfileCount >= MAX_PROFILES) {
+        //alert(`已達到 ${MAX_PROFILES} 個設定檔的數量上限，無法匯入新的設定檔。\nProfile limit of ${MAX_PROFILES} has been reached. Cannot import new profile. Please delete some profiles first.`);
+        log(t('log_import_limit', {limit: MAX_PROFILES}));
+        return false;
+      }
+      const profileNameToSave = portknockingData.profileName;
+      const ipToSave = portknockingData.ip;
+      const firstportToSave = portknockingData.firstport;
+      const totpKeyToSave = portknockingData.totpKey;
+      const publicportToSave = portknockingData.publicport || null;
+      const protocolToSave = portknockingData.protocol || null;
+
+          // --- 填入表單 ---
+          document.getElementById('profileName').value = portknockingData.profileName;
+          document.getElementById('ip').value = portknockingData.ip;
+          document.getElementById('1stport').value = portknockingData.firstport;
+          document.getElementById('totpKey').value = portknockingData.totpKey;
+
+          // 處理可選設定
+          const optionalSettingsRow = document.getElementById('optionalSettingsRow');
+          const toggleOptionalCheckbox = document.getElementById('toggleOptional');
+          if (portknockingData.publicport && portknockingData.protocol) {
+            document.getElementById('publicport').value = portknockingData.publicport;
+            document.getElementById('protocol').value = portknockingData.protocol;
+            toggleOptionalCheckbox.checked = true;
+            optionalSettingsRow.style.display = 'table-row';
+            updateStatusLink(); // 更新狀態連結顯示
+          } else {
+            document.getElementById('publicport').value = '';
+            document.getElementById('protocol').value = 'http';
+            toggleOptionalCheckbox.checked = false;
+            optionalSettingsRow.style.display = 'none';
+            document.getElementById('statusLink').innerHTML = "";
+          }
+
+          // --- ★ 新增：立即儲存匯入的資料 ---
+          saveService(
+              profileNameToSave,
+              ipToSave,
+              firstportToSave,
+              totpKeyToSave,
+              publicportToSave,
+              protocolToSave
+          );
+
+          // --- ★ 新增：立即更新下拉選單 ---
+          refreshServiceSelect();
+
+          // --- ★ 新增：自動選中剛匯入的設定檔 ---
+          document.getElementById('profileSelect').value = profileNameToSave;
+
+          // 更新 TOTP 顯示和計時器 (保持不變)
+          updateTotpCode();
+          startTotpTimer();
+
+          // 清空檔案輸入框的值
+          //event.target.value = null;
+
+      log(t('log_imported', {name: profileNameToSave, file: fileName}));
+      //alert("Profile '" + profileNameToSave + "' has been imported and saved successfully!");
+      return true; // 返回 true 表示成功
+    }
+
+    function generateImportModalContent(profiles, fileName) {
+      const profileList = document.getElementById('importProfileList');
+      profileList.innerHTML = '';
+      document.getElementById('importSearch').value = ''; // 清空搜尋框
+      document.getElementById('selectAllImportCheckbox').checked = false; // 重置 Select All 勾選框
+      profiles.forEach((profile, index) => {
+        if (profile.profileName) {
+          const div = document.createElement('div');
+          div.innerHTML = `
+            <label>
+              <input type="checkbox" class="custom-checkbox import-checkbox" data-index="${index}">
+              ${profile.profileName}
+            </label>
+          `;
+          profileList.appendChild(div);
+        }
+      });
+      document.getElementById('confirmImportBtn').dataset.fileName = fileName;
+    }
+
+    function confirmImport() {
+      const MAX_PROFILES = 200;
+      const checkboxes = document.querySelectorAll('.import-checkbox:checked');
+      const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+      const fileName = document.getElementById('confirmImportBtn').dataset.fileName;
+
+      // --- 新增：處理加密設定檔的助記詞輸入 ---
+      async function processProfileWithPassphrase(profile, index) {
+        return new Promise((resolve, reject) => {
+          if (!profile.encrypted) {
+            resolve(profile); // 未加密，直接返回
+            return;
+          }
+          // 轉換字串格式的陣列為數值陣列
+          const encryptedTotpKey = parseArrayString(profile.totpKey.encryptedTotpKey);
+          const salt = parseArrayString(profile.totpKey.salt);
+          const iv = parseArrayString(profile.totpKey.iv);
+          const iterations = profile.totpKey.iterations;
+          profile.totpKey = { encryptedTotpKey, salt, iv, iterations };
+
+          showPassphraseModal(
+            async (passphrase) => {
+              if (!passphrase) {
+                reject(new Error(`Passphrase is required for importing profile "${profile.profileName}".`));
+                return;
+              }
+              try {
+                profile.totpKey = await decryptTOTPKey(profile.totpKey, passphrase);
+                resolve(profile);
+              } catch (err) {
+                reject(new Error(`Failed to decrypt profile "${profile.profileName}": ${err.message}`));
+              }
+            },
+            () => {
+              reject(new Error(`Import cancelled for profile "${profile.profileName}".`));
+            },
+            t('passphrase_profile_title', {name: profile.profileName})
+          );
+        });
+      }
+
+      // --- 新增：檢查 Profile 數量上限 ---
+      const currentProfileCount = Object.keys(getAllServices()).length;
+      const selectedCount = selectedIndices.length;
+      if (currentProfileCount + selectedCount > MAX_PROFILES) {
+        log(t('log_import_limit_exceeded', {count: selectedCount, limit: MAX_PROFILES, current: currentProfileCount}));
+        return; // 阻止匯入
+      }
+
+      if (selectedIndices.length === 0) {
+        log(t('log_select_export'));
+        return;
+      }
+      const importedData = JSON.parse(document.getElementById('importFile').dataset.importedContent || '{}');
+      const profiles = importedData.portknocking || [];
+      const selectedProfiles = selectedIndices.map(index => profiles[index]);
+
+      // --- 修改：逐一處理每個設定檔，確保加密的設定檔要求助記詞 ---
+      let successfullyImported = 0;
+      const processProfiles = async () => {
+        for (const profile of selectedProfiles) {
+          if (!profile.profileName || !profile.ip || !profile.firstport || !profile.totpKey) {
+            log(`Skipping invalid profile at index ${selectedProfiles.indexOf(profile)}: Missing required fields.`);
+            continue;
+          }
+          try {
+            const processedProfile = await processProfileWithPassphrase(profile);
+            saveService(
+              processedProfile.profileName,
+              processedProfile.ip,
+              processedProfile.firstport,
+              processedProfile.totpKey,
+              processedProfile.publicport || null,
+              processedProfile.protocol || null
+            );
+            successfullyImported++;
+          } catch (err) {
+            log(err.message);
+          }
+        }
+
+        // 更新 UI
+        refreshServiceSelect();
+        if (successfullyImported > 0) {
+          const firstSuccessfulProfile = selectedProfiles.find(p => p.profileName && getServiceData(p.profileName));
+          if (firstSuccessfulProfile) {
+            document.getElementById('profileSelect').value = firstSuccessfulProfile.profileName;
+            document.getElementById('profileName').value = firstSuccessfulProfile.profileName;
+            document.getElementById('ip').value = firstSuccessfulProfile.ip;
+            document.getElementById('1stport').value = firstSuccessfulProfile.firstport;
+            document.getElementById('totpKey').value = firstSuccessfulProfile.totpKey;
+
+            const optionalSettingsRow = document.getElementById('optionalSettingsRow');
+            const toggleOptionalCheckbox = document.getElementById('toggleOptional');
+            if (firstSuccessfulProfile.publicport && firstSuccessfulProfile.protocol) {
+              document.getElementById('publicport').value = firstSuccessfulProfile.publicport;
+              document.getElementById('protocol').value = firstSuccessfulProfile.protocol;
+              toggleOptionalCheckbox.checked = true;
+              optionalSettingsRow.style.display = 'table-row';
+              updateStatusLink();
+            } else {
+              document.getElementById('publicport').value = '';
+              document.getElementById('protocol').value = 'http';
+              toggleOptionalCheckbox.checked = false;
+              optionalSettingsRow.style.display = 'none';
+              document.getElementById('statusLink').innerHTML = "";
+            }
+
+            updateTotpCode();
+            startTotpTimer();
+          }
+          log(t('log_imported_multiple', {count: successfullyImported, file: fileName}));
+        } else {
+          log(t('log_no_imported', {file: fileName}));
+        }
+
+        document.getElementById('importFile').value = null;
+        document.getElementById('importModal').style.display = 'none';
+      };
+
+      processProfiles();
+    }
+    function confirmDelete() {
+      const checkboxes = document.querySelectorAll('.delete-checkbox:checked');
+      const selectedProfiles = Array.from(checkboxes).map(cb => cb.dataset.profile);
+
+      if (selectedProfiles.length === 0) {
+        log(t('log_select_delete'));
+        return;
+      }
+
+      selectedProfiles.forEach(profileName => {
+        deleteService(profileName);
+      });
+
+      refreshServiceSelect();
+      if (selectedProfiles.includes(document.getElementById('profileName').value)) {
+        document.getElementById('profileName').value = '';
+        document.getElementById('ip').value = '';
+        document.getElementById('1stport').value = '';
+        document.getElementById('totpKey').value = '';
+        document.getElementById('toggleOptional').checked = false;
+        document.getElementById('optionalSettingsRow').style.display = 'none';
+      }
+
+      log(t('log_deleted', {count: selectedProfiles.length}));
+      //alert(`Successfully deleted ${selectedProfiles.length} profile(s)`);
+      document.getElementById('deleteModal').style.display = 'none';
+    }
+    // --- 刪除功能 ---
+   function deleteProfile() {
+      document.getElementById('log').textContent = '';
+      const profiles = getAllServices();
+      const profileNames = Object.keys(profiles);
+      if (profileNames.length === 0) {
+        log(t('log_no_delete'));
+        return;
+      }
+      generateDeleteModalContent();
+      document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function generateDeleteModalContent() {
+      const profiles = getAllServices();
+      const profileNames = Object.keys(profiles);
+      document.getElementById('deleteSearch').value = ''; // 清空搜尋框
+      const profileList = document.getElementById('deleteProfileList');
+      profileList.innerHTML = '';
+      document.getElementById('selectAllDeleteCheckbox').checked = false; // 重置 Select All 勾選框
+
+      profileNames.forEach(name => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <label>
+            <input type="checkbox" class="custom-checkbox delete-checkbox" data-profile="${name}">
+            ${name}
+          </label>
+        `;
+        profileList.appendChild(div);
+      });
+    }
+    // --- 用於在 Log 區域顯示訊息的輔助函數 ---
+    function log(message) {
+        const logElem = document.getElementById('log');
+        const timestamp = new Intl.DateTimeFormat(currentLang, {
+          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+        }).format(new Date());
+        logElem.textContent += `[${timestamp}] ${message}\n`;
+        logElem.scrollTop = logElem.scrollHeight;
+    }
+
+    // --- 新增：將字串格式的陣列轉為數值陣列 ---
+    function parseArrayString(arrayStr) {
+      if (typeof arrayStr !== 'string') {
+        return arrayStr; // 如果不是字串，直接返回（相容舊格式）
+      }
+      try {
+        // 移除括號並分割為數值陣列
+        const cleanedStr = arrayStr.replace(/^\[|\]$/g, '');
+        return cleanedStr.split(',').map(num => parseInt(num.trim(), 10));
+      } catch (err) {
+        throw new Error(`Failed to parse array string: ${arrayStr}`);
+      }
+    }
+
+    function updateStatusLink() {
+        const protocol = document.getElementById('protocol').value.trim();
+        const ip = document.getElementById('ip').value.trim();
+        const publicport = document.getElementById('publicport').value.trim();
+        const statusLink = document.getElementById('statusLink');
+
+        if (protocol && ip && publicport) {
+          const link = `${protocol}://${ip}:${publicport}`;
+          statusLink.innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+        } else {
+          statusLink.innerHTML = "";
+        }
+      }
+
+    // --- 新增：篩選設定檔函數 ---
+    function filterProfiles(modalType, searchInput) {
+      const searchText = searchInput.value.toLowerCase();
+      const profileList = document.getElementById(`${modalType}ProfileList`);
+      const checkboxes = profileList.querySelectorAll(`.${modalType}-checkbox`);
+      checkboxes.forEach(checkbox => {
+        const profileName = modalType === 'import' 
+          ? checkbox.parentElement.textContent.trim()
+          : checkbox.dataset.profile;
+        const label = checkbox.parentElement;
+        if (profileName.toLowerCase().includes(searchText)) {
+          label.style.display = 'block';
+        } else {
+          label.style.display = 'none';
+        }
+      });
+    }
+
+    // --- 新增：綁定搜尋輸入框事件 ---
+    document.addEventListener('DOMContentLoaded', () => {
+      ['export', 'import', 'delete'].forEach(modalType => {
+        document.getElementById(`${modalType}Search`).addEventListener('input', () => filterProfiles(modalType, document.getElementById(`${modalType}Search`)));
+      });
+    });
+  </script>
+</body>
+</html>
