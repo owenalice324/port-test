@@ -1073,7 +1073,7 @@
 
     <pre id="log"></pre>
     <div class="notice">
-      <p><strong data-i18n="notice_title">Notice:</strong> <span data-i18n="notice_text">Profiles are stored in your browser's local storage. They will be lost if you clear browsing data or use incognito mode. Please export profiles to save them.</span></p>
+      <p><strong data-i18n="notice_title">Notice:</strong> <span data-i18n="notice_text">Profiles are stored in your browser local storage. They will be lost if you clear browsing data or use incognito mode. Please export profiles to save them.</span></p>
       <p><strong data-i18n="tip_title">Tip:</strong> <span data-i18n-html="tip_text">To save a new profile, click <strong>Knock Ports</strong> — the profile will be saved automatically when knocking is triggered.</span></p>
     </div>
     <!-- Export Modal -->
@@ -1201,6 +1201,7 @@
         <div class="cli-group">
           <span class="cli-head">OS</span>
           <select id="cliOs" style="width:100%;">
+            <option value="auto" data-i18n="helper_os_auto">Auto — this device (default browser)</option>
             <option value="linux">Linux — google-chrome</option>
             <option value="win-cmd">Windows — cmd (start chrome)</option>
             <option value="win-ps">Windows — PowerShell</option>
@@ -1253,7 +1254,7 @@
         copy:"Copy",sec:"Sec",more_settings:"More Settings",optional_title:"Checking port knocking status",
         public_port_label:"Public Port",public_port_placeholder:"443",protocol_label:"Protocol",
         status_link_label:"Status Link",knock_btn:"Knock Ports",
-        notice_title:"Notice:",notice_text:"Profiles are stored in your browser’s local storage. They will be lost if you clear browsing data or use incognito mode. Please export profiles to save them.",
+        notice_title:"Notice:",notice_text:"Profiles are stored in your browser local storage. They will be lost if you clear browsing data or use incognito mode. Please export profiles to save them.",
         tip_title:"Tip:",tip_text:"To save a new profile, click <strong>Knock Ports</strong> — the profile will be saved automatically when knocking is triggered.",
         export_title:"Export Profiles",search_placeholder:"Search profiles...",select_all:"Select All",
         encrypt_totp:"Encrypt TOTP Key",confirm:"Confirm",cancel:"Cancel",import_title:"Import Profiles",
@@ -1274,6 +1275,8 @@
         log_exported_plain:"Exported {count} profile(s) to {filename} (unencrypted)",
         log_export_cancelled:"Export cancelled.",log_passphrase_required_enc:"Passphrase is required for encryption.",
         log_passphrase_required_imp:"Passphrase is required for import.",log_import_cancelled:"Import cancelled.",
+        log_wrong_passphrase:"Incorrect passphrase for profile '{name}'. Please try again.",
+        log_import_enc_skipped:"Skipped {count} encrypted profile(s) (passphrase entry cancelled).",
         log_no_delete:"No profiles available to delete.",log_select_delete:"Please select at least one profile to delete.",
         log_deleted:"Deleted {count} profile(s)",log_totp_scanned:"TOTP Key has been successfully scanned and loaded!",
         log_camera_error:"Unable to access the camera, please check your permissions.",
@@ -1289,7 +1292,7 @@
         log_import_error:"Error importing profile: {error}",log_file_read_error:"Error reading file.",
         save_btn:"Save Profile",log_saved_new:"Profile \"{name}\" saved.",log_saved_updated:"Profile \"{name}\" updated.",
         log_sched_start:"Scheduled knocking started: every {interval}s, count {count}.",log_sched_done:"Scheduled knocking stopped. Total {total} / success {success} / failed {failed}.",
-        helper_option:"Generate CLI Command",helper_title:"Generate Launch Command",helper_schedule:"Scheduled (repeat)",helper_once_keep:"Single knock, keep tab open",helper_once_close:"Single knock, then close tab",helper_interval:"Interval (sec)",helper_count:"Count (0 = unlimited)",helper_until:"Until (HH:MM, optional)",helper_missing:"Please fill in Profile Name / IP / 1st Port / TOTP Key above first.",helper_copy:"Copy",helper_copied:"Copied!",helper_current_form:"Use current form",
+        helper_option:"Generate CLI Command",helper_title:"Generate Launch Command",helper_schedule:"Scheduled (repeat)",helper_once_keep:"Single knock, keep tab open",helper_once_close:"Single knock, then close tab",helper_interval:"Interval (sec)",helper_count:"Count (0 = unlimited)",helper_until:"Until (HH:MM, optional)",helper_missing:"Please fill in Profile Name / IP / 1st Port / TOTP Key above first.",helper_copy:"Copy",helper_copied:"Copied!",helper_current_form:"Use current form",helper_os_auto:"Auto — this device (default browser)",
         log_export_failed:"Export failed: {error}",log_import_invalid_file:"Imported file is missing 'portknocking' section.",
         log_import_empty:"Imported file has an empty 'portknocking' array.",
         log_import_missing_fields:"Imported file is missing required fields (profileName, ip, 1stport, totpKey) in 'portknocking' section.",
@@ -1326,6 +1329,8 @@
         log_exported_plain:"已將 {count} 個設定檔匯出至 {filename}（未加密）",
         log_export_cancelled:"匯出已取消。",log_passphrase_required_enc:"加密需要通行密語。",
         log_passphrase_required_imp:"匯入需要通行密語。",log_import_cancelled:"匯入已取消。",
+        log_wrong_passphrase:"設定檔「{name}」的通行密語錯誤，請重新輸入。",
+        log_import_enc_skipped:"已略過 {count} 個加密設定檔（通行密語輸入已取消）。",
         log_no_delete:"沒有可刪除的設定檔。",log_select_delete:"請至少選擇一個設定檔進行刪除。",
         log_deleted:"已刪除 {count} 個設定檔",log_totp_scanned:"TOTP 金鑰已成功掃描並載入！",
         log_camera_error:"無法存取相機，請檢查您的權限設定。",
@@ -1346,7 +1351,7 @@
         passphrase_profile_title:"輸入設定檔「{name}」的通行密語",
         save_btn:"儲存設定檔",log_saved_new:"設定檔「{name}」已儲存。",log_saved_updated:"設定檔「{name}」已更新。",
         log_sched_start:"已開始定時敲門：每 {interval} 秒，次數 {count}。",log_sched_done:"定時敲門結束。總次數 {total} / 成功 {success} / 失敗 {failed}。",
-        helper_option:"產生 CLI 指令",helper_title:"產生啟動指令",helper_schedule:"定時敲門（重複）",helper_once_keep:"單次敲門並保持開啟",helper_once_close:"單次敲門後關閉分頁",helper_interval:"間隔（秒）",helper_count:"次數（0 = 無限）",helper_until:"停止時間（HH:MM，可留空）",helper_missing:"請先在上方填寫 Profile Name / IP / 第一埠 / TOTP 金鑰。",helper_copy:"複製",helper_copied:"已複製！",helper_current_form:"使用目前表單",
+        helper_option:"產生 CLI 指令",helper_title:"產生啟動指令",helper_schedule:"定時敲門（重複）",helper_once_keep:"單次敲門並保持開啟",helper_once_close:"單次敲門後關閉分頁",helper_interval:"間隔（秒）",helper_count:"次數（0 = 無限）",helper_until:"停止時間（HH:MM，可留空）",helper_missing:"請先在上方填寫 Profile Name / IP / 第一埠 / TOTP 金鑰。",helper_copy:"複製",helper_copied:"已複製！",helper_current_form:"使用目前表單",helper_os_auto:"自動 — 本機（預設瀏覽器）",
         ordinals:["1","2","3"],countdown_default:"-- 秒"
       },
       "zh-CN": {
@@ -1378,6 +1383,8 @@
         log_exported_plain:"已将 {count} 个配置文件导出至 {filename}（未加密）",
         log_export_cancelled:"导出已取消。",log_passphrase_required_enc:"加密需要密码短语。",
         log_passphrase_required_imp:"导入需要密码短语。",log_import_cancelled:"导入已取消。",
+        log_wrong_passphrase:"配置文件「{name}」的密码短语错误，请重新输入。",
+        log_import_enc_skipped:"已跳过 {count} 个加密配置文件（密码短语输入已取消）。",
         log_no_delete:"没有可删除的配置文件。",log_select_delete:"请至少选择一个配置文件进行删除。",
         log_deleted:"已删除 {count} 个配置文件",log_totp_scanned:"TOTP 密钥已成功扫描并加载！",
         log_camera_error:"无法访问摄像头，请检查您的权限设置。",
@@ -1398,7 +1405,7 @@
         passphrase_profile_title:"输入配置文件「{name}」的密码短语",
         save_btn:"保存配置文件",log_saved_new:"配置文件「{name}」已保存。",log_saved_updated:"配置文件「{name}」已更新。",
         log_sched_start:"已开始定时敲门：每 {interval} 秒，次数 {count}。",log_sched_done:"定时敲门结束。总次数 {total} / 成功 {success} / 失败 {failed}。",
-        helper_option:"生成 CLI 命令",helper_title:"生成启动命令",helper_schedule:"定时敲门（重复）",helper_once_keep:"单次敲门并保持打开",helper_once_close:"单次敲门后关闭标签页",helper_interval:"间隔（秒）",helper_count:"次数（0 = 无限）",helper_until:"停止时间（HH:MM，可留空）",helper_missing:"请先在上方填写 Profile Name / IP / 第一端口 / TOTP 密钥。",helper_copy:"复制",helper_copied:"已复制！",helper_current_form:"使用当前表单",
+        helper_option:"生成 CLI 命令",helper_title:"生成启动命令",helper_schedule:"定时敲门（重复）",helper_once_keep:"单次敲门并保持打开",helper_once_close:"单次敲门后关闭标签页",helper_interval:"间隔（秒）",helper_count:"次数（0 = 无限）",helper_until:"停止时间（HH:MM，可留空）",helper_missing:"请先在上方填写 Profile Name / IP / 第一端口 / TOTP 密钥。",helper_copy:"复制",helper_copied:"已复制！",helper_current_form:"使用当前表单",helper_os_auto:"自动 — 本机（默认浏览器）",
         ordinals:["1","2","3"],countdown_default:"-- 秒"
       },
       de: {
@@ -1430,6 +1437,8 @@
         log_exported_plain:"{count} Profil(e) nach {filename} exportiert (unverschlüsselt)",
         log_export_cancelled:"Export abgebrochen.",log_passphrase_required_enc:"Für die Verschlüsselung ist eine Passphrase erforderlich.",
         log_passphrase_required_imp:"Für den Import ist eine Passphrase erforderlich.",log_import_cancelled:"Import abgebrochen.",
+        log_wrong_passphrase:"Falsche Passphrase für Profil '{name}'. Bitte erneut versuchen.",
+        log_import_enc_skipped:"{count} verschlüsselte(s) Profil(e) übersprungen (Passphrase-Eingabe abgebrochen).",
         log_no_delete:"Keine Profile zum Löschen vorhanden.",log_select_delete:"Bitte mindestens ein Profil zum Löschen auswählen.",
         log_deleted:"{count} Profil(e) gelöscht",log_totp_scanned:"TOTP-Schlüssel wurde erfolgreich gescannt und geladen!",
         log_camera_error:"Kamerazugriff nicht möglich. Bitte Berechtigungen prüfen.",
@@ -1450,7 +1459,7 @@
         passphrase_profile_title:"Passphrase für Profil \"{name}\" eingeben",
         save_btn:"Profil speichern",log_saved_new:"Profil \"{name}\" gespeichert.",log_saved_updated:"Profil \"{name}\" aktualisiert.",
         log_sched_start:"Geplantes Klopfen gestartet: alle {interval}s, Anzahl {count}.",log_sched_done:"Geplantes Klopfen beendet. Gesamt {total} / Erfolg {success} / Fehler {failed}.",
-        helper_option:"CLI-Befehl generieren",helper_title:"Startbefehl generieren",helper_schedule:"Geplant (wiederholen)",helper_once_keep:"Einmal anklopfen, Tab offen lassen",helper_once_close:"Einmal anklopfen, dann Tab schließen",helper_interval:"Intervall (Sek.)",helper_count:"Anzahl (0 = unbegrenzt)",helper_until:"Bis (HH:MM, optional)",helper_missing:"Bitte zuerst oben Profilname / IP / 1. Port / TOTP-Schlüssel ausfüllen.",helper_copy:"Kopieren",helper_copied:"Kopiert!",helper_current_form:"Aktuelles Formular verwenden",
+        helper_option:"CLI-Befehl generieren",helper_title:"Startbefehl generieren",helper_schedule:"Geplant (wiederholen)",helper_once_keep:"Einmal anklopfen, Tab offen lassen",helper_once_close:"Einmal anklopfen, dann Tab schließen",helper_interval:"Intervall (Sek.)",helper_count:"Anzahl (0 = unbegrenzt)",helper_until:"Bis (HH:MM, optional)",helper_missing:"Bitte zuerst oben Profilname / IP / 1. Port / TOTP-Schlüssel ausfüllen.",helper_copy:"Kopieren",helper_copied:"Kopiert!",helper_current_form:"Aktuelles Formular verwenden",helper_os_auto:"Auto — dieses Gerät (Standardbrowser)",
         ordinals:["1","2","3"],countdown_default:"-- Sek"
       },
       fr: {
@@ -1482,6 +1491,8 @@
         log_exported_plain:"{count} profil(s) exporté(s) vers {filename} (non chiffré)",
         log_export_cancelled:"Export annulé.",log_passphrase_required_enc:"Une phrase secrète est requise pour le chiffrement.",
         log_passphrase_required_imp:"Une phrase secrète est requise pour l'import.",log_import_cancelled:"Import annulé.",
+        log_wrong_passphrase:"Phrase secrète incorrecte pour le profil '{name}'. Veuillez réessayer.",
+        log_import_enc_skipped:"{count} profil(s) chiffré(s) ignoré(s) (saisie de la phrase secrète annulée).",
         log_no_delete:"Aucun profil disponible à supprimer.",log_select_delete:"Veuillez sélectionner au moins un profil à supprimer.",
         log_deleted:"{count} profil(s) supprimé(s)",log_totp_scanned:"La clé TOTP a été scannée et chargée avec succès !",
         log_camera_error:"Impossible d'accéder à la caméra, vérifiez vos autorisations.",
@@ -1502,7 +1513,7 @@
         passphrase_profile_title:"Phrase secrète pour le profil \"{name}\"",
         save_btn:"Enregistrer le profil",log_saved_new:"Profil \"{name}\" enregistré.",log_saved_updated:"Profil \"{name}\" mis à jour.",
         log_sched_start:"Frappe planifiée démarrée : toutes les {interval}s, nombre {count}.",log_sched_done:"Frappe planifiée arrêtée. Total {total} / réussis {success} / échoués {failed}.",
-        helper_option:"Générer la commande CLI",helper_title:"Générer la commande de lancement",helper_schedule:"Planifié (répéter)",helper_once_keep:"Frappe unique, garder l'onglet ouvert",helper_once_close:"Frappe unique, puis fermer l'onglet",helper_interval:"Intervalle (s)",helper_count:"Nombre (0 = illimité)",helper_until:"Jusqu'à (HH:MM, facultatif)",helper_missing:"Veuillez d'abord remplir Nom du profil / IP / 1er port / Clé TOTP ci-dessus.",helper_copy:"Copier",helper_copied:"Copié !",helper_current_form:"Utiliser le formulaire actuel",
+        helper_option:"Générer la commande CLI",helper_title:"Générer la commande de lancement",helper_schedule:"Planifié (répéter)",helper_once_keep:"Frappe unique, garder l'onglet ouvert",helper_once_close:"Frappe unique, puis fermer l'onglet",helper_interval:"Intervalle (s)",helper_count:"Nombre (0 = illimité)",helper_until:"Jusqu'à (HH:MM, facultatif)",helper_missing:"Veuillez d'abord remplir Nom du profil / IP / 1er port / Clé TOTP ci-dessus.",helper_copy:"Copier",helper_copied:"Copié !",helper_current_form:"Utiliser le formulaire actuel",helper_os_auto:"Auto — cet appareil (navigateur par défaut)",
         ordinals:["1er","2ème","3ème"],countdown_default:"-- s"
       },
       it: {
@@ -1534,6 +1545,8 @@
         log_exported_plain:"{count} profilo/i esportato/i in {filename} (non cifrato)",
         log_export_cancelled:"Esportazione annullata.",log_passphrase_required_enc:"La passphrase è richiesta per la cifratura.",
         log_passphrase_required_imp:"La passphrase è richiesta per l'importazione.",log_import_cancelled:"Importazione annullata.",
+        log_wrong_passphrase:"Passphrase errata per il profilo '{name}'. Riprova.",
+        log_import_enc_skipped:"{count} profilo/i cifrato/i ignorato/i (inserimento passphrase annullato).",
         log_no_delete:"Nessun profilo disponibile per l'eliminazione.",log_select_delete:"Selezionare almeno un profilo da eliminare.",
         log_deleted:"{count} profilo/i eliminato/i",log_totp_scanned:"Chiave TOTP scansionata e caricata con successo!",
         log_camera_error:"Impossibile accedere alla fotocamera. Verificare le autorizzazioni.",
@@ -1554,7 +1567,7 @@
         passphrase_profile_title:"Inserisci passphrase per il profilo \"{name}\"",
         save_btn:"Salva profilo",log_saved_new:"Profilo \"{name}\" salvato.",log_saved_updated:"Profilo \"{name}\" aggiornato.",
         log_sched_start:"Knocking pianificato avviato: ogni {interval}s, numero {count}.",log_sched_done:"Knocking pianificato interrotto. Totale {total} / riusciti {success} / falliti {failed}.",
-        helper_option:"Genera comando CLI",helper_title:"Genera comando di avvio",helper_schedule:"Pianificato (ripeti)",helper_once_keep:"Bussata singola, mantieni scheda aperta",helper_once_close:"Bussata singola, poi chiudi scheda",helper_interval:"Intervallo (sec)",helper_count:"Numero (0 = illimitato)",helper_until:"Fino a (HH:MM, opzionale)",helper_missing:"Compilare prima Nome profilo / IP / 1ª porta / Chiave TOTP sopra.",helper_copy:"Copia",helper_copied:"Copiato!",helper_current_form:"Usa il modulo corrente",
+        helper_option:"Genera comando CLI",helper_title:"Genera comando di avvio",helper_schedule:"Pianificato (ripeti)",helper_once_keep:"Bussata singola, mantieni scheda aperta",helper_once_close:"Bussata singola, poi chiudi scheda",helper_interval:"Intervallo (sec)",helper_count:"Numero (0 = illimitato)",helper_until:"Fino a (HH:MM, opzionale)",helper_missing:"Compilare prima Nome profilo / IP / 1ª porta / Chiave TOTP sopra.",helper_copy:"Copia",helper_copied:"Copiato!",helper_current_form:"Usa il modulo corrente",helper_os_auto:"Auto — questo dispositivo (browser predefinito)",
         ordinals:["1","2","3"],countdown_default:"-- sec"
       },
       pl: {
@@ -1586,6 +1599,8 @@
         log_exported_plain:"Wyeksportowano {count} profil(i) do {filename} (niezaszyfrowane)",
         log_export_cancelled:"Eksport anulowany.",log_passphrase_required_enc:"Hasło jest wymagane do szyfrowania.",
         log_passphrase_required_imp:"Hasło jest wymagane do importu.",log_import_cancelled:"Import anulowany.",
+        log_wrong_passphrase:"Nieprawidłowe hasło dla profilu '{name}'. Spróbuj ponownie.",
+        log_import_enc_skipped:"Pominięto {count} zaszyfrowanych profili (anulowano wprowadzanie hasła).",
         log_no_delete:"Brak profili do usunięcia.",log_select_delete:"Proszę wybrać co najmniej jeden profil do usunięcia.",
         log_deleted:"Usunięto {count} profil(i)",log_totp_scanned:"Klucz TOTP został pomyślnie zeskanowany i załadowany!",
         log_camera_error:"Nie można uzyskać dostępu do kamery. Sprawdź uprawnienia.",
@@ -1606,7 +1621,7 @@
         passphrase_profile_title:"Wpisz hasło dla profilu \"{name}\"",
         save_btn:"Zapisz profil",log_saved_new:"Profil \"{name}\" zapisany.",log_saved_updated:"Profil \"{name}\" zaktualizowany.",
         log_sched_start:"Rozpoczęto zaplanowane pukanie: co {interval}s, liczba {count}.",log_sched_done:"Zaplanowane pukanie zatrzymane. Łącznie {total} / udane {success} / nieudane {failed}.",
-        helper_option:"Generuj polecenie CLI",helper_title:"Generuj polecenie uruchamiające",helper_schedule:"Zaplanowane (powtarzaj)",helper_once_keep:"Pojedyncze pukanie, pozostaw kartę otwartą",helper_once_close:"Pojedyncze pukanie, potem zamknij kartę",helper_interval:"Odstęp (sek.)",helper_count:"Liczba (0 = bez limitu)",helper_until:"Do (HH:MM, opcjonalnie)",helper_missing:"Najpierw wypełnij powyżej Nazwę profilu / IP / 1. port / Klucz TOTP.",helper_copy:"Kopiuj",helper_copied:"Skopiowano!",helper_current_form:"Użyj bieżącego formularza",
+        helper_option:"Generuj polecenie CLI",helper_title:"Generuj polecenie uruchamiające",helper_schedule:"Zaplanowane (powtarzaj)",helper_once_keep:"Pojedyncze pukanie, pozostaw kartę otwartą",helper_once_close:"Pojedyncze pukanie, potem zamknij kartę",helper_interval:"Odstęp (sek.)",helper_count:"Liczba (0 = bez limitu)",helper_until:"Do (HH:MM, opcjonalnie)",helper_missing:"Najpierw wypełnij powyżej Nazwę profilu / IP / 1. port / Klucz TOTP.",helper_copy:"Kopiuj",helper_copied:"Skopiowano!",helper_current_form:"Użyj bieżącego formularza",helper_os_auto:"Auto — to urządzenie (domyślna przeglądarka)",
         ordinals:["1","2","3"],countdown_default:"-- sek"
       },
       pt: {
@@ -1638,6 +1653,8 @@
         log_exported_plain:"{count} perfil(is) exportado(s) para {filename} (não criptografado)",
         log_export_cancelled:"Exportação cancelada.",log_passphrase_required_enc:"Senha é necessária para criptografia.",
         log_passphrase_required_imp:"Senha é necessária para importação.",log_import_cancelled:"Importação cancelada.",
+        log_wrong_passphrase:"Senha incorreta para o perfil '{name}'. Tente novamente.",
+        log_import_enc_skipped:"{count} perfil(is) criptografado(s) ignorado(s) (entrada de senha cancelada).",
         log_no_delete:"Nenhum perfil disponível para excluir.",log_select_delete:"Selecione pelo menos um perfil para excluir.",
         log_deleted:"{count} perfil(is) excluído(s)",log_totp_scanned:"Chave TOTP digitalizada e carregada com sucesso!",
         log_camera_error:"Não foi possível acessar a câmera. Verifique as permissões.",
@@ -1658,7 +1675,7 @@
         passphrase_profile_title:"Inserir senha para o perfil \"{name}\"",
         save_btn:"Salvar perfil",log_saved_new:"Perfil \"{name}\" salvo.",log_saved_updated:"Perfil \"{name}\" atualizado.",
         log_sched_start:"Knocking agendado iniciado: a cada {interval}s, contagem {count}.",log_sched_done:"Knocking agendado parado. Total {total} / sucesso {success} / falhas {failed}.",
-        helper_option:"Gerar comando CLI",helper_title:"Gerar comando de inicialização",helper_schedule:"Agendado (repetir)",helper_once_keep:"Batida única, manter aba aberta",helper_once_close:"Batida única, depois fechar aba",helper_interval:"Intervalo (s)",helper_count:"Contagem (0 = ilimitado)",helper_until:"Até (HH:MM, opcional)",helper_missing:"Preencha primeiro Nome do perfil / IP / 1ª porta / Chave TOTP acima.",helper_copy:"Copiar",helper_copied:"Copiado!",helper_current_form:"Usar formulário atual",
+        helper_option:"Gerar comando CLI",helper_title:"Gerar comando de inicialização",helper_schedule:"Agendado (repetir)",helper_once_keep:"Batida única, manter aba aberta",helper_once_close:"Batida única, depois fechar aba",helper_interval:"Intervalo (s)",helper_count:"Contagem (0 = ilimitado)",helper_until:"Até (HH:MM, opcional)",helper_missing:"Preencha primeiro Nome do perfil / IP / 1ª porta / Chave TOTP acima.",helper_copy:"Copiar",helper_copied:"Copiado!",helper_current_form:"Usar formulário atual",helper_os_auto:"Auto — este dispositivo (navegador padrão)",
         ordinals:["1","2","3"],countdown_default:"-- seg"
       },
       nl: {
@@ -1690,6 +1707,8 @@
         log_exported_plain:"{count} profiel(en) geëxporteerd naar {filename} (niet versleuteld)",
         log_export_cancelled:"Exporteren geannuleerd.",log_passphrase_required_enc:"Een wachtwoord is vereist voor versleuteling.",
         log_passphrase_required_imp:"Een wachtwoord is vereist voor importeren.",log_import_cancelled:"Importeren geannuleerd.",
+        log_wrong_passphrase:"Onjuist wachtwoord voor profiel '{name}'. Probeer het opnieuw.",
+        log_import_enc_skipped:"{count} versleutelde profiel(en) overgeslagen (wachtwoordinvoer geannuleerd).",
         log_no_delete:"Geen profielen beschikbaar om te verwijderen.",log_select_delete:"Selecteer minimaal één profiel om te verwijderen.",
         log_deleted:"{count} profiel(en) verwijderd",log_totp_scanned:"TOTP-sleutel succesvol gescand en geladen!",
         log_camera_error:"Kan geen toegang krijgen tot de camera. Controleer uw rechten.",
@@ -1710,7 +1729,7 @@
         passphrase_profile_title:"Wachtwoord invoeren voor profiel \"{name}\"",
         save_btn:"Profiel opslaan",log_saved_new:"Profiel \"{name}\" opgeslagen.",log_saved_updated:"Profiel \"{name}\" bijgewerkt.",
         log_sched_start:"Geplande knock gestart: elke {interval}s, aantal {count}.",log_sched_done:"Geplande knock gestopt. Totaal {total} / gelukt {success} / mislukt {failed}.",
-        helper_option:"CLI-commando genereren",helper_title:"Startcommando genereren",helper_schedule:"Gepland (herhalen)",helper_once_keep:"Eenmalig kloppen, tabblad open houden",helper_once_close:"Eenmalig kloppen, daarna tabblad sluiten",helper_interval:"Interval (sec)",helper_count:"Aantal (0 = onbeperkt)",helper_until:"Tot (HH:MM, optioneel)",helper_missing:"Vul eerst hierboven Profielnaam / IP / 1e poort / TOTP-sleutel in.",helper_copy:"Kopiëren",helper_copied:"Gekopieerd!",helper_current_form:"Huidig formulier gebruiken",
+        helper_option:"CLI-commando genereren",helper_title:"Startcommando genereren",helper_schedule:"Gepland (herhalen)",helper_once_keep:"Eenmalig kloppen, tabblad open houden",helper_once_close:"Eenmalig kloppen, daarna tabblad sluiten",helper_interval:"Interval (sec)",helper_count:"Aantal (0 = onbeperkt)",helper_until:"Tot (HH:MM, optioneel)",helper_missing:"Vul eerst hierboven Profielnaam / IP / 1e poort / TOTP-sleutel in.",helper_copy:"Kopiëren",helper_copied:"Gekopieerd!",helper_current_form:"Huidig formulier gebruiken",helper_os_auto:"Auto — dit apparaat (standaardbrowser)",
         ordinals:["1","2","3"],countdown_default:"-- sec"
       },
       vi: {
@@ -1742,6 +1761,8 @@
         log_exported_plain:"Đã xuất {count} cấu hình sang {filename} (không mã hóa)",
         log_export_cancelled:"Đã hủy xuất.",log_passphrase_required_enc:"Cần mật khẩu để mã hóa.",
         log_passphrase_required_imp:"Cần mật khẩu để nhập.",log_import_cancelled:"Đã hủy nhập.",
+        log_wrong_passphrase:"Mật khẩu không đúng cho cấu hình '{name}'. Vui lòng thử lại.",
+        log_import_enc_skipped:"Đã bỏ qua {count} cấu hình đã mã hóa (đã hủy nhập mật khẩu).",
         log_no_delete:"Không có cấu hình để xóa.",log_select_delete:"Vui lòng chọn ít nhất một cấu hình để xóa.",
         log_deleted:"Đã xóa {count} cấu hình",log_totp_scanned:"Đã quét và tải khóa TOTP thành công!",
         log_camera_error:"Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.",
@@ -1762,7 +1783,7 @@
         passphrase_profile_title:"Nhập mật khẩu cho cấu hình \"{name}\"",
         save_btn:"Lưu cấu hình",log_saved_new:"Đã lưu cấu hình \"{name}\".",log_saved_updated:"Đã cập nhật cấu hình \"{name}\".",
         log_sched_start:"Đã bắt đầu gõ cửa định kỳ: mỗi {interval}s, số lần {count}.",log_sched_done:"Đã dừng gõ cửa định kỳ. Tổng {total} / thành công {success} / thất bại {failed}.",
-        helper_option:"Tạo lệnh CLI",helper_title:"Tạo lệnh khởi chạy",helper_schedule:"Định kỳ (lặp lại)",helper_once_keep:"Gõ một lần, giữ tab mở",helper_once_close:"Gõ một lần, rồi đóng tab",helper_interval:"Khoảng (giây)",helper_count:"Số lần (0 = không giới hạn)",helper_until:"Đến (HH:MM, tùy chọn)",helper_missing:"Vui lòng điền Tên cấu hình / IP / Cổng đầu tiên / Khóa TOTP ở trên trước.",helper_copy:"Sao chép",helper_copied:"Đã sao chép!",helper_current_form:"Dùng biểu mẫu hiện tại",
+        helper_option:"Tạo lệnh CLI",helper_title:"Tạo lệnh khởi chạy",helper_schedule:"Định kỳ (lặp lại)",helper_once_keep:"Gõ một lần, giữ tab mở",helper_once_close:"Gõ một lần, rồi đóng tab",helper_interval:"Khoảng (giây)",helper_count:"Số lần (0 = không giới hạn)",helper_until:"Đến (HH:MM, tùy chọn)",helper_missing:"Vui lòng điền Tên cấu hình / IP / Cổng đầu tiên / Khóa TOTP ở trên trước.",helper_copy:"Sao chép",helper_copied:"Đã sao chép!",helper_current_form:"Dùng biểu mẫu hiện tại",helper_os_auto:"Tự động — thiết bị này (trình duyệt mặc định)",
         ordinals:["1","2","3"],countdown_default:"-- giây"
       }
     };
@@ -2342,6 +2363,14 @@
     function cliBuildCmd(url) {
       const os = document.getElementById('cliOs').value;
       const q = '"' + url + '"';
+      if (os === 'auto') {
+        // 只偵測 OS；瀏覽器交給各 OS 的原生「以預設瀏覽器開啟」指令，
+        // 網頁無法得知使用者的預設瀏覽器是哪一套，也不需要知道。
+        const ua = navigator.userAgent;
+        if (/Windows/i.test(ua)) return 'start "" ' + q;        // cmd
+        if (/Macintosh|Mac OS X/i.test(ua)) return 'open ' + q; // macOS
+        return 'xdg-open ' + q;                                 // Linux / 其他
+      }
       if (os === 'win-cmd') return 'start chrome ' + q;
       if (os === 'win-ps') return 'Start-Process chrome ' + q;
       if (os === 'macos') return 'open -a "Google Chrome" ' + q;
@@ -2812,17 +2841,25 @@
       input.value = '';
       modal.style.display = 'flex';
 
-      const onConfirm = () => {
-        callback(input.value);
-        modal.style.display = 'none';
-        confirmBtn.removeEventcolari
+      // confirm/cancel 只會按到其中一顆，兩顆的 listener 都要移除，
+      // 否則殘留的舊 listener 會在下次開啟 modal 時觸發過期的 callback。
+      const cleanup = () => {
+        confirmBtn.removeEventListener('click', onConfirm);
+        cancelBtn.removeEventListener('click', onCancel);
       };
-
-      confirmBtn.addEventListener('click', onConfirm, { once: true });
-      cancelBtn.addEventListener('click', () => {
+      const onConfirm = () => {
+        cleanup();
+        modal.style.display = 'none';
+        callback(input.value);
+      };
+      const onCancel = () => {
+        cleanup();
         modal.style.display = 'none';
         if (cancelCallback) cancelCallback();
-      }, { once: true });
+      };
+      confirmBtn.addEventListener('click', onConfirm);
+      cancelBtn.addEventListener('click', onCancel);
+      input.focus();
     }
     // --- 匯出功能 ---
     function exportProfile() {
@@ -3197,39 +3234,56 @@
       const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
       const fileName = document.getElementById('confirmImportBtn').dataset.fileName;
 
-      // --- 新增：處理加密設定檔的助記詞輸入 ---
-      async function processProfileWithPassphrase(profile, index) {
-        return new Promise((resolve, reject) => {
-          if (!profile.encrypted) {
-            resolve(profile); // 未加密，直接返回
-            return;
-          }
-          // 轉換字串格式的陣列為數值陣列
-          const encryptedTotpKey = parseArrayString(profile.totpKey.encryptedTotpKey);
-          const salt = parseArrayString(profile.totpKey.salt);
-          const iv = parseArrayString(profile.totpKey.iv);
-          const iterations = profile.totpKey.iterations;
-          profile.totpKey = { encryptedTotpKey, salt, iv, iterations };
+      // --- 處理加密設定檔的通行密語輸入 ---
+      // 同一個匯出檔內的所有 profile 都以同一組通行密語加密（confirmExport 只提示一次），
+      // 因此整個匯入流程也只提示一次並快取；快取解不開（手工拼湊的混合檔）才重新提示。
+      let cachedPassphrase = null;
+      let passphraseAborted = false;
 
-          showPassphraseModal(
-            async (passphrase) => {
-              if (!passphrase) {
-                reject(new Error(`Passphrase is required for importing profile "${profile.profileName}".`));
-                return;
-              }
-              try {
-                profile.totpKey = await decryptTOTPKey(profile.totpKey, passphrase);
-                resolve(profile);
-              } catch (err) {
-                reject(new Error(`Failed to decrypt profile "${profile.profileName}": ${err.message}`));
-              }
-            },
-            () => {
-              reject(new Error(`Import cancelled for profile "${profile.profileName}".`));
-            },
-            t('passphrase_profile_title', {name: profile.profileName})
-          );
+      function promptPassphrase(title) {
+        return new Promise((resolve, reject) => {
+          showPassphraseModal(resolve, () => reject(new Error('cancelled')), title);
         });
+      }
+
+      async function processProfileWithPassphrase(profile) {
+        if (!profile.encrypted) return profile; // 未加密，直接返回
+        // 轉換字串格式的陣列為數值陣列
+        const encryptedData = {
+          encryptedTotpKey: parseArrayString(profile.totpKey.encryptedTotpKey),
+          salt: parseArrayString(profile.totpKey.salt),
+          iv: parseArrayString(profile.totpKey.iv),
+          iterations: profile.totpKey.iterations
+        };
+
+        if (cachedPassphrase !== null) {
+          try {
+            profile.totpKey = await decryptTOTPKey(encryptedData, cachedPassphrase);
+            return profile;
+          } catch (err) {
+            // 快取的通行密語解不開這個 profile，改為重新提示
+          }
+        }
+        while (true) {
+          let passphrase;
+          try {
+            passphrase = await promptPassphrase(t('passphrase_import_title'));
+          } catch (err) {
+            passphraseAborted = true;
+            throw new Error(`Import cancelled for profile "${profile.profileName}".`);
+          }
+          if (!passphrase) {
+            log(t('log_passphrase_required_imp'));
+            continue;
+          }
+          try {
+            profile.totpKey = await decryptTOTPKey(encryptedData, passphrase);
+            cachedPassphrase = passphrase;
+            return profile;
+          } catch (err) {
+            log(t('log_wrong_passphrase', {name: profile.profileName}));
+          }
+        }
       }
 
       // --- 新增：檢查 Profile 數量上限 ---
@@ -3248,12 +3302,17 @@
       const profiles = importedData.portknocking || [];
       const selectedProfiles = selectedIndices.map(index => profiles[index]);
 
-      // --- 修改：逐一處理每個設定檔，確保加密的設定檔要求助記詞 ---
+      // --- 逐一處理每個設定檔；通行密語只提示一次（快取），取消則略過其餘加密設定檔 ---
       let successfullyImported = 0;
+      let skippedEncrypted = 0;
       const processProfiles = async () => {
         for (const profile of selectedProfiles) {
           if (!profile.profileName || !profile.ip || !profile.firstport || !profile.totpKey) {
             log(`Skipping invalid profile at index ${selectedProfiles.indexOf(profile)}: Missing required fields.`);
+            continue;
+          }
+          if (profile.encrypted && passphraseAborted) {
+            skippedEncrypted++;
             continue;
           }
           try {
@@ -3270,6 +3329,9 @@
           } catch (err) {
             log(err.message);
           }
+        }
+        if (skippedEncrypted > 0) {
+          log(t('log_import_enc_skipped', {count: skippedEncrypted}));
         }
 
         // 更新 UI
